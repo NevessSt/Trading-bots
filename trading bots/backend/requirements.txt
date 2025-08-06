@@ -1,0 +1,39 @@
+# Backend Dependencies
+
+# Flask and Extensions
+flask==2.2.3
+flask-cors==3.0.10
+flask-jwt-extended==4.4.4
+flask-pymongo==2.3.0
+gunicorn==20.1.0
+Werkzeug==2.2.3
+
+# Database
+pymongo==4.3.3
+
+# Trading and Data Analysis
+ccxt==3.0.74  # Cryptocurrency exchange trading library
+pandas==1.5.3
+numpy==1.24.2
+ta-lib==0.4.26  # Technical analysis library (requires separate installation of TA-Lib C library)
+python-binance==1.0.17  # Binance API wrapper
+
+# Authentication and Security
+bcrypt==4.0.1
+pyjwt==2.6.0
+passlib==1.7.4
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.28.2
+websocket-client==1.5.1
+apscheduler==3.10.1  # For scheduling tasks
+
+# Testing
+pytest==7.3.1
+
+# Notifications
+python-telegram-bot==20.1
+
+# Payment Processing
+stripe==5.2.0

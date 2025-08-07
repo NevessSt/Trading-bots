@@ -1,0 +1,306 @@
+import os
+import hashlib
+import secrets
+from datetime import datetime, timedelta
+from cryptography.fernet import Fernet
+from functools import wraps
+from flask import request, jsonify, current_app
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from collections import defaultdict
+import time
+
+class SecurityManager:
+    """Handles security operations for the trading bot"""
+    
+    def __init__(self):
+        self.encryption_key = self._get_or_create_encryption_key()
+        self.cipher_suite = Fernet(self.encryption_key)
+        self.rate_limit_storage = defaultdict(list)
+        self.failed_attempts = defaultdict(int)
+        self.blocked_ips = set()
+    
+    def _get_or_create_encryption_key(self):
+        """Get or create encryption key for API keys"""
+        key_file = os.path.join(os.path.dirname(__file__), '..', 'config', 'encryption.key')
+        
+        if os.path.exists(key_file):
+            with open(key_file, 'rb') as f:
+                return f.read()
+        else:
+            # Create new key
+            key = Fernet.generate_key()
+            os.makedirs(os.path.dirname(key_file), exist_ok=True)
+            with open(key_file, 'wb') as f:
+                f.write(key)
+            return key
+    
+    def encrypt_api_key(self, api_key):
+        """Encrypt API key for storage
+        
+        Args:
+            api_key (str): Plain text API key
+            
+        Returns:
+            str: Encrypted API key
+        """
+        if not api_key:
+            return None
+        return self.cipher_suite.encrypt(api_key.encode()).decode()
+    
+    def decrypt_api_key(self, encrypted_key):
+        """Decrypt API key for use
+        
+        Args:
+            encrypted_key (str): Encrypted API key
+            
+        Returns:
+            str: Plain text API key
+        """
+        if not encrypted_key:
+            return None
+        try:
+            return self.cipher_suite.decrypt(encrypted_key.encode()).decode()
+        except Exception:
+            return None
+    
+    def validate_api_key_format(self, api_key, exchange):
+        """Validate API key format for different exchanges
+        
+        Args:
+            api_key (str): API key to validate
+            exchange (str): Exchange name
+            
+        Returns:
+            bool: True if format is valid
+        """
+        if not api_key or len(api_key.strip()) < 10:
+            return False
+        
+        # Basic format validation for different exchanges
+        exchange = exchange.lower()
+        
+        if exchange == 'binance':
+            # Binance API keys are typically 64 characters long
+            return len(api_key) >= 60 and api_key.isalnum()
+        elif exchange == 'coinbase':
+            # Coinbase Pro API keys are typically UUID format
+            import re
+            uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            return bool(re.match(uuid_pattern, api_key, re.IGNORECASE))
+        elif exchange == 'kraken':
+            # Kraken API keys are base64 encoded
+            return len(api_key) >= 50 and all(c.isalnum() or c in '+/=' for c in api_key)
+        elif exchange == 'bitfinex':
+            # Bitfinex API keys are typically 25+ characters
+            return len(api_key) >= 25 and api_key.isalnum()
+        else:
+            # Generic validation for other exchanges
+            return len(api_key) >= 20 and api_key.replace('-', '').replace('_', '').isalnum()
+    
+    def hash_password(self, password):
+        """Hash password with salt
+        
+        Args:
+            password (str): Plain text password
+            
+        Returns:
+            str: Hashed password
+        """
+        salt = secrets.token_hex(16)
+        password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+        return f"{salt}:{password_hash.hex()}"
+    
+    def verify_password(self, password, hashed_password):
+        """Verify password against hash
+        
+        Args:
+            password (str): Plain text password
+            hashed_password (str): Hashed password
+            
+        Returns:
+            bool: True if password matches
+        """
+        try:
+            salt, password_hash = hashed_password.split(':')
+            new_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+            return new_hash.hex() == password_hash
+        except Exception:
+            return False
+    
+    def generate_secure_token(self, length=32):
+        """Generate secure random token
+        
+        Args:
+            length (int): Token length
+            
+        Returns:
+            str: Secure token
+        """
+        return secrets.token_urlsafe(length)
+    
+    def is_rate_limited(self, identifier, max_requests=100, window_minutes=15):
+        """Check if identifier is rate limited
+        
+        Args:
+            identifier (str): IP address or user ID
+            max_requests (int): Maximum requests allowed
+            window_minutes (int): Time window in minutes
+            
+        Returns:
+            bool: True if rate limited
+        """
+        now = time.time()
+        window_start = now - (window_minutes * 60)
+        
+        # Clean old requests
+        self.rate_limit_storage[identifier] = [
+            req_time for req_time in self.rate_limit_storage[identifier]
+            if req_time > window_start
+        ]
+        
+        # Check if over limit
+        if len(self.rate_limit_storage[identifier]) >= max_requests:
+            return True
+        
+        # Add current request
+        self.rate_limit_storage[identifier].append(now)
+        return False
+    
+    def record_failed_attempt(self, identifier):
+        """Record failed login attempt
+        
+        Args:
+            identifier (str): IP address or user ID
+        """
+        self.failed_attempts[identifier] += 1
+        
+        # Block IP after 5 failed attempts
+        if self.failed_attempts[identifier] >= 5:
+            self.blocked_ips.add(identifier)
+    
+    def is_blocked(self, identifier):
+        """Check if identifier is blocked
+        
+        Args:
+            identifier (str): IP address or user ID
+            
+        Returns:
+            bool: True if blocked
+        """
+        return identifier in self.blocked_ips
+    
+    def clear_failed_attempts(self, identifier):
+        """Clear failed attempts for identifier
+        
+        Args:
+            identifier (str): IP address or user ID
+        """
+        self.failed_attempts.pop(identifier, None)
+    
+    def validate_api_keys(self, api_key, api_secret):
+        """Validate API key format
+        
+        Args:
+            api_key (str): Binance API key
+            api_secret (str): Binance API secret
+            
+        Returns:
+            bool: True if valid format
+        """
+        if not api_key or not api_secret:
+            return False
+        
+        # Basic format validation for Binance keys
+        if len(api_key) != 64 or len(api_secret) != 64:
+            return False
+        
+        # Check if keys contain only valid characters
+        valid_chars = set('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz')
+        if not all(c in valid_chars for c in api_key + api_secret):
+            return False
+        
+        return True
+    
+    def sanitize_input(self, data):
+        """Sanitize user input
+        
+        Args:
+            data (str): Input data
+            
+        Returns:
+            str: Sanitized data
+        """
+        if not isinstance(data, str):
+            return data
+        
+        # Remove potentially dangerous characters
+        dangerous_chars = ['<', '>', '"', "'", '&', ';', '(', ')', '|', '`']
+        for char in dangerous_chars:
+            data = data.replace(char, '')
+        
+        return data.strip()
+
+# Global security manager instance
+security_manager = SecurityManager()
+
+# Decorators for security
+def rate_limit(max_requests=100, window_minutes=15):
+    """Rate limiting decorator"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Get client IP
+            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+            
+            # Check if blocked
+            if security_manager.is_blocked(client_ip):
+                return jsonify({'error': 'IP address blocked due to suspicious activity'}), 429
+            
+            # Check rate limit
+            if security_manager.is_rate_limited(client_ip, max_requests, window_minutes):
+                return jsonify({'error': 'Rate limit exceeded'}), 429
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def require_api_keys():
+    """Decorator to require valid API keys"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            verify_jwt_in_request()
+            user_id = get_jwt_identity()
+            
+            # Check if user has valid API keys
+            from models.user import User
+            user = User.find_by_id(user_id)
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            api_key = user.get('binance_api_key')
+            api_secret = user.get('binance_api_secret')
+            
+            if not api_key or not api_secret:
+                return jsonify({'error': 'Binance API keys not configured'}), 400
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def admin_required():
+    """Decorator to require admin privileges"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            verify_jwt_in_request()
+            user_id = get_jwt_identity()
+            
+            from models.user import User
+            user = User.find_by_id(user_id)
+            if not user or user.get('role') != 'admin':
+                return jsonify({'error': 'Admin privileges required'}), 403
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator

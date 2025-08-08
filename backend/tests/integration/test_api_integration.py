@@ -39,12 +39,12 @@ class TestAuthAPIIntegration:
         assert user is not None
         assert user.email == 'newuser@example.com'
     
-    def test_user_login_flow(self, client, sample_user):
+    def test_user_login_flow(self, client, test_user):
         """Test complete user login flow."""
         # Test login
         login_data = {
-            'username': sample_user.username,
-            'password': 'testpassword123'
+            'username': test_user.username,
+            'password': 'password123'
         }
         
         response = client.post('/api/auth/login',
@@ -56,7 +56,7 @@ class TestAuthAPIIntegration:
         assert 'access_token' in data
         assert 'refresh_token' in data
         assert 'user' in data
-        assert data['user']['id'] == sample_user.id
+        assert data['user']['id'] == test_user.id
     
     def test_token_refresh_flow(self, client, auth_headers):
         """Test token refresh flow."""
@@ -111,13 +111,13 @@ class TestAuthAPIIntegration:
 class TestBotAPIIntegration:
     """Test bot management API integration."""
     
-    def test_bot_creation_flow(self, client, auth_headers, sample_api_key):
+    def test_bot_creation_flow(self, client, auth_headers, test_api_key):
         """Test complete bot creation flow."""
         bot_data = {
             'name': 'Test Grid Bot',
             'strategy': 'grid',
             'trading_pair': 'BTCUSDT',
-            'api_key_id': sample_api_key.id,
+            'api_key_id': test_api_key.id,
             'config': {
                 'grid_size': 10,
                 'price_range': [45000, 55000],
@@ -136,12 +136,12 @@ class TestBotAPIIntegration:
         assert 'bot' in data
         assert data['bot']['name'] == 'Test Grid Bot'
         assert data['bot']['strategy'] == 'grid'
-        assert data['bot']['status'] == 'inactive'
+        assert data['bot']['is_active'] == False
         
         # Verify bot was created in database
         bot = Bot.query.filter_by(name='Test Grid Bot').first()
         assert bot is not None
-        assert bot.trading_pair == 'BTCUSDT'
+        assert bot.symbol == 'BTCUSDT'
     
     def test_bot_lifecycle_management(self, client, auth_headers, sample_bot):
         """Test complete bot lifecycle management."""

@@ -155,10 +155,10 @@ class User(db.Model):
         }
         
         access_token = create_access_token(
-            identity=self.id,
+            identity=str(self.id),
             additional_claims=additional_claims
         )
-        refresh_token = create_refresh_token(identity=self.id)
+        refresh_token = create_refresh_token(identity=str(self.id))
         
         return {
             'access_token': access_token,

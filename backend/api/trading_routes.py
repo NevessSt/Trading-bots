@@ -4,9 +4,8 @@ from datetime import datetime
 
 # Import trading engine components
 from bot_engine import TradingEngine, RiskManager
-from models.trade import Trade
-from models.user import User
-from models.bot import Bot
+from db import db
+from models import Trade, User, Bot
 
 # Create blueprint
 trading_bp = Blueprint('trading', __name__)
@@ -49,7 +48,13 @@ def get_trading_status():
         'recent_trades': recent_trades,
         'balance': balance,
         'is_trading_enabled': user.get('settings', {}).get('is_trading_enabled', False)
-    }), 200
+    })
+
+
+
+
+
+
 
 @trading_bp.route('/start', methods=['POST'])
 @jwt_required()
@@ -297,30 +302,44 @@ def create_bot():
     user_id = get_jwt_identity()
     data = request.get_json()
     
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
     # Validate required fields
-    required_fields = ['name', 'symbol', 'strategy', 'amount']
+    required_fields = ['name', 'strategy']
     for field in required_fields:
         if field not in data:
             return jsonify({'error': f'Missing required field: {field}'}), 400
     
     try:
-        engine = get_trading_engine()
-        bot_id = engine.create_bot(
+        # Extract required parameters from config
+        config = data.get('config', {})
+        
+        # Create bot directly using Bot model
+        bot = Bot(
             user_id=user_id,
             name=data['name'],
-            symbol=data['symbol'],
             strategy=data['strategy'],
-            amount=data['amount'],
-            take_profit=data.get('takeProfit', 3.0),
-            stop_loss=data.get('stopLoss', 2.0),
-            strategy_params=data.get('strategyParams', {})
+            symbol=data.get('trading_pair', 'BTCUSDT'),  # Map trading_pair to symbol
+            base_amount=config.get('base_amount', 100.0),  # Default base amount
+            timeframe=config.get('timeframe', '1h'),
+            stop_loss_percentage=config.get('stop_loss_percentage'),
+            take_profit_percentage=config.get('take_profit_percentage'),
+            max_daily_trades=config.get('max_daily_trades', 10),
+            risk_per_trade=config.get('risk_per_trade', 2.0),
+            is_paper_trading=config.get('is_paper_trading', True)
         )
+        
+        db.session.add(bot)
+        db.session.commit()
         
         return jsonify({
             'message': 'Bot created successfully',
-            'bot_id': bot_id
+            'bot': bot.to_dict()
         }), 201
+        
     except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
 @trading_bp.route('/bots/<bot_id>', methods=['GET'])

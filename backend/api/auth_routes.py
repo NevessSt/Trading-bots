@@ -5,7 +5,8 @@ from datetime import timedelta, datetime
 import re
 
 # Import database and models
-from models.user import User
+from db import db
+from models import User
 
 # Create blueprint
 auth_bp = Blueprint('auth', __name__)
@@ -33,49 +34,32 @@ def register():
     if User.find_by_username(data['username']):
         return jsonify({'error': 'Username already taken'}), 409
     
-    # Create new user
-    hashed_password = generate_password_hash(data['password'])
-    
-    new_user = {
-        'email': data['email'],
-        'username': data['username'],
-        'password': hashed_password,
-        'role': 'user',
-        'is_active': True,
-        'created_at': datetime.utcnow(),
-        'settings': {
-            'notifications': {
-                'email': True,
-                'telegram': False
-            },
-            'risk_management': {
-                'max_daily_loss': 5.0,  # Percentage
-                'max_trade_size': 10.0  # Percentage of portfolio
-            }
-        }
-    }
-    
-    user_id = User.create(new_user)
-    
-    if not user_id:
-        return jsonify({'error': 'Failed to create user'}), 500
-    
-    # Generate access token
-    access_token = create_access_token(
-        identity=str(user_id),
-        expires_delta=timedelta(days=1)
-    )
-    
-    return jsonify({
-        'message': 'User registered successfully',
-        'access_token': access_token,
-        'user': {
-            'id': str(user_id),
+    try:
+        # Create new user using the model's create_user method
+        user_data = {
             'email': data['email'],
             'username': data['username'],
-            'role': 'user'
+            'password': data['password'],
+            'first_name': data.get('first_name'),
+            'last_name': data.get('last_name')
         }
-    }), 201
+        
+        new_user = User.create_user(user_data)
+        
+        # Generate access token
+        tokens = new_user.generate_tokens()
+        
+        return jsonify({
+            'message': 'User registered successfully',
+            'access_token': tokens['access_token'],
+            'user': new_user.to_dict()
+        }), 201
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create user'}), 500
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -83,33 +67,23 @@ def login():
     data = request.get_json()
     
     # Validate required fields
-    if 'email' not in data or 'password' not in data:
-        return jsonify({'error': 'Email and password are required'}), 400
+    if 'username' not in data or 'password' not in data:
+        return jsonify({'error': 'Username and password are required'}), 400
     
-    # Find user by email
-    user = User.find_by_email(data['email'])
+    # Authenticate user
+    user = User.authenticate(data['username'], data['password'])
     
-    if not user or not check_password_hash(user['password'], data['password']):
+    if not user:
         return jsonify({'error': 'Invalid credentials'}), 401
     
-    if not user['is_active']:
-        return jsonify({'error': 'Account is deactivated'}), 403
-    
     # Generate access token
-    access_token = create_access_token(
-        identity=str(user['_id']),
-        expires_delta=timedelta(days=1)
-    )
+    tokens = user.generate_tokens()
     
     return jsonify({
         'message': 'Login successful',
-        'access_token': access_token,
-        'user': {
-            'id': str(user['_id']),
-            'email': user['email'],
-            'username': user['username'],
-            'role': user['role']
-        }
+        'access_token': tokens['access_token'],
+        'refresh_token': tokens.get('refresh_token', tokens['access_token']),
+        'user': user.to_dict()
     }), 200
 
 @auth_bp.route('/me', methods=['GET'])
@@ -123,21 +97,14 @@ def get_user_profile():
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    return jsonify({
-        'id': str(user['_id']),
-        'email': user['email'],
-        'username': user['username'],
-        'role': user['role'],
-        'settings': user.get('settings', {}),
-        'created_at': user.get('created_at')
-    }), 200
+    return jsonify(user.to_dict()), 200
 
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
 def refresh_token():
     """Refresh access token"""
     current_user_id = get_jwt_identity()
-    access_token = create_access_token(identity=current_user_id)
+    access_token = create_access_token(identity=str(current_user_id))
     
     return jsonify({
         'access_token': access_token

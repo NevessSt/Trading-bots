@@ -3,8 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 
 # Import models
-from models.user import User
-from models.trade import Trade
+from db import db
+from models import User, Trade, Bot, Subscription
 
 # Create blueprint
 admin_bp = Blueprint('admin', __name__)
@@ -15,7 +15,7 @@ def admin_required(f):
         user_id = get_jwt_identity()
         user = User.find_by_id(user_id)
         
-        if not user or user.get('role') != 'admin':
+        if not user or user.role != 'admin':
             return jsonify({'error': 'Admin access required'}), 403
         
         return f(*args, **kwargs)

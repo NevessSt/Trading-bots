@@ -5,7 +5,8 @@ from datetime import datetime
 import re
 
 # Import models
-from models.user import User
+from db import db
+from models import User
 
 # Create blueprint
 user_bp = Blueprint('user', __name__)
@@ -15,25 +16,12 @@ user_bp = Blueprint('user', __name__)
 def get_profile():
     """Get user profile"""
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = User.find_by_id(user_id)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    # Remove sensitive information
-    user_data = {
-        'id': user.id,
-        'email': user.email,
-        'username': user.username,
-        'firstName': user.first_name or '',
-        'lastName': user.last_name or '',
-        'role': user.role or 'user',
-        'settings': user.settings or {},
-        'createdAt': user.created_at.isoformat() if user.created_at else None,
-        'updatedAt': user.updated_at.isoformat() if user.updated_at else None
-    }
-    
-    return jsonify(user_data), 200
+    return jsonify(user.to_dict()), 200
 
 @user_bp.route('/profile', methods=['PUT'])
 @jwt_required()

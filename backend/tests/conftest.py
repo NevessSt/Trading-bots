@@ -154,8 +154,8 @@ def runner(app):
 @pytest.fixture
 def auth_headers(client, test_user):
     """Get authentication headers for test user."""
-    response = client.post('/api/v2/auth/login', json={
-        'email': test_user.email,
+    response = client.post('/api/auth/login', json={
+        'username': test_user.username,
         'password': 'password123'
     })
     
@@ -168,8 +168,8 @@ def auth_headers(client, test_user):
 @pytest.fixture
 def admin_headers(client, admin_user):
     """Get authentication headers for admin user."""
-    response = client.post('/api/v2/auth/login', json={
-        'email': admin_user.email,
+    response = client.post('/api/auth/login', json={
+        'username': admin_user.username,
         'password': 'admin123'
     })
     

@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
-from models.user import User
+from db import db
+from models import User, APIKey
 from utils.logger import logger
 from utils.security import security_manager, rate_limit
 from bot_engine import TradingEngine

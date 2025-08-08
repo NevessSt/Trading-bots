@@ -1,5 +1,6 @@
 import os
-from flask import Flask, jsonify
+from datetime import timedelta
+from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
@@ -28,10 +29,10 @@ def create_app(config_name=None):
             app.config.from_object(config_name)
     else:
         app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://trading_user:trading_password123@localhost:5432/trading_bot_db')
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///trading_bot.db')
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'jwt-secret-key-change-in-production')
-        app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 3600  # 1 hour
+        app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
     
     # Enable CORS
     CORS(app, origins=['http://localhost:3000'], supports_credentials=True)
@@ -68,10 +69,10 @@ def register_routes(app):
         # Register blueprints
         app.register_blueprint(auth_bp, url_prefix='/api/auth')
         app.register_blueprint(user_bp, url_prefix='/api/user')
-        app.register_blueprint(trading_bp, url_prefix='/api/trading')
+        app.register_blueprint(trading_bp, url_prefix='/api')
         app.register_blueprint(admin_bp, url_prefix='/api/admin')
         app.register_blueprint(backtest_bp, url_prefix='/api/backtest')
-        app.register_blueprint(api_key_bp, url_prefix='/api/keys')
+        app.register_blueprint(api_key_bp, url_prefix='/api/api-keys')
         app.register_blueprint(notification_bp, url_prefix='/api/notifications')
     except ImportError as e:
         print(f"Warning: Could not import some routes: {e}")

@@ -1,8 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from typing import Dict, Optional, List
 import json
-from .user import db
+from db import db
 
 class Trade(db.Model):
     """Trade model for SQLAlchemy"""
@@ -59,6 +58,9 @@ class Trade(db.Model):
         self.quantity = quantity
         self.price = price
         self.signal_data = json.dumps({})
+        self.status = 'pending'  # Set default status
+        self.created_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
         
         for key, value in kwargs.items():
             if hasattr(self, key):
@@ -89,6 +91,13 @@ class Trade(db.Model):
             pnl = (float(self.average_price) - current_price) * float(self.filled_quantity)
         
         return pnl - float(self.fee or 0)
+    
+    @property
+    def total(self):
+        """Calculate total value of the trade"""
+        if self.quantity and self.price:
+            return float(self.quantity) * float(self.price)
+        return 0
     
     def calculate_percentage_return(self, current_price=None):
         """Calculate percentage return for the trade"""
@@ -158,8 +167,9 @@ class Trade(db.Model):
             'symbol': self.symbol,
             'side': self.side,
             'trade_type': self.trade_type,
-            'quantity': float(self.quantity) if self.quantity else 0,
-            'price': float(self.price) if self.price else 0,
+            'quantity': f'{self.quantity:.3f}' if self.quantity else '0.000',
+            'price': f'{self.price:.2f}' if self.price else '0.00',
+            'total': f'{self.total:.2f}',
             'filled_quantity': float(self.filled_quantity) if self.filled_quantity else 0,
             'average_price': float(self.average_price) if self.average_price else 0,
             'total_value': float(self.total_value) if self.total_value else 0,
@@ -305,4 +315,4 @@ class Trade(db.Model):
         }
     
     def __repr__(self):
-        return f'<Trade {self.symbol} {self.side} {self.quantity} @ {self.price}>'
+        return f'<Trade {self.side} {self.quantity} {self.symbol}>'

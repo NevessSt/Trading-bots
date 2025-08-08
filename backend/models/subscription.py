@@ -1,8 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 import json
-from .user import db
+from db import db
 
 class Subscription(db.Model):
     """Subscription model for user billing and plans"""
@@ -88,6 +87,10 @@ class Subscription(db.Model):
         self.user_id = user_id
         self.plan_type = plan_type
         self.usage_data = json.dumps({})
+        self.is_active = True  # Set default value
+        self.status = 'active'  # Set default value
+        self.created_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
         
         # Set default dates for free plan
         if plan_type == 'free':
@@ -126,6 +129,22 @@ class Subscription(db.Model):
         if not self.end_date:
             return False
         return datetime.utcnow() > self.end_date
+    
+    def is_currently_active(self):
+        """Check if subscription is currently active"""
+        # Check if status is active
+        if self.status != 'active':
+            return False
+        
+        # Check if subscription has started
+        if self.start_date and datetime.utcnow() < self.start_date:
+            return False
+        
+        # Check if subscription has expired
+        if self.end_date and datetime.utcnow() > self.end_date:
+            return False
+        
+        return True
     
     def is_trial(self):
         """Check if subscription is in trial period"""
@@ -251,7 +270,7 @@ class Subscription(db.Model):
             'price': plan_config['price'],
             'currency': plan_config['currency'],
             'features': plan_config['features'],
-            'is_active': self.is_active,
+            'is_active': self.is_currently_active(),
             'status': self.status,
             'start_date': self.start_date.isoformat() if self.start_date else None,
             'end_date': self.end_date.isoformat() if self.end_date else None,

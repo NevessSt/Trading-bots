@@ -1,12 +1,9 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from typing import Dict, Optional, List
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, create_refresh_token
 import secrets
-
-# This will be initialized by the main app
-db = SQLAlchemy()
+from db import db
 
 class User(db.Model):
     """User model for SQLAlchemy with subscription support"""
@@ -39,13 +36,34 @@ class User(db.Model):
     subscriptions = db.relationship('Subscription', backref='user', lazy=True, cascade='all, delete-orphan')
     bots = db.relationship('Bot', backref='user', lazy=True, cascade='all, delete-orphan')
     trades = db.relationship('Trade', backref='user', lazy=True, cascade='all, delete-orphan')
+    api_keys = db.relationship('APIKey', backref='user', lazy=True, cascade='all, delete-orphan')
     
     def __init__(self, email, username, password, **kwargs):
+        # Validate inputs
+        if not username or username.strip() == '':
+            raise ValueError("Username cannot be empty")
+        
+        if not email or '@' not in email or '.' not in email.split('@')[-1]:
+            raise ValueError("Invalid email format")
+        
+        if not password or len(password) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        
         self.email = email
         self.username = username
         self.set_password(password)
+        
+        # Set default values
+        self.is_active = kwargs.get('is_active', True)
+        self.is_verified = kwargs.get('is_verified', False)
+        self.role = kwargs.get('role', 'user')
+        self.login_attempts = kwargs.get('login_attempts', 0)
+        self.created_at = kwargs.get('created_at', datetime.utcnow())
+        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        
+        # Set other provided attributes
         for key, value in kwargs.items():
-            if hasattr(self, key):
+            if hasattr(self, key) and key not in ['is_active', 'is_verified', 'role', 'login_attempts', 'created_at', 'updated_at']:
                 setattr(self, key, value)
     
     def set_password(self, password):
@@ -119,6 +137,14 @@ class User(db.Model):
             return []
         return subscription.get_available_strategies()
     
+    @property
+    def is_premium(self):
+        """Check if user has a premium subscription"""
+        subscription = self.get_current_subscription()
+        if not subscription:
+            return False
+        return subscription.plan_type != 'free'
+    
     def generate_tokens(self):
         """Generate JWT access and refresh tokens"""
         additional_claims = {
@@ -151,6 +177,7 @@ class User(db.Model):
             'phone': self.phone,
             'is_active': self.is_active,
             'is_verified': self.is_verified,
+            'is_premium': self.is_premium,
             'role': self.role,
             'last_login': self.last_login.isoformat() if self.last_login else None,
             'created_at': self.created_at.isoformat(),

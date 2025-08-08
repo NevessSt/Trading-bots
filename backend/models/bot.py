@@ -1,8 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from typing import Dict, Optional, List
 import json
-from .user import db
+from db import db
 
 class Bot(db.Model):
     """Bot model for SQLAlchemy"""
@@ -63,8 +62,23 @@ class Bot(db.Model):
         self.strategy_config = json.dumps({})
         self.indicators_config = json.dumps({})
         
+        # Set default values for boolean fields
+        self.is_active = kwargs.get('is_active', False)
+        self.is_running = kwargs.get('is_running', False)
+        self.is_paused = kwargs.get('is_paused', False)
+        
+        # Set default values for performance tracking
+        self.total_trades = kwargs.get('total_trades', 0)
+        self.winning_trades = kwargs.get('winning_trades', 0)
+        self.total_profit_loss = kwargs.get('total_profit_loss', 0.0)
+        
+        # Set default timestamps
+        self.created_at = kwargs.get('created_at', datetime.utcnow())
+        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        
+        # Set other attributes from kwargs
         for key, value in kwargs.items():
-            if hasattr(self, key):
+            if hasattr(self, key) and key not in ['is_active', 'is_running', 'is_paused', 'created_at', 'updated_at']:
                 setattr(self, key, value)
     
     def get_strategy_config(self):
@@ -169,6 +183,11 @@ class Bot(db.Model):
         """Get recent trades for this bot"""
         return self.trades.order_by(Trade.created_at.desc()).limit(limit).all()
     
+    @property
+    def profit_loss(self):
+        """Alias for total_profit_loss for backward compatibility"""
+        return self.total_profit_loss
+    
     def get_performance_summary(self, days=30):
         """Get performance summary for specified days"""
         from sqlalchemy import func
@@ -198,11 +217,11 @@ class Bot(db.Model):
         return {
             'total_trades': total_trades,
             'filled_trades': filled_trades,
-            'win_rate': (winning_trades / filled_trades) * 100,
-            'total_pnl': sum(pnls),
-            'average_pnl': sum(pnls) / len(pnls),
-            'best_trade': max(pnls),
-            'worst_trade': min(pnls)
+            'win_rate': (winning_trades / filled_trades) * 100 if filled_trades > 0 else 0,
+            'total_pnl': sum(pnls) if pnls else 0,
+            'average_pnl': sum(pnls) / len(pnls) if pnls else 0,
+            'best_trade': max(pnls) if pnls else 0,
+            'worst_trade': min(pnls) if pnls else 0
         }
     
     def to_dict(self):

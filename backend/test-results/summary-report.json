@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-08-08 16:06:31",
+  "total_duration": 0.79,
+  "results": {
+    "unit_tests": {
+      "success": false,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "C:\\Users\\pc\\AppData\\Local\\Programs\\Python\\Python313\\python.exe: No module named pytest\n",
+      "duration": 0.13298678398132324,
+      "command": "python -m pytest tests/unit/ -v --cov=. --cov-report=xml:test-results/coverage-unit.xml --cov-report=html:htmlcov/unit --junit-xml=test-results/unit-tests.xml --tb=short"
+    },
+    "coverage_report": {
+      "success": false,
+      "combine": {
+        "success": false,
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "C:\\Users\\pc\\AppData\\Local\\Programs\\Python\\Python313\\python.exe: No module named coverage\n",
+        "duration": 0.18962407112121582,
+        "command": "python -m coverage combine"
+      },
+      "html": {
+        "success": false,
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "C:\\Users\\pc\\AppData\\Local\\Programs\\Python\\Python313\\python.exe: No module named coverage\n",
+        "duration": 0.1555948257446289,
+        "command": "python -m coverage html -d htmlcov/combined"
+      },
+      "xml": {
+        "success": false,
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "C:\\Users\\pc\\AppData\\Local\\Programs\\Python\\Python313\\python.exe: No module named coverage\n",
+        "duration": 0.13948392868041992,
+        "command": "python -m coverage xml -o test-results/coverage-combined.xml"
+      },
+      "text": {
+        "success": false,
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "C:\\Users\\pc\\AppData\\Local\\Programs\\Python\\Python313\\python.exe: No module named coverage\n",
+        "duration": 0.16530776023864746,
+        "command": "python -m coverage report --show-missing"
+      }
+    }
+  },
+  "summary": {
+    "total_tests": 2,
+    "passed": 0,
+    "failed": 2
+  }
+}

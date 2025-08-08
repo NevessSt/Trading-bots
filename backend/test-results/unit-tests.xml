@@ -1,0 +1,856 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="78" failures="139" skipped="0" tests="232" time="112.630" timestamp="2025-08-08T21:10:31.816010+01:00" hostname="Nevess"><testcase classname="tests.unit.test_api_routes.TestAuthRoutes" name="test_register_success" time="0.235"><failure message="AttributeError: module 'app' has no attribute 'routes'">tests\unit\test_api_routes.py:24: in test_register_success
+    with patch('app.routes.auth.AuthService') as mock_auth_service:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'routes'</failure></testcase><testcase classname="tests.unit.test_api_routes.TestAuthRoutes" name="test_register_validation_error" time="0.013"><failure message="KeyError: 'success'">tests\unit\test_api_routes.py:54: in test_register_validation_error
+    assert data['success'] is False
+           ^^^^^^^^^^^^^^^
+E   KeyError: 'success'</failure></testcase><testcase classname="tests.unit.test_api_routes.TestAuthRoutes" name="test_register_duplicate_user" time="0.004"><failure message="AttributeError: module 'app' has no attribute 'routes'">tests\unit\test_api_routes.py:65: in test_register_duplicate_user
+    with patch('app.routes.auth.AuthService') as mock_auth_service:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'routes'</failure></testcase><testcase classname="tests.unit.test_api_routes.TestAuthRoutes" name="test_login_success" time="0.010"><failure message="AttributeError: module 'app' has no attribute 'routes'">tests\unit\test_api_routes.py:87: in test_login_success
+    with patch('app.routes.auth.AuthService') as mock_auth_service:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'routes'</failure></testcase><testcase classname="tests.unit.test_api_routes.TestAuthRoutes" name="test_login_invalid_credentials" time="0.003"><failure message="AttributeError: module 'app' has no attribute 'routes'">tests\unit\test_api_routes.py:111: in test_login_invalid_credentials
+    with patch('app.routes.auth.AuthService') as mock_auth_service:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'routes'</failure></testcase><testcase classname="tests.unit.test_api_routes.TestAuthRoutes" name="test_logout_success" time="0.600"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestAuthRoutes" name="test_profile_get" time="0.630"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestAuthRoutes" name="test_profile_update" time="0.516"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestBotRoutes" name="test_create_bot_success" time="0.723"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestBotRoutes" name="test_get_bots_list" time="0.572"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestBotRoutes" name="test_get_bot_details" time="0.609"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestBotRoutes" name="test_start_bot" time="0.543"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestBotRoutes" name="test_stop_bot" time="0.530"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestBotRoutes" name="test_delete_bot" time="0.473"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestBotRoutes" name="test_bot_unauthorized_access" time="0.576"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_api_routes.TestTradingRoutes" name="test_execute_trade" time="0.508"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestTradingRoutes" name="test_get_trade_history" time="0.505"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestTradingRoutes" name="test_get_market_data" time="0.786"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestAnalyticsRoutes" name="test_get_bot_performance" time="0.801"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestAnalyticsRoutes" name="test_get_portfolio_summary" time="0.768"><error message="failed on setup with &quot;assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code&quot;">tests\conftest.py:162: in auth_headers
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code</error></testcase><testcase classname="tests.unit.test_api_routes.TestErrorHandling" name="test_404_error" time="0.006" /><testcase classname="tests.unit.test_api_routes.TestErrorHandling" name="test_500_error" time="0.004"><failure message="AttributeError: module 'app' has no attribute 'routes'">tests\unit\test_api_routes.py:423: in test_500_error
+    with patch('app.routes.auth.AuthService') as mock_auth_service:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'routes'</failure></testcase><testcase classname="tests.unit.test_api_routes.TestErrorHandling" name="test_validation_error" time="0.005"><failure message="json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)">tests\unit\test_api_routes.py:442: in test_validation_error
+    data = json.loads(response.data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py:345: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py:363: in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+E   json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_register_user_success" time="0.110"><failure message="TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'">tests\unit\test_auth_service.py:28: in test_register_user_success
+    result = auth_service.register_user(user_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_register_user_duplicate_username" time="0.629"><failure message="TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'">tests\unit\test_auth_service.py:52: in test_register_user_duplicate_username
+    result = auth_service.register_user(user_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_register_user_duplicate_email" time="0.480"><failure message="TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'">tests\unit\test_auth_service.py:70: in test_register_user_duplicate_email
+    result = auth_service.register_user(user_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_register_user_invalid_data" time="0.101"><failure message="TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'">tests\unit\test_auth_service.py:86: in test_register_user_invalid_data
+    result = auth_service.register_user(user_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_login_user_success" time="0.699"><failure message="AttributeError: module 'app' has no attribute 'services'">tests\unit\test_auth_service.py:102: in test_login_user_success
+    patch('app.services.auth_service.create_access_token') as mock_create_token:
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'services'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_login_user_invalid_username" time="0.155"><failure message="AttributeError: 'AuthService' object has no attribute 'login_user'">tests\unit\test_auth_service.py:126: in test_login_user_invalid_username
+    result = auth_service.login_user(login_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'AuthService' object has no attribute 'login_user'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_login_user_invalid_password" time="0.630"><failure message="AttributeError: 'AuthService' object has no attribute 'login_user'">tests\unit\test_auth_service.py:145: in test_login_user_invalid_password
+    result = auth_service.login_user(login_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'AuthService' object has no attribute 'login_user'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_login_user_inactive_account" time="0.582"><failure message="AttributeError: 'AuthService' object has no attribute 'login_user'">tests\unit\test_auth_service.py:165: in test_login_user_inactive_account
+    result = auth_service.login_user(login_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'AuthService' object has no attribute 'login_user'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_validate_token_success" time="0.545"><failure message="AttributeError: module 'app' has no attribute 'services'">tests\unit\test_auth_service.py:174: in test_validate_token_success
+    with patch('app.services.auth_service.decode_token') as mock_decode, \
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'services'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_validate_token_invalid" time="0.129"><failure message="AttributeError: module 'app' has no attribute 'services'">tests\unit\test_auth_service.py:189: in test_validate_token_invalid
+    with patch('app.services.auth_service.decode_token') as mock_decode:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'services'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_validate_token_user_not_found" time="0.095"><failure message="AttributeError: module 'app' has no attribute 'services'">tests\unit\test_auth_service.py:201: in test_validate_token_user_not_found
+    with patch('app.services.auth_service.decode_token') as mock_decode, \
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'services'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_refresh_token_success" time="0.506"><failure message="AttributeError: module 'app' has no attribute 'services'">tests\unit\test_auth_service.py:216: in test_refresh_token_success
+    with patch('app.services.auth_service.decode_token') as mock_decode, \
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'services'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_change_password_success" time="0.568"><failure message="TypeError: AuthService.change_password() missing 1 required positional argument: 'new_password'">tests\unit\test_auth_service.py:241: in test_change_password_success
+    result = auth_service.change_password(test_user, password_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AuthService.change_password() missing 1 required positional argument: 'new_password'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_change_password_invalid_current" time="0.539"><failure message="TypeError: AuthService.change_password() missing 1 required positional argument: 'new_password'">tests\unit\test_auth_service.py:258: in test_change_password_invalid_current
+    result = auth_service.change_password(test_user, password_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AuthService.change_password() missing 1 required positional argument: 'new_password'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_reset_password_request" time="0.640"><failure message="AttributeError: module 'app' has no attribute 'services'">tests\unit\test_auth_service.py:268: in test_reset_password_request
+    patch('app.services.auth_service.send_reset_email') as mock_send:
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'services'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_reset_password_request_user_not_found" time="0.182"><failure message="AttributeError: 'AuthService' object has no attribute 'request_password_reset'">tests\unit\test_auth_service.py:285: in test_reset_password_request_user_not_found
+    result = auth_service.request_password_reset('nonexistent@example.com')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'AuthService' object has no attribute 'request_password_reset'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_logout_user" time="0.104"><failure message="AttributeError: module 'app' has no attribute 'services'">tests\unit\test_auth_service.py:294: in test_logout_user
+    with patch('app.services.auth_service.blacklist_token') as mock_blacklist:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'services'</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_get_user_profile" time="0.988"><failure message="AttributeError: 'AuthService' object has no attribute 'get_user_profile'. Did you mean: 'update_user_profile'?">tests\unit\test_auth_service.py:306: in test_get_user_profile
+    profile = auth_service.get_user_profile(test_user)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'AuthService' object has no attribute 'get_user_profile'. Did you mean: 'update_user_profile'?</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_update_user_profile" time="0.709"><failure message="TypeError: AuthService.update_user_profile() takes 1 positional argument but 2 were given">tests\unit\test_auth_service.py:325: in test_update_user_profile
+    result = auth_service.update_user_profile(test_user, update_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AuthService.update_user_profile() takes 1 positional argument but 2 were given</failure></testcase><testcase classname="tests.unit.test_auth_service.TestAuthService" name="test_deactivate_user" time="0.608"><failure message="TypeError: 'User' object is not subscriptable">tests\unit\test_auth_service.py:340: in test_deactivate_user
+    assert result['success'] is True
+           ^^^^^^^^^^^^^^^^^
+E   TypeError: 'User' object is not subscriptable</failure></testcase><testcase classname="tests.unit.test_database.TestUserModel" name="test_user_creation" time="0.114"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_database.py:19: in test_user_creation
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_database.TestUserModel" name="test_user_password_hashing" time="0.107"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_database.py:37: in test_user_password_hashing
+    user = User(username='testuser', email='test@example.com')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_database.TestUserModel" name="test_user_unique_constraints" time="0.130"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_database.py:47: in test_user_unique_constraints
+    user1 = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_database.TestUserModel" name="test_user_serialization" time="0.129"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_database.py:81: in test_user_serialization
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_database.TestUserModel" name="test_user_relationships" time="0.099"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_database.py:101: in test_user_relationships
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_database.TestBotModel" name="test_bot_creation" time="0.098"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 141&#10;      def test_bot_creation(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:141&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 141
+      def test_bot_creation(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:141</error></testcase><testcase classname="tests.unit.test_database.TestBotModel" name="test_bot_status_management" time="0.131"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 167&#10;      def test_bot_status_management(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:167&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 167
+      def test_bot_status_management(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:167</error></testcase><testcase classname="tests.unit.test_database.TestBotModel" name="test_bot_config_validation" time="0.088"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 197&#10;      def test_bot_config_validation(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:197&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 197
+      def test_bot_config_validation(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:197</error></testcase><testcase classname="tests.unit.test_database.TestBotModel" name="test_bot_performance_calculation" time="0.105"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 225&#10;      def test_bot_performance_calculation(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:225&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 225
+      def test_bot_performance_calculation(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:225</error></testcase><testcase classname="tests.unit.test_database.TestBotModel" name="test_bot_serialization" time="0.130"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 272&#10;      def test_bot_serialization(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:272&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 272
+      def test_bot_serialization(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:272</error></testcase><testcase classname="tests.unit.test_database.TestTradeModel" name="test_trade_creation" time="0.098"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 298&#10;      def test_trade_creation(self, app_context, sample_user, sample_bot):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:298&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 298
+      def test_trade_creation(self, app_context, sample_user, sample_bot):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:298</error></testcase><testcase classname="tests.unit.test_database.TestTradeModel" name="test_trade_calculations" time="0.097"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 323&#10;      def test_trade_calculations(self, app_context, sample_user, sample_bot):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:323&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 323
+      def test_trade_calculations(self, app_context, sample_user, sample_bot):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:323</error></testcase><testcase classname="tests.unit.test_database.TestTradeModel" name="test_trade_validation" time="0.096"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 347&#10;      def test_trade_validation(self, app_context, sample_user, sample_bot):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:347&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 347
+      def test_trade_validation(self, app_context, sample_user, sample_bot):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:347</error></testcase><testcase classname="tests.unit.test_database.TestTradeModel" name="test_trade_serialization" time="0.120"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 377&#10;      def test_trade_serialization(self, app_context, sample_user, sample_bot):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:377&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 377
+      def test_trade_serialization(self, app_context, sample_user, sample_bot):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:377</error></testcase><testcase classname="tests.unit.test_database.TestAPIKeyModel" name="test_api_key_creation" time="0.100"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 407&#10;      def test_api_key_creation(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:407&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 407
+      def test_api_key_creation(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:407</error></testcase><testcase classname="tests.unit.test_database.TestAPIKeyModel" name="test_api_key_secret_hashing" time="0.103"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 427&#10;      def test_api_key_secret_hashing(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:427&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 427
+      def test_api_key_secret_hashing(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:427</error></testcase><testcase classname="tests.unit.test_database.TestAPIKeyModel" name="test_api_key_validation" time="0.296"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 443&#10;      def test_api_key_validation(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:443&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 443
+      def test_api_key_validation(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:443</error></testcase><testcase classname="tests.unit.test_database.TestAPIKeyModel" name="test_api_key_serialization" time="0.116"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 460&#10;      def test_api_key_serialization(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:460&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 460
+      def test_api_key_serialization(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:460</error></testcase><testcase classname="tests.unit.test_database.TestSubscriptionModel" name="test_subscription_creation" time="0.174"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 485&#10;      def test_subscription_creation(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:485&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 485
+      def test_subscription_creation(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:485</error></testcase><testcase classname="tests.unit.test_database.TestSubscriptionModel" name="test_subscription_status_methods" time="0.104"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 504&#10;      def test_subscription_status_methods(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:504&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 504
+      def test_subscription_status_methods(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:504</error></testcase><testcase classname="tests.unit.test_database.TestSubscriptionModel" name="test_subscription_renewal" time="0.111"><error message="failed on setup with &quot;file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 532&#10;      def test_subscription_renewal(self, app_context, sample_user):&#10;E       fixture 'sample_user' not found&#10;&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:532&quot;">file C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py, line 532
+      def test_subscription_renewal(self, app_context, sample_user):
+E       fixture 'sample_user' not found
+&gt;       available fixtures: active_bot, admin_auth_headers, admin_headers, admin_user, anyio_backend, anyio_backend_name, anyio_backend_options, app, app_context, auth_headers, auth_service, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cleanup_files, cleanup_test_data, client, cov, database_engine, db, db_session, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, mock_email, mock_email_service, mock_exchange_api, mock_redis, mock_stripe, monkeypatch, no_cover, performance_timer, premium_user, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, redis_client, request_context, runner, sample_bot_config, sample_bot_data, sample_market_data, sample_trade_data, sample_user_data, session, setup_test_environment, temp_dir, temp_file, test_api_key, test_bot, test_config, test_subscription, test_trade, test_user, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, trading_service, unverified_user
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\pc\Desktop\trading bots\backend\tests\unit\test_database.py:532</error></testcase><testcase classname="tests.unit.test_database.TestDatabaseManager" name="test_database_initialization" time="0.139"><failure message="AttributeError: 'NoneType' object has no attribute 'app_context'">tests\unit\test_database.py:562: in test_database_initialization
+    db_manager.create_tables()
+database.py:28: in create_tables
+    with self.app.app_context():
+         ^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'app_context'</failure></testcase><testcase classname="tests.unit.test_database.TestDatabaseManager" name="test_database_backup_restore" time="0.101"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_database.py:577: in test_database_backup_restore
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_database.TestDatabaseManager" name="test_database_migration" time="0.107"><failure message="AttributeError: module 'app' has no attribute 'database'">tests\unit\test_database.py:598: in test_database_migration
+    with patch('app.database.DatabaseManager.run_migrations') as mock_migrate:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'app' has no attribute 'database'</failure></testcase><testcase classname="tests.unit.test_database.TestDatabaseManager" name="test_database_health_check" time="0.108"><failure message="AttributeError: 'DatabaseManager' object has no attribute 'health_check'">tests\unit\test_database.py:609: in test_database_health_check
+    health_status = db_manager.health_check()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'DatabaseManager' object has no attribute 'health_check'</failure></testcase><testcase classname="tests.unit.test_database.TestDatabaseManager" name="test_database_cleanup" time="0.152"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'trade_type'">tests\unit\test_database.py:621: in test_database_cleanup
+    old_trade = Trade(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'trade_type'</failure></testcase><testcase classname="tests.unit.test_database.TestDatabaseIntegration" name="test_user_bot_trade_relationship" time="0.102"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_database.py:649: in test_user_bot_trade_relationship
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_database.TestDatabaseIntegration" name="test_concurrent_database_operations" time="0.367"><failure message="assert 0 == 5&#10; +  where 0 = len([])">tests\unit\test_database.py:728: in test_concurrent_database_operations
+    assert len(results) == 5
+E   assert 0 == 5
+E    +  where 0 = len([])</failure></testcase><testcase classname="tests.unit.test_database.TestDatabaseIntegration" name="test_transaction_rollback" time="0.143"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_database.py:734: in test_transaction_rollback
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_create_bot" time="0.525"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:18: in test_create_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_user_relationship" time="0.558"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:43: in test_bot_user_relationship
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_name_unique_per_user" time="0.516"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:56: in test_bot_name_unique_per_user
+    bot1 = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_repr" time="0.617"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:76: in test_bot_repr
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_to_dict" time="0.697"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:88: in test_bot_to_dict
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_start_stop" time="0.482"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:113: in test_bot_start_stop
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_performance_calculation" time="0.634"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:142: in test_bot_performance_calculation
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_risk_management" time="0.686"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:184: in test_bot_risk_management
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_config_validation" time="0.521"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:219: in test_bot_config_validation
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_status_tracking" time="0.689"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:241: in test_bot_status_tracking
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_trade_history" time="0.572"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:265: in test_bot_trade_history
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_profit_calculation" time="0.680"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:299: in test_bot_profit_calculation
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_strategy_specific_methods" time="0.598"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:355: in test_bot_strategy_specific_methods
+    grid_bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_alerts_and_notifications" time="0.559"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:393: in test_bot_alerts_and_notifications
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_backup_and_restore" time="0.558"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:419: in test_bot_backup_and_restore
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_clone" time="0.632"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:450: in test_bot_clone
+    original_bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_bot.TestBotModel" name="test_bot_resource_usage" time="0.591"><failure message="TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'">tests\unit\test_models\test_bot.py:473: in test_bot_resource_usage
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_create_user" time="0.488"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:16: in test_create_user
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_email_unique" time="0.104"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:35: in test_user_email_unique
+    user1 = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_username_unique" time="0.110"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:55: in test_user_username_unique
+    user1 = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_check_password" time="0.826"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:76: in test_check_password
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_set_password" time="0.164"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:89: in test_set_password
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_repr" time="0.119"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:106: in test_user_repr
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_to_dict" time="0.113"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:118: in test_user_to_dict
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_is_admin" time="0.124"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:143: in test_user_is_admin
+    admin_user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_subscription_limits" time="0.128"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:164: in test_user_subscription_limits
+    free_user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_verification_token" time="0.104"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:198: in test_user_verification_token
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_password_reset_token" time="0.131"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:216: in test_user_password_reset_token
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_last_login_update" time="0.094"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:234: in test_user_last_login_update
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_failed_login_attempts" time="0.103"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:252: in test_user_failed_login_attempts
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_subscription_status" time="0.145"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:280: in test_user_subscription_status
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_api_usage_tracking" time="0.110"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:300: in test_user_api_usage_tracking
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_profile_completion" time="0.137"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:331: in test_user_profile_completion
+    incomplete_user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_timezone_handling" time="0.185"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:354: in test_user_timezone_handling
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.test_user.TestUserModel" name="test_user_preferences" time="0.101"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_models\test_user.py:372: in test_user_preferences
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_models.TestUserModel" name="test_user_creation" time="0.737" /><testcase classname="tests.unit.test_models.TestUserModel" name="test_password_hashing" time="1.571" /><testcase classname="tests.unit.test_models.TestUserModel" name="test_check_password_method" time="1.448" /><testcase classname="tests.unit.test_models.TestUserModel" name="test_user_repr" time="0.515" /><testcase classname="tests.unit.test_models.TestUserModel" name="test_user_to_dict" time="0.794"><failure message="sqlalchemy.exc.ResourceClosedError: This Connection is closed">tests\unit\test_models.py:76: in test_user_to_dict
+    user_dict = user.to_dict()
+                ^^^^^^^^^^^^^^
+models\user.py:175: in to_dict
+    subscription = self.get_current_subscription()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+models\user.py:104: in get_current_subscription
+    ).first()
+      ^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\query.py:2759: in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:2365: in execute
+    return self._execute_internal(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:2241: in _execute_internal
+    conn = self._connection_for_bind(bind)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:2110: in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;string&gt;:2: in _connection_for_bind
+    ???
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:1242: in _connection_for_bind
+    transaction = conn.begin()
+                  ^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:856: in begin
+    self._transaction = RootTransaction(self)
+                        ^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2678: in __init__
+    self._connection_begin_impl()
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2696: in _connection_begin_impl
+    self.connection._begin_impl(self)
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1104: in _begin_impl
+    self._handle_dbapi_exception(e, None, None, None, None)
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2352: in _handle_dbapi_exception
+    raise exc_info[1].with_traceback(exc_info[2])
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1102: in _begin_impl
+    self.engine.dialect.do_begin(self.connection)
+                                 ^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:581: in connection
+    return self._revalidate_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:676: in _revalidate_connection
+    raise exc.ResourceClosedError("This Connection is closed")
+E   sqlalchemy.exc.ResourceClosedError: This Connection is closed</failure></testcase><testcase classname="tests.unit.test_models.TestUserModel" name="test_user_validation_empty_username" time="0.635"><failure message="Failed: DID NOT RAISE &lt;class 'ValueError'&gt;">tests\unit\test_models.py:88: in test_user_validation_empty_username
+    with pytest.raises(ValueError, match="Username cannot be empty"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE &lt;class 'ValueError'&gt;</failure></testcase><testcase classname="tests.unit.test_models.TestUserModel" name="test_user_validation_invalid_email" time="0.480"><failure message="Failed: DID NOT RAISE &lt;class 'ValueError'&gt;">tests\unit\test_models.py:97: in test_user_validation_invalid_email
+    with pytest.raises(ValueError, match="Invalid email format"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE &lt;class 'ValueError'&gt;</failure></testcase><testcase classname="tests.unit.test_models.TestUserModel" name="test_user_validation_weak_password" time="0.843"><failure message="Failed: DID NOT RAISE &lt;class 'ValueError'&gt;">tests\unit\test_models.py:106: in test_user_validation_weak_password
+    with pytest.raises(ValueError, match="Password must be at least 8 characters"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE &lt;class 'ValueError'&gt;</failure></testcase><testcase classname="tests.unit.test_models.TestBotModel" name="test_bot_creation" time="0.512"><failure message="TypeError: __init__() missing 1 required positional argument: 'base_amount'">tests\unit\test_models.py:119: in test_bot_creation
+    bot = Bot(
+E   TypeError: __init__() missing 1 required positional argument: 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.TestBotModel" name="test_bot_profit_loss_calculation" time="0.518"><failure message="TypeError: __init__() missing 1 required positional argument: 'base_amount'">tests\unit\test_models.py:140: in test_bot_profit_loss_calculation
+    bot = Bot(
+E   TypeError: __init__() missing 1 required positional argument: 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.TestBotModel" name="test_bot_repr" time="0.566"><failure message="TypeError: __init__() missing 1 required positional argument: 'base_amount'">tests\unit\test_models.py:155: in test_bot_repr
+    bot = Bot(
+E   TypeError: __init__() missing 1 required positional argument: 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.TestBotModel" name="test_bot_to_dict" time="0.557"><failure message="TypeError: __init__() missing 1 required positional argument: 'base_amount'">tests\unit\test_models.py:168: in test_bot_to_dict
+    bot = Bot(
+E   TypeError: __init__() missing 1 required positional argument: 'base_amount'</failure></testcase><testcase classname="tests.unit.test_models.TestTradeModel" name="test_trade_creation" time="0.611"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_models.TestTradeModel" name="test_trade_total_calculation" time="0.489"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_models.TestTradeModel" name="test_trade_repr" time="0.568"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_models.TestTradeModel" name="test_trade_to_dict" time="0.586"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_models.TestSubscriptionModel" name="test_subscription_creation" time="0.658"><failure message="AttributeError: 'Subscription' object has no attribute 'plan'">tests\unit\test_models.py:276: in test_subscription_creation
+    assert subscription.plan == 'premium'
+           ^^^^^^^^^^^^^^^^^
+E   AttributeError: 'Subscription' object has no attribute 'plan'</failure></testcase><testcase classname="tests.unit.test_models.TestSubscriptionModel" name="test_subscription_is_active" time="0.693"><failure message="TypeError: 'NoneType' object is not callable">tests\unit\test_models.py:292: in test_subscription_is_active
+    assert active_subscription.is_active() is True
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: 'NoneType' object is not callable</failure></testcase><testcase classname="tests.unit.test_models.TestAPIKeyModel" name="test_api_key_creation" time="0.945"><failure message="AttributeError: 'APIKey' object has no attribute 'api_secret'. Did you mean: 'set_secret'?">tests\unit\test_models.py:334: in test_api_key_creation
+    assert api_key.api_secret == 'test_api_secret'
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'APIKey' object has no attribute 'api_secret'. Did you mean: 'set_secret'?</failure></testcase><testcase classname="tests.unit.test_models.TestAPIKeyModel" name="test_api_key_repr" time="0.974"><failure message="AssertionError: assert '&lt;APIKey My B... for binance&gt;' == '&lt;APIKey My B...ey (binance)&gt;'&#10;  &#10;  - &lt;APIKey My Binance Key (binance)&gt;&#10;  ?                        ^       -&#10;  + &lt;APIKey My Binance Key for binance&gt;&#10;  ?                        ^^^^">tests\unit\test_models.py:348: in test_api_key_repr
+    assert repr(api_key) == '&lt;APIKey My Binance Key (binance)&gt;'
+E   AssertionError: assert '&lt;APIKey My B... for binance&gt;' == '&lt;APIKey My B...ey (binance)&gt;'
+E     
+E     - &lt;APIKey My Binance Key (binance)&gt;
+E     ?                        ^       -
+E     + &lt;APIKey My Binance Key for binance&gt;
+E     ?                        ^^^^</failure></testcase><testcase classname="tests.unit.test_models.TestAPIKeyModel" name="test_api_key_to_dict" time="1.233"><failure message="AttributeError: 'NoneType' object has no attribute 'isoformat'">tests\unit\test_models.py:361: in test_api_key_to_dict
+    api_key_dict = api_key.to_dict()
+                   ^^^^^^^^^^^^^^^^^
+models\api_key.py:74: in to_dict
+    'created_at': self.created_at.isoformat(),
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'isoformat'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_hash_password" time="0.459"><failure message="AttributeError: type object 'AuthService' has no attribute 'verify_password'. Did you mean: 'reset_password'?">tests\unit\test_services\test_auth_service.py:22: in test_hash_password
+    assert AuthService.verify_password(password, hashed) is True
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'verify_password'. Did you mean: 'reset_password'?</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_verify_password" time="0.492"><failure message="AttributeError: type object 'AuthService' has no attribute 'verify_password'. Did you mean: 'reset_password'?">tests\unit\test_services\test_auth_service.py:30: in test_verify_password
+    assert AuthService.verify_password(password, hashed) is True
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'verify_password'. Did you mean: 'reset_password'?</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_generate_jwt_token" time="0.004"><failure message="AttributeError: type object 'AuthService' has no attribute 'generate_jwt_token'">tests\unit\test_services\test_auth_service.py:39: in test_generate_jwt_token
+    token = AuthService.generate_jwt_token(user_id)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'generate_jwt_token'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_verify_jwt_token" time="0.003"><failure message="AttributeError: type object 'AuthService' has no attribute 'generate_jwt_token'">tests\unit\test_services\test_auth_service.py:59: in test_verify_jwt_token
+    token = AuthService.generate_jwt_token(user_id)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'generate_jwt_token'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_expired_jwt_token" time="0.004"><failure message="AttributeError: type object 'AuthService' has no attribute 'verify_jwt_token'">tests\unit\test_services\test_auth_service.py:90: in test_expired_jwt_token
+    assert AuthService.verify_jwt_token(expired_token) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'verify_jwt_token'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_generate_refresh_token" time="0.004"><failure message="AttributeError: type object 'AuthService' has no attribute 'generate_refresh_token'">tests\unit\test_services\test_auth_service.py:96: in test_generate_refresh_token
+    refresh_token = AuthService.generate_refresh_token(user_id)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'generate_refresh_token'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_authenticate_user" time="1.427" /><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_authenticate_locked_user" time="0.699"><failure message="TypeError: __init__() missing 1 required positional argument: 'password'">tests\unit\test_services\test_auth_service.py:133: in test_authenticate_locked_user
+    locked_user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_authenticate_unverified_user" time="0.833"><error message="failed on setup with &quot;TypeError: __init__() missing 1 required positional argument: 'password'&quot;">tests\conftest.py:217: in unverified_user
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</error></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_register_user" time="0.105"><failure message="TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'">tests\unit\test_services\test_auth_service.py:167: in test_register_user
+    user = AuthService.register_user(user_data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_register_duplicate_user" time="0.487"><failure message="TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'">tests\unit\test_services\test_auth_service.py:187: in test_register_duplicate_user
+    AuthService.register_user(user_data)
+E   TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_register_invalid_data" time="0.109"><failure message="TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'">tests\unit\test_services\test_auth_service.py:203: in test_register_invalid_data
+    AuthService.register_user({})
+E   TypeError: AuthService.register_user() missing 2 required positional arguments: 'email' and 'password'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_change_password" time="3.006"><failure message="ValueError: Current password is incorrect">tests\unit\test_services\test_auth_service.py:238: in test_change_password
+    success = AuthService.change_password(
+services\auth_service.py:104: in change_password
+    raise ValueError("Current password is incorrect")
+E   ValueError: Current password is incorrect</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_reset_password" time="0.455"><failure message="AttributeError: type object 'AuthService' has no attribute 'generate_password_reset_token'">tests\unit\test_services\test_auth_service.py:252: in test_reset_password
+    token = AuthService.generate_password_reset_token(test_user)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'generate_password_reset_token'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_verify_email" time="0.476"><error message="failed on setup with &quot;TypeError: __init__() missing 1 required positional argument: 'password'&quot;">tests\conftest.py:217: in unverified_user
+    user = User(
+E   TypeError: __init__() missing 1 required positional argument: 'password'</error></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_login_attempt_tracking" time="0.645"><failure message="AttributeError: type object 'AuthService' has no attribute 'record_login_attempt'">tests\unit\test_services\test_auth_service.py:294: in test_login_attempt_tracking
+    AuthService.record_login_attempt(test_user, success=True)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'record_login_attempt'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_account_lockout" time="0.632"><failure message="AttributeError: type object 'AuthService' has no attribute 'record_login_attempt'">tests\unit\test_services\test_auth_service.py:310: in test_account_lockout
+    AuthService.record_login_attempt(test_user, success=False)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'record_login_attempt'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_unlock_account" time="0.727"><failure message="AttributeError: type object 'AuthService' has no attribute 'unlock_account'">tests\unit\test_services\test_auth_service.py:332: in test_unlock_account
+    AuthService.unlock_account(test_user)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'unlock_account'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_session_management" time="0.527"><failure message="AttributeError: type object 'AuthService' has no attribute 'create_session'">tests\unit\test_services\test_auth_service.py:342: in test_session_management
+    session_id = AuthService.create_session(test_user.id)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'create_session'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_two_factor_authentication" time="0.535"><failure message="AttributeError: type object 'AuthService' has no attribute 'enable_2fa'">tests\unit\test_services\test_auth_service.py:359: in test_two_factor_authentication
+    secret = AuthService.enable_2fa(test_user)
+             ^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'enable_2fa'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_api_key_authentication" time="0.867"><failure message="AttributeError: type object 'AuthService' has no attribute 'authenticate_api_key'. Did you mean: 'authenticate_user'?">tests\unit\test_services\test_auth_service.py:384: in test_api_key_authentication
+    user = AuthService.authenticate_api_key('test_api_key_value')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'authenticate_api_key'. Did you mean: 'authenticate_user'?</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_rate_limiting" time="0.671"><failure message="AttributeError: &lt;module 'services.auth_service' from 'C:\\Users\\pc\\Desktop\\trading bots\\backend\\services\\auth_service.py'&gt; does not have the attribute 'redis_client'">tests\unit\test_services\test_auth_service.py:400: in test_rate_limiting
+    with patch('services.auth_service.redis_client') as mock_redis:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1467: in get_original
+    raise AttributeError(
+E   AttributeError: &lt;module 'services.auth_service' from 'C:\\Users\\pc\\Desktop\\trading bots\\backend\\services\\auth_service.py'&gt; does not have the attribute 'redis_client'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_password_strength_validation" time="0.005"><failure message="AttributeError: type object 'AuthService' has no attribute 'validate_password_strength'">tests\unit\test_services\test_auth_service.py:417: in test_password_strength_validation
+    assert AuthService.validate_password_strength('StrongP@ssw0rd123') is True
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'validate_password_strength'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_email_validation" time="0.003"><failure message="AttributeError: type object 'AuthService' has no attribute 'validate_email'">tests\unit\test_services\test_auth_service.py:430: in test_email_validation
+    assert AuthService.validate_email('user@example.com') is True
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'validate_email'</failure></testcase><testcase classname="tests.unit.test_services.test_auth_service.TestAuthService" name="test_username_validation" time="0.004"><failure message="AttributeError: type object 'AuthService' has no attribute 'validate_username'">tests\unit\test_services\test_auth_service.py:443: in test_username_validation
+    assert AuthService.validate_username('validuser') is True
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'AuthService' has no attribute 'validate_username'</failure></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_create_bot" time="0.554"><failure message="AttributeError: 'dict' object has no attribute 'name'">tests\unit\test_services\test_trading_service.py:34: in test_create_bot
+    assert bot.name == 'Test Bot'
+           ^^^^^^^^
+E   AttributeError: 'dict' object has no attribute 'name'</failure></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_create_bot_invalid_data" time="0.601"><failure message="sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: bots.name&#10;[SQL: INSERT INTO bots (user_id, name, description, strategy, symbol, timeframe, base_amount, max_position_size, stop_loss_percentage, take_profit_percentage, max_daily_trades, max_daily_loss, risk_per_trade, is_active, is_running, is_paper_trading, total_trades, winning_trades, total_profit_loss, strategy_config, indicators_config, created_at, updated_at, last_run_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]&#10;[parameters: (1, None, None, None, 'BTCUSDT', '1h', 1000.0, None, None, None, 10, None, 2.0, 0, 0, 1, 0, 0, 0.0, '{}', '{}', '2025-08-08 20:11:50.425001', '2025-08-08 20:11:50.425014', None)]&#10;(Background on this error at: https://sqlalche.me/e/20/gkpj)">..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.IntegrityError: NOT NULL constraint failed: bots.name
+
+The above exception was the direct cause of the following exception:
+tests\unit\test_services\test_trading_service.py:46: in test_create_bot_invalid_data
+    TradingService.create_bot(test_user.id, {})
+services\trading_service.py:64: in create_bot
+    db.session.commit()
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\scoping.py:599: in commit
+    return self._proxied.commit()
+           ^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:2032: in commit
+    trans.commit(_to_root=True)
+&lt;string&gt;:2: in commit
+    ???
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:1313: in commit
+    self._prepare_impl()
+&lt;string&gt;:2: in _prepare_impl
+    ???
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:1288: in _prepare_impl
+    self.session.flush()
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:4345: in flush
+    self._flush(objects)
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:4480: in _flush
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:4441: in _flush
+    flush_context.execute()
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py:466: in execute
+    rec.execute(self)
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py:93: in save_obj
+    _emit_insert_statements(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py:1233: in _emit_insert_statements
+    result = connection.execute(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1413: in execute
+    return meth(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1840: in _execute_context
+    return self._exec_single_context(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: bots.name
+E   [SQL: INSERT INTO bots (user_id, name, description, strategy, symbol, timeframe, base_amount, max_position_size, stop_loss_percentage, take_profit_percentage, max_daily_trades, max_daily_loss, risk_per_trade, is_active, is_running, is_paper_trading, total_trades, winning_trades, total_profit_loss, strategy_config, indicators_config, created_at, updated_at, last_run_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+E   [parameters: (1, None, None, None, 'BTCUSDT', '1h', 1000.0, None, None, None, 10, None, 2.0, 0, 0, 1, 0, 0, 0.0, '{}', '{}', '2025-08-08 20:11:50.425001', '2025-08-08 20:11:50.425014', None)]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)</failure></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_start_bot" time="0.574"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_start_bot_insufficient_balance" time="0.547"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_stop_bot" time="0.499"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:252: in active_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_delete_bot" time="0.472"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_delete_running_bot" time="0.616"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:252: in active_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_update_bot_config" time="0.625"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_update_running_bot_config" time="0.748"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:252: in active_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_get_bot_performance" time="0.496"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_get_bot_trades" time="0.698"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_get_bot_trades_with_pagination" time="0.466"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_execute_trade" time="0.806"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:252: in active_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_execute_trade_failed" time="0.596"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:252: in active_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_cancel_trade" time="0.758"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_cancel_filled_trade" time="0.554"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_get_market_data" time="0.007"><error message="failed on setup with &quot;AttributeError: module 'services' has no attribute 'exchange_api'&quot;">tests\conftest.py:331: in mock_exchange_api
+    with patch('services.exchange_api.ExchangeAPI') as mock:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'services' has no attribute 'exchange_api'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_get_candlestick_data" time="0.004"><error message="failed on setup with &quot;AttributeError: module 'services' has no attribute 'exchange_api'&quot;">tests\conftest.py:331: in mock_exchange_api
+    with patch('services.exchange_api.ExchangeAPI') as mock:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'services' has no attribute 'exchange_api'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_calculate_risk_metrics" time="0.590"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_validate_trade_parameters" time="0.569"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:252: in active_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_check_risk_limits" time="0.555"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:252: in active_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_update_bot_status" time="0.505"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_get_bot_logs" time="0.649"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_clone_bot" time="0.582"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_backup_bot_config" time="0.682"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_restore_bot_config" time="0.710"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_get_strategy_templates" time="0.004"><failure message="AttributeError: type object 'TradingService' has no attribute 'get_strategy_templates'">tests\unit\test_services\test_trading_service.py:434: in test_get_strategy_templates
+    templates = TradingService.get_strategy_templates()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'TradingService' has no attribute 'get_strategy_templates'</failure></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_validate_strategy_config" time="0.008"><failure message="AttributeError: type object 'TradingService' has no attribute 'validate_strategy_config'">tests\unit\test_services\test_trading_service.py:455: in test_validate_strategy_config
+    assert TradingService.validate_strategy_config(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'TradingService' has no attribute 'validate_strategy_config'</failure></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_get_supported_exchanges" time="0.004"><failure message="AttributeError: type object 'TradingService' has no attribute 'get_supported_exchanges'. Did you mean: 'get_supported_strategies'?">tests\unit\test_services\test_trading_service.py:474: in test_get_supported_exchanges
+    exchanges = TradingService.get_supported_exchanges()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'TradingService' has no attribute 'get_supported_exchanges'. Did you mean: 'get_supported_strategies'?</failure></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_get_exchange_symbols" time="0.004"><error message="failed on setup with &quot;AttributeError: module 'services' has no attribute 'exchange_api'&quot;">tests\conftest.py:331: in mock_exchange_api
+    with patch('services.exchange_api.ExchangeAPI') as mock:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'services' has no attribute 'exchange_api'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_calculate_position_size" time="0.604"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:252: in active_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_services.test_trading_service.TestTradingService" name="test_emergency_stop_all_bots" time="0.531"><error message="failed on setup with &quot;AttributeError: module 'services' has no attribute 'exchange_api'&quot;">tests\conftest.py:331: in mock_exchange_api
+    with patch('services.exchange_api.ExchangeAPI') as mock:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'services' has no attribute 'exchange_api'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_create_bot_success" time="0.993" /><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_create_bot_invalid_api_key" time="0.574"><failure message="ValueError: Invalid or inactive API key">tests\unit\test_trading_service.py:60: in test_create_bot_invalid_api_key
+    result = trading_service.create_bot(test_user.id, bot_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services\trading_service.py:47: in create_bot
+    raise ValueError("Invalid or inactive API key")
+E   ValueError: Invalid or inactive API key</failure></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_start_bot_success" time="0.567"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_start_bot_already_active" time="0.582"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_stop_bot_success" time="0.752"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_stop_bot_not_active" time="0.511"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_execute_trade_buy_success" time="0.680"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_execute_trade_insufficient_balance" time="0.625"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_execute_trade_exchange_error" time="0.570"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_get_market_data_success" time="0.104"><failure message="AttributeError: &lt;services.trading_service.TradingService object at 0x0000023AE49687D0&gt; does not have the attribute '_get_exchange_client'">tests\unit\test_trading_service.py:202: in test_get_market_data_success
+    with patch.object(trading_service, '_get_exchange_client') as mock_exchange:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1467: in get_original
+    raise AttributeError(
+E   AttributeError: &lt;services.trading_service.TradingService object at 0x0000023AE49687D0&gt; does not have the attribute '_get_exchange_client'</failure></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_get_market_data_error" time="0.119"><failure message="AttributeError: &lt;services.trading_service.TradingService object at 0x0000023AE4884B00&gt; does not have the attribute '_get_exchange_client'">tests\unit\test_trading_service.py:215: in test_get_market_data_error
+    with patch.object(trading_service, '_get_exchange_client') as mock_exchange:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1467: in get_original
+    raise AttributeError(
+E   AttributeError: &lt;services.trading_service.TradingService object at 0x0000023AE4884B00&gt; does not have the attribute '_get_exchange_client'</failure></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_get_bot_performance" time="0.525"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_update_bot_configuration" time="0.941"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_delete_bot_success" time="0.634"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_delete_bot_active" time="0.537"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_get_trade_history" time="0.528"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_calculate_risk_metrics" time="0.555"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_backtest_strategy" time="0.625"><error message="failed on setup with &quot;TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'&quot;">tests\conftest.py:232: in test_bot
+    bot = Bot(
+E   TypeError: __init__() missing 2 required positional arguments: 'symbol' and 'base_amount'</error></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_get_portfolio_summary" time="0.572"><failure message="AttributeError: 'TradingService' object has no attribute 'get_portfolio_summary'">tests\unit\test_trading_service.py:370: in test_get_portfolio_summary
+    result = trading_service.get_portfolio_summary(test_user.id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'TradingService' object has no attribute 'get_portfolio_summary'</failure></testcase><testcase classname="tests.unit.test_trading_service.TestTradingService" name="test_validate_trading_parameters" time="0.122"><failure message="AttributeError: 'TradingService' object has no attribute '_validate_trading_parameters'. Did you mean: 'validate_trading_pair'?">tests\unit\test_trading_service.py:389: in test_validate_trading_parameters
+    result = trading_service._validate_trading_parameters(valid_params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'TradingService' object has no attribute '_validate_trading_parameters'. Did you mean: 'validate_trading_pair'?</failure></testcase><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_email_valid" time="0.005" /><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_email_invalid" time="0.003"><failure message="AssertionError: assert True is False&#10; +  where True = validate_email('user..double.dot@domain.com')">tests\unit\test_utils.py:63: in test_validate_email_invalid
+    assert validate_email(email) is False
+E   AssertionError: assert True is False
+E    +  where True = validate_email('user..double.dot@domain.com')</failure></testcase><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_password_valid" time="0.004"><failure message="TypeError: tuple indices must be integers or slices, not str">tests\unit\test_utils.py:76: in test_validate_password_valid
+    assert result['valid'] is True
+           ^^^^^^^^^^^^^^^
+E   TypeError: tuple indices must be integers or slices, not str</failure></testcase><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_password_invalid" time="0.003"><failure message="TypeError: tuple indices must be integers or slices, not str">tests\unit\test_utils.py:91: in test_validate_password_invalid
+    assert result['valid'] is False
+           ^^^^^^^^^^^^^^^
+E   TypeError: tuple indices must be integers or slices, not str</failure></testcase><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_trading_pair_valid" time="0.004"><failure message="AssertionError: assert False is True&#10; +  where False = validate_trading_pair('BTCUSDT')">tests\unit\test_utils.py:106: in test_validate_trading_pair_valid
+    assert validate_trading_pair(pair) is True
+E   AssertionError: assert False is True
+E    +  where False = validate_trading_pair('BTCUSDT')</failure></testcase><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_trading_pair_invalid" time="0.003" /><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_decimal_amount_valid" time="0.004"><failure message="TypeError: tuple indices must be integers or slices, not str">tests\unit\test_utils.py:133: in test_validate_decimal_amount_valid
+    assert result['valid'] is True
+           ^^^^^^^^^^^^^^^
+E   TypeError: tuple indices must be integers or slices, not str</failure></testcase><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_decimal_amount_invalid" time="0.003"><failure message="TypeError: tuple indices must be integers or slices, not str">tests\unit\test_utils.py:148: in test_validate_decimal_amount_invalid
+    assert result['valid'] is False
+           ^^^^^^^^^^^^^^^
+E   TypeError: tuple indices must be integers or slices, not str</failure></testcase><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_api_key_format_valid" time="0.006" /><testcase classname="tests.unit.test_utils.TestValidators" name="test_validate_api_key_format_invalid" time="0.004"><failure message="AssertionError: assert True is False&#10; +  where True = validate_api_key_format('toolongapikeythatexceedsmaximumlength1234567890')">tests\unit\test_utils.py:172: in test_validate_api_key_format_invalid
+    assert validate_api_key_format(key) is False
+E   AssertionError: assert True is False
+E    +  where True = validate_api_key_format('toolongapikeythatexceedsmaximumlength1234567890')</failure></testcase><testcase classname="tests.unit.test_utils.TestFormatters" name="test_format_currency" time="0.006"><failure message="AssertionError: assert '€1,000.00' in '€1000.00'">tests\unit\test_utils.py:189: in test_format_currency
+    assert expected in result
+E   AssertionError: assert '€1,000.00' in '€1000.00'</failure></testcase><testcase classname="tests.unit.test_utils.TestFormatters" name="test_format_percentage" time="0.005"><failure message="AssertionError: assert '+12.34%' == '12.34%'&#10;  &#10;  - 12.34%&#10;  + +12.34%&#10;  ? +">tests\unit\test_utils.py:202: in test_format_percentage
+    assert result == expected
+E   AssertionError: assert '+12.34%' == '12.34%'
+E     
+E     - 12.34%
+E     + +12.34%
+E     ? +</failure></testcase><testcase classname="tests.unit.test_utils.TestFormatters" name="test_format_datetime" time="0.003" /><testcase classname="tests.unit.test_utils.TestFormatters" name="test_format_trade_data" time="0.006"><failure message="TypeError: argument of type 'decimal.Decimal' is not iterable">tests\unit\test_utils.py:228: in test_format_trade_data
+    assert '$50,000.00' in formatted['price']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: argument of type 'decimal.Decimal' is not iterable</failure></testcase><testcase classname="tests.unit.test_utils.TestSecurity" name="test_generate_api_key" time="0.006" /><testcase classname="tests.unit.test_utils.TestSecurity" name="test_hash_and_verify_api_secret" time="0.003" /><testcase classname="tests.unit.test_utils.TestSecurity" name="test_encrypt_decrypt_sensitive_data" time="0.058" /><testcase classname="tests.unit.test_utils.TestSecurity" name="test_encrypt_decrypt_with_key" time="0.003"><failure message="TypeError: encrypt_sensitive_data() takes 1 positional argument but 2 were given">tests\unit\test_utils.py:277: in test_encrypt_decrypt_with_key
+    encrypted = encrypt_sensitive_data(data, key)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: encrypt_sensitive_data() takes 1 positional argument but 2 were given</failure></testcase><testcase classname="tests.unit.test_utils.TestCalculations" name="test_calculate_profit_loss" time="0.005"><failure message="ValueError: Side must be 'buy' or 'sell'">tests\unit\test_utils.py:297: in test_calculate_profit_loss
+    pnl = calculate_profit_loss(buy_price, sell_price, quantity, 'long')
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+utils\calculations.py:25: in calculate_profit_loss
+    raise ValueError("Side must be 'buy' or 'sell'")
+E   ValueError: Side must be 'buy' or 'sell'</failure></testcase><testcase classname="tests.unit.test_utils.TestCalculations" name="test_calculate_win_rate" time="0.003"><failure message="assert 0.0 == 100.0">tests\unit\test_utils.py:314: in test_calculate_win_rate
+    assert win_rate == 100.0
+E   assert 0.0 == 100.0</failure></testcase><testcase classname="tests.unit.test_utils.TestCalculations" name="test_calculate_sharpe_ratio" time="0.004"><failure message="assert -0.525200786615365 &gt; 0">tests\unit\test_utils.py:332: in test_calculate_sharpe_ratio
+    assert sharpe &gt; 0  # Should be positive for profitable strategy
+    ^^^^^^^^^^^^^^^^^
+E   assert -0.525200786615365 &gt; 0</failure></testcase><testcase classname="tests.unit.test_utils.TestCalculations" name="test_calculate_max_drawdown" time="0.003"><failure message="assert 18.181818181818183 &lt; 0">tests\unit\test_utils.py:340: in test_calculate_max_drawdown
+    assert max_dd &lt; 0  # Drawdown should be negative
+    ^^^^^^^^^^^^^^^^^
+E   assert 18.181818181818183 &lt; 0</failure></testcase><testcase classname="tests.unit.test_utils.TestCalculations" name="test_calculate_portfolio_value" time="0.004"><failure message="TypeError: calculate_portfolio_value() missing 1 required positional argument: 'current_prices'">tests\unit\test_utils.py:351: in test_calculate_portfolio_value
+    total_value = calculate_portfolio_value(positions)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: calculate_portfolio_value() missing 1 required positional argument: 'current_prices'</failure></testcase><testcase classname="tests.unit.test_utils.TestCalculations" name="test_calculate_portfolio_value_empty" time="0.004"><failure message="TypeError: calculate_portfolio_value() missing 1 required positional argument: 'current_prices'">tests\unit\test_utils.py:357: in test_calculate_portfolio_value_empty
+    total_value = calculate_portfolio_value([])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: calculate_portfolio_value() missing 1 required positional argument: 'current_prices'</failure></testcase><testcase classname="tests.unit.test_utils.TestUtilityIntegration" name="test_trade_processing_pipeline" time="0.004"><failure message="AssertionError: assert False&#10; +  where False = validate_trading_pair('BTCUSDT')">tests\unit\test_utils.py:377: in test_trade_processing_pipeline
+    assert validate_trading_pair(symbol)
+E   AssertionError: assert False
+E    +  where False = validate_trading_pair('BTCUSDT')</failure></testcase><testcase classname="tests.unit.test_utils.TestUtilityIntegration" name="test_security_workflow" time="0.005" /><testcase classname="tests.unit.test_utils.TestUtilityIntegration" name="test_performance_calculation_workflow" time="0.036"><failure message="ValueError: Side must be 'buy' or 'sell'">tests\unit\test_utils.py:437: in test_performance_calculation_workflow
+    pnl = calculate_profit_loss(
+utils\calculations.py:25: in calculate_profit_loss
+    raise ValueError("Side must be 'buy' or 'sell'")
+E   ValueError: Side must be 'buy' or 'sell'</failure></testcase></testsuite></testsuites>

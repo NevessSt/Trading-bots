@@ -1,0 +1,143 @@
+# Core Testing Dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.1
+pytest-flask>=1.2.0
+pytest-asyncio>=0.21.1
+pytest-xdist>=3.3.1
+pytest-html>=3.2.0
+pytest-json-report>=1.5.0
+pytest-benchmark>=4.0.0
+pytest-timeout>=2.1.0
+pytest-randomly>=3.12.0
+pytest-clarity>=1.0.1
+pytest-sugar>=0.9.7
+Flask-Testing>=0.8.1
+
+# Test Data and Factories
+factory-boy>=3.3.0
+faker>=19.3.0
+
+# HTTP Testing
+requests-mock>=1.11.0
+httpretty>=1.1.4
+responses>=0.23.3
+
+# Database Testing
+pytest-postgresql>=5.0.0
+testing.postgresql>=1.3.0
+
+# Security Testing
+bandit>=1.7.5
+safety>=2.3.5
+
+# Performance Testing
+locust>=2.16.1
+memory-profiler>=0.61.0
+psutil>=5.9.5
+
+# API Testing
+tavern>=2.0.1
+
+# Mocking and Fixtures
+freezegun>=1.2.2
+time-machine>=2.12.0
+responses>=0.23.1
+sqlalchemy-utils>=0.41.1
+hypothesis>=6.82.0
+syrupy>=4.0.8
+
+# Code Quality and Linting
+flake8>=6.0.0
+flake8-docstrings>=1.7.0
+flake8-import-order>=0.18.2
+flake8-bugbear>=23.7.10
+flake8-comprehensions>=3.14.0
+flake8-bandit>=4.1.1
+flake8-pytest-style>=1.7.2
+black>=23.7.0
+isort>=5.12.0
+mypy>=1.5.1
+types-requests>=2.31.0
+types-redis>=4.6.0
+types-Flask>=1.1.6
+types-SQLAlchemy>=1.4.53
+pylint>=2.17.5
+
+# Coverage and Reporting
+coverage[toml]>=7.2.7
+coverage-badge>=1.1.0
+
+# Load Testing
+gevent>=23.7.0
+grequests>=0.6.0
+
+# Test Utilities
+parameterized>=0.9.0
+deepmerge>=1.1.0
+jsonschema>=4.19.0
+cerberus>=1.3.5
+websocket-client>=1.6.1
+websockets>=11.0.3
+ccxt>=4.0.0
+click>=8.1.6
+rich>=13.4.2
+tabulate>=0.9.0
+
+# Email Testing
+mailtrap>=2.0.0
+
+# Redis Testing
+fakeredis>=2.18.1
+
+# JWT Testing
+pyjwt>=2.8.0
+
+# Stripe Testing (for subscription tests)
+stripe>=6.5.0
+
+# Environment Testing
+python-dotenv>=1.0.0
+
+# Async Testing
+aiohttp>=3.8.5
+aioresponses>=0.7.4
+
+# Database Migration Testing
+alembic>=1.11.3
+
+# File System Testing
+pyfakefs>=5.2.4
+
+# Time Testing
+freezegun>=1.2.2
+
+# Logging Testing
+testfixtures>=7.2.0
+structlog>=23.1.0
+
+# Additional Testing Tools
+allure-pytest>=2.13.2
+prometheus-client>=0.17.1
+cryptography>=41.0.3
+cachetools>=5.3.1
+flask-limiter>=3.4.0
+flask-cors>=4.0.0
+marshmallow>=3.20.1
+celery>=5.3.1
+sentry-sdk>=1.29.2
+flasgger>=0.9.7.1
+openapi-spec-validator>=0.6.0
+werkzeug>=2.3.6
+pandas>=2.0.3
+lxml>=4.9.3
+orjson>=3.9.4
+furl>=2.1.3
+fake-useragent>=1.2.1
+pytz>=2023.3
+
+# Development and Debugging
+ipython>=8.14.0
+ipdb>=0.13.13
+tox>=4.6.4
+pydantic>=2.1.1

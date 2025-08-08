@@ -1,0 +1,153 @@
+[run]
+# Configuration for coverage.py
+
+# Source code directories to measure
+source = .
+
+# Omit files from coverage measurement
+omit = 
+    # Test files
+    tests/*
+    */tests/*
+    test_*.py
+    *_test.py
+    
+    # Virtual environment
+    venv/*
+    */venv/*
+    .venv/*
+    */.venv/*
+    
+    # Migration files
+    migrations/*
+    */migrations/*
+    
+    # Configuration files
+    config.py
+    settings.py
+    
+    # Third-party packages
+    */site-packages/*
+    
+    # Build and distribution
+    build/*
+    dist/*
+    *.egg-info/*
+    
+    # IDE and editor files
+    .vscode/*
+    .idea/*
+    
+    # Cache directories
+    __pycache__/*
+    */__pycache__/*
+    .pytest_cache/*
+    
+    # Temporary files
+    *.tmp
+    *.temp
+    
+    # Application entry point (if it just starts the server)
+    app.py
+    run.py
+    wsgi.py
+    
+    # Documentation
+    docs/*
+    */docs/*
+
+# Include patterns (override omit for specific files)
+include = 
+    models/*
+    services/*
+    routes/*
+    utils/*
+    api/*
+
+# Additional options
+branch = True
+timid = False
+parallel = True
+concurrency = multiprocessing
+
+[report]
+# Reporting configuration
+
+# Exclude lines from coverage
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code
+    def __repr__
+    if self\.debug
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if 0:
+    if False:
+    if __name__ == .__main__.:
+    
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+    
+    # Don't complain about type checking imports
+    if TYPE_CHECKING:
+    
+    # Don't complain about platform specific code
+    if sys.platform
+    
+    # Don't complain about deprecated code
+    @deprecated
+    
+    # Don't complain about pass statements
+    pass
+    
+    # Don't complain about ellipsis
+    \.\.\.
+
+# Ignore errors for these files
+ignore_errors = True
+
+# Skip covered files in report
+skip_covered = False
+
+# Skip empty files
+skip_empty = True
+
+# Show missing line numbers
+show_missing = True
+
+# Sort by name
+sort = Name
+
+# Precision for percentages
+precision = 2
+
+[html]
+# HTML report configuration
+directory = htmlcov
+title = Trading Bot Platform - Test Coverage Report
+show_contexts = True
+
+[xml]
+# XML report configuration
+output = coverage.xml
+
+[json]
+# JSON report configuration
+output = coverage.json
+show_contexts = True
+pretty_print = True
+
+[paths]
+# Path mapping for different environments
+source =
+    .
+    /app
+    C:\Users\*\Desktop\trading bots\backend
+    /home/*/trading-bots/backend
+    /workspace/backend

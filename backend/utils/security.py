@@ -304,3 +304,56 @@ def admin_required():
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+
+# Utility functions for API key and data security
+def generate_api_key():
+    """Generate a secure API key"""
+    return secrets.token_urlsafe(32)
+
+
+def hash_api_secret(secret):
+    """Hash an API secret using SHA-256"""
+    return hashlib.sha256(secret.encode()).hexdigest()
+
+
+def verify_api_secret(secret, hashed_secret):
+    """Verify an API secret against its hash"""
+    return hash_api_secret(secret) == hashed_secret
+
+
+def encrypt_sensitive_data(data):
+    """Encrypt sensitive data using Fernet encryption"""
+    if isinstance(data, str):
+        data = data.encode()
+    
+    # Get or create encryption key
+    key_file = os.path.join(os.path.dirname(__file__), '..', 'config', 'encryption.key')
+    if os.path.exists(key_file):
+        with open(key_file, 'rb') as f:
+            key = f.read()
+    else:
+        key = Fernet.generate_key()
+        os.makedirs(os.path.dirname(key_file), exist_ok=True)
+        with open(key_file, 'wb') as f:
+            f.write(key)
+    
+    cipher_suite = Fernet(key)
+    return cipher_suite.encrypt(data).decode()
+
+
+def decrypt_sensitive_data(encrypted_data):
+    """Decrypt sensitive data using Fernet encryption"""
+    if isinstance(encrypted_data, str):
+        encrypted_data = encrypted_data.encode()
+    
+    # Get encryption key
+    key_file = os.path.join(os.path.dirname(__file__), '..', 'config', 'encryption.key')
+    if not os.path.exists(key_file):
+        raise ValueError("Encryption key not found")
+    
+    with open(key_file, 'rb') as f:
+        key = f.read()
+    
+    cipher_suite = Fernet(key)
+    return cipher_suite.decrypt(encrypted_data).decode()

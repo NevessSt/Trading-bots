@@ -1,70 +1,158 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
-import useAuthStore from './stores/useAuthStore';
-
-// Layout
-import Layout from './components/Layout';
-
-// Components
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
-import BotList from './components/Bots/BotList';
-import BotDetail from './components/Bots/BotDetail';
-import BotForm from './components/Bots/BotForm';
-import TradesList from './components/Trades';
+import Login from './components/Login';
+import Register from './components/Register';
+import Profile from './components/Profile';
+import Billing from './pages/Billing';
+import AdminPanel from './components/AdminPanel';
+import LoadingSpinner from './components/LoadingSpinner';
 
-// Pages
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Settings from './pages/Settings';
-import Profile from './pages/Profile';
-import NotFound from './pages/NotFound';
+const queryClient = new QueryClient();
 
-// Protected route component
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, checkAuth } = useAuthStore();
+// Protected Route Component
+const ProtectedRoute = ({ children, adminOnly = false }) => {
+  const { isAuthenticated, isAdmin, loading } = useAuth();
   
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-  
-  if (isAuthenticated === null) {
-    // Still checking authentication
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (loading) {
+    return <LoadingSpinner />;
   }
   
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  
+  if (adminOnly && !isAdmin) {
+    return <Navigate to="/dashboard" />;
+  }
+  
+  return children;
 };
+
+// Public Route Component (redirect if authenticated)
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" />;
+  }
+  
+  return children;
+};
+
+function AppContent() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Toaster 
+        position="top-right" 
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            theme: {
+              primary: 'green',
+              secondary: 'black',
+            },
+          },
+        }}
+      />
+      
+      {isAuthenticated && <Navbar />}
+      
+      <Routes>
+        {/* Public Routes */}
+        <Route 
+          path="/login" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/register" 
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          } 
+        />
+        
+        {/* Protected Routes */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/billing" 
+          element={
+            <ProtectedRoute>
+              <Billing />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Admin Routes */}
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminPanel />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Default Route */}
+        <Route 
+          path="/" 
+          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} 
+        />
+        
+        {/* Catch all route */}
+        <Route 
+          path="*" 
+          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} 
+        />
+      </Routes>
+    </div>
+  );
+}
 
 function App() {
   return (
-    <>
-      <Toaster position="top-right" />
-      <Routes>
-        {/* Auth routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        {/* Dashboard routes */}
-        <Route element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/bots" element={<BotList />} />
-          <Route path="/bots/new" element={<BotForm />} />
-          <Route path="/bots/:botId" element={<BotDetail />} />
-          <Route path="/bots/:botId/edit" element={<BotForm />} />
-          <Route path="/trades" element={<TradesList />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/profile" element={<Profile />} />
-        </Route>
-        
-        {/* 404 route */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

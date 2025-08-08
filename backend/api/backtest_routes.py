@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 from bot_engine import Backtester
 from utils.logger import logger
-from utils.security import rate_limit, require_api_key
+from utils.security import rate_limit, require_api_keys
 
 backtest_bp = Blueprint('backtest', __name__, url_prefix='/api/backtest')
 

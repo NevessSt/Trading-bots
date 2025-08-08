@@ -1,5 +1,6 @@
-# Import models for easier access
-from models.user import User
-from models.trade import Trade
+from .user import User, db
+from .subscription import Subscription
+from .trade import Trade
+from .bot import Bot
 
-__all__ = ['User', 'Trade']
+__all__ = ['User', 'Subscription', 'Trade', 'Bot', 'db']

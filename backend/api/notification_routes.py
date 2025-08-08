@@ -8,7 +8,7 @@ notification_bp = Blueprint('notification', __name__)
 
 @notification_bp.route('/list', methods=['GET'])
 @jwt_required()
-@rate_limit(requests_per_minute=60)
+@rate_limit(max_requests=60, window_minutes=1)
 def get_notifications():
     """Get notifications for the current user"""
     try:
@@ -56,7 +56,7 @@ def get_notifications():
 
 @notification_bp.route('/mark-read', methods=['POST'])
 @jwt_required()
-@rate_limit(requests_per_minute=120)
+@rate_limit(max_requests=120, window_minutes=1)
 def mark_notification_read():
     """Mark a notification as read"""
     try:
@@ -102,7 +102,7 @@ def mark_notification_read():
 
 @notification_bp.route('/mark-all-read', methods=['POST'])
 @jwt_required()
-@rate_limit(requests_per_minute=30)
+@rate_limit(max_requests=30, window_minutes=1)
 def mark_all_notifications_read():
     """Mark all notifications as read for the current user"""
     try:
@@ -132,7 +132,7 @@ def mark_all_notifications_read():
 
 @notification_bp.route('/unread-count', methods=['GET'])
 @jwt_required()
-@rate_limit(requests_per_minute=120)
+@rate_limit(max_requests=120, window_minutes=1)
 def get_unread_count():
     """Get count of unread notifications"""
     try:
@@ -154,13 +154,13 @@ def get_unread_count():
 
 @notification_bp.route('/settings', methods=['GET'])
 @jwt_required()
-@rate_limit(requests_per_minute=60)
+@rate_limit(max_requests=60, window_minutes=1)
 def get_notification_settings():
     """Get notification settings for the current user"""
     try:
         user_id = get_jwt_identity()
         
-        from ..models.user import User
+        from models.user import User
         user = User.find_by_id(user_id)
         
         if not user:
@@ -199,7 +199,7 @@ def get_notification_settings():
 
 @notification_bp.route('/settings', methods=['PUT'])
 @jwt_required()
-@rate_limit(requests_per_minute=30)
+@rate_limit(max_requests=30, window_minutes=1)
 def update_notification_settings():
     """Update notification settings for the current user"""
     try:
@@ -288,7 +288,7 @@ def update_notification_settings():
 
 @notification_bp.route('/test', methods=['POST'])
 @jwt_required()
-@rate_limit(requests_per_minute=10)
+@rate_limit(max_requests=10, window_minutes=1)
 def send_test_notification():
     """Send a test notification to verify settings"""
     try:

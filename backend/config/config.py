@@ -11,8 +11,9 @@ class Config:
     DEBUG = False
     TESTING = False
     
-    # MongoDB settings
-    MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/trading_bot')
+    # PostgreSQL settings
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'postgresql://postgres:password@localhost:5432/trading_bot')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # JWT settings
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key')
@@ -82,7 +83,7 @@ class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     DEBUG = True
-    MONGO_URI = os.environ.get('TEST_MONGO_URI', 'mongodb://localhost:27017/trading_bot_test')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL', 'postgresql://postgres:password@localhost:5432/trading_bot_test')
 
 class ProductionConfig(Config):
     """Production configuration"""

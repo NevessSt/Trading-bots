@@ -1,21 +1,72 @@
-# AI-Powered Crypto Trading Bot
+# 🚀 Trading Bot Platform
 
-## Project Overview
-This is a production-grade AI-powered crypto trading bot designed to analyze market data in real-time, execute profitable trades automatically, and give users full control through a clean, modern dashboard. The bot connects to Binance's trading platform and supports both manual settings and AI-enhanced trading signals, making it suitable for beginners and advanced traders.
+A comprehensive, production-ready trading bot platform with user management, subscription billing, and live trading capabilities.
 
-## Core Features
-- 🔄 **Auto-Trading Engine**: Executes trades based on technical indicators (RSI, MACD, EMA)
-- 🔗 **Multi-Exchange Support**: Binance, Coinbase Pro, Kraken, and more via CCXT
-- 📊 **Trading Dashboard**: Real-time view of trades, profits, losses, balance, trade history
-- 🤖 **AI Signal Module**: Advanced signal generation with multiple strategy support
-- ⚠️ **Advanced Risk Management**: Daily loss limits, position exposure, stop-loss/take-profit automation
-- 🧑‍💻 **Secure Authentication**: JWT-based auth with rate limiting and security monitoring
-- 💬 **Multi-Channel Notifications**: Email, Telegram, and in-app notifications
-- 💳 **Monetization Layer**: Stripe integration for subscriptions and premium features
-- 🔐 **API Key Management**: Encrypted storage and secure handling of exchange credentials
-- 📈 **Backtesting Engine**: Test strategies against historical data before live trading
-- 🎯 **Position Monitoring**: Automatic stop-loss and take-profit execution
-- 📱 **Real-time Updates**: WebSocket connections for live market data and trade updates
+## 🌟 Features
+
+### ✅ Complete User System
+- **User Registration & Authentication** with JWT tokens
+- **Email Verification** for account security
+- **Password Reset** functionality
+- **Role-based Access Control** (Admin/User)
+- **User Profiles** with trading preferences
+
+### 💳 Subscription & Billing
+- **Multiple Plans**: Free, Pro, Enterprise
+- **Stripe Integration** for secure payments
+- **Subscription Management** with automatic renewals
+- **Usage Limits** based on subscription tier
+- **Billing History** and invoice management
+
+### 🎛️ Frontend Dashboard
+- **Modern React UI** with Tailwind CSS
+- **Real-time Trading Dashboard** with live updates
+- **Strategy Management** - create, edit, and deploy strategies
+- **Trade History** with detailed analytics
+- **API Key Management** for broker connections
+- **Subscription Status** and billing management
+- **Admin Panel** for user and system management
+
+### 🛡️ Security & Reliability
+- **JWT Authentication** with secure token management
+- **API Rate Limiting** to prevent abuse
+- **Input Validation** and sanitization
+- **Encrypted Storage** for sensitive data (API keys)
+- **CORS Protection** and security headers
+- **Error Logging** and monitoring
+
+### 📈 Trading Features
+- **Multiple Trading Strategies** (SMA, EMA, RSI, MACD)
+- **Live Trading Integration** with major exchanges
+- **Paper Trading Mode** for testing
+- **Risk Management** with stop-loss and take-profit
+- **Portfolio Management** and tracking
+- **Real-time Market Data** integration
+
+### 🐳 Production-Ready Deployment
+- **Docker Containerization** for all services
+- **Nginx Reverse Proxy** with SSL support
+- **PostgreSQL Database** with Redis caching
+- **Environment Configuration** management
+- **Health Checks** and monitoring
+- **Automated Deployment** scripts
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Nginx         │    │   Backend       │
+│   (React)       │◄──►│   (Reverse      │◄──►│   (Flask)       │
+│   Port: 3000    │    │   Proxy)        │    │   Port: 5000    │
+└─────────────────┘    │   Port: 80/443  │    └─────────────────┘
+                       └─────────────────┘             │
+                                                        ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Redis         │    │   PostgreSQL    │    │   External APIs │
+│   (Cache)       │◄──►│   (Database)    │    │   (Exchanges)   │
+│   Port: 6379    │    │   Port: 5432    │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
 ## Recent Enhancements
 

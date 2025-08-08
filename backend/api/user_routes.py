@@ -15,22 +15,22 @@ user_bp = Blueprint('user', __name__)
 def get_profile():
     """Get user profile"""
     user_id = get_jwt_identity()
-    user = User.find_by_id(user_id)
+    user = User.query.get(user_id)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
     # Remove sensitive information
     user_data = {
-        'id': str(user['_id']),
-        'email': user['email'],
-        'username': user['username'],
-        'firstName': user.get('firstName', ''),
-        'lastName': user.get('lastName', ''),
-        'role': user.get('role', 'user'),
-        'settings': user.get('settings', {}),
-        'createdAt': user.get('created_at'),
-        'updatedAt': user.get('updated_at')
+        'id': user.id,
+        'email': user.email,
+        'username': user.username,
+        'firstName': user.first_name or '',
+        'lastName': user.last_name or '',
+        'role': user.role or 'user',
+        'settings': user.settings or {},
+        'createdAt': user.created_at.isoformat() if user.created_at else None,
+        'updatedAt': user.updated_at.isoformat() if user.updated_at else None
     }
     
     return jsonify(user_data), 200
@@ -55,20 +55,28 @@ def update_profile():
     
     # Validate username if provided
     if 'username' in update_data:
-        existing_user = User.find_by_username(update_data['username'])
-        if existing_user and str(existing_user['_id']) != user_id:
+        existing_user = User.query.filter_by(username=update_data['username']).first()
+        if existing_user and existing_user.id != user_id:
             return jsonify({'error': 'Username already taken'}), 409
     
     if not update_data:
         return jsonify({'error': 'No valid fields to update'}), 400
     
     # Update user
-    success = User.update(user_id, update_data)
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
     
-    if success:
-        return jsonify({'message': 'Profile updated successfully'}), 200
-    else:
-        return jsonify({'error': 'Failed to update profile'}), 500
+    for field, value in update_data.items():
+        if field == 'firstName':
+            user.first_name = value
+        elif field == 'lastName':
+            user.last_name = value
+        elif field == 'username':
+            user.username = value
+    
+    user.save()
+    return jsonify({'message': 'Profile updated successfully'}), 200
 
 @user_bp.route('/change-password', methods=['POST'])
 @jwt_required()
@@ -84,12 +92,12 @@ def change_password():
             return jsonify({'error': f'Missing required field: {field}'}), 400
     
     # Get current user
-    user = User.find_by_id(user_id)
+    user = User.query.get(user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
     # Verify current password
-    if not check_password_hash(user['password'], data['currentPassword']):
+    if not check_password_hash(user.password_hash, data['currentPassword']):
         return jsonify({'error': 'Current password is incorrect'}), 401
     
     # Validate new password
@@ -100,24 +108,22 @@ def change_password():
     hashed_password = generate_password_hash(data['newPassword'])
     
     # Update password
-    success = User.update(user_id, {'password': hashed_password})
+    user.password_hash = hashed_password
+    user.save()
     
-    if success:
-        return jsonify({'message': 'Password changed successfully'}), 200
-    else:
-        return jsonify({'error': 'Failed to change password'}), 500
+    return jsonify({'message': 'Password changed successfully'}), 200
 
 @user_bp.route('/settings', methods=['GET'])
 @jwt_required()
 def get_settings():
     """Get user settings"""
     user_id = get_jwt_identity()
-    user = User.find_by_id(user_id)
+    user = User.query.get(user_id)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    settings = user.get('settings', {
+    settings = user.settings or {
         'notifications': {
             'email': True,
             'telegram': False,
@@ -132,7 +138,7 @@ def get_settings():
             'binanceApiKey': '',
             'binanceApiSecret': ''
         }
-    })
+    }
     
     return jsonify(settings), 200
 
@@ -147,12 +153,12 @@ def update_settings():
         return jsonify({'error': 'No data provided'}), 400
     
     # Get current user
-    user = User.find_by_id(user_id)
+    user = User.query.get(user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
     # Get current settings or initialize with defaults
-    current_settings = user.get('settings', {})
+    current_settings = user.settings or {}
     
     # Update settings
     if 'notifications' in data:
@@ -171,12 +177,10 @@ def update_settings():
         current_settings['apiKeys'].update(data['apiKeys'])
     
     # Update user settings
-    success = User.update(user_id, {'settings': current_settings})
+    user.settings = current_settings
+    user.save()
     
-    if success:
-        return jsonify({'message': 'Settings updated successfully'}), 200
-    else:
-        return jsonify({'error': 'Failed to update settings'}), 500
+    return jsonify({'message': 'Settings updated successfully'}), 200
 
 @user_bp.route('/account-summary', methods=['GET'])
 @jwt_required()

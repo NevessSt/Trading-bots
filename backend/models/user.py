@@ -1,138 +1,245 @@
-from flask import current_app
-from pymongo import MongoClient
-from bson.objectid import ObjectId
-from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
+from typing import Dict, Optional, List
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import create_access_token, create_refresh_token
+import secrets
 
-class User:
-    """User model for database operations"""
+# This will be initialized by the main app
+db = SQLAlchemy()
+
+class User(db.Model):
+    """User model for SQLAlchemy with subscription support"""
     
-    @staticmethod
-    def get_collection():
-        """Get the users collection from MongoDB"""
-        mongo_client = MongoClient(current_app.config['MONGO_URI'])
-        db = mongo_client.get_database()
-        return db.users
+    __tablename__ = 'users'
     
-    @staticmethod
-    def create(user_data):
-        """Create a new user
-        
-        Args:
-            user_data (dict): User data including email, username, password, etc.
-            
-        Returns:
-            ObjectId: ID of the created user, or None if creation failed
-        """
-        users = User.get_collection()
-        
-        # Add created_at timestamp if not present
-        if 'created_at' not in user_data:
-            user_data['created_at'] = datetime.utcnow()
-        
-        result = users.insert_one(user_data)
-        
-        if result.inserted_id:
-            return result.inserted_id
-        return None
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    first_name = db.Column(db.String(50))
+    last_name = db.Column(db.String(50))
+    phone = db.Column(db.String(20))
     
-    @staticmethod
-    def find_by_id(user_id):
-        """Find a user by ID
+    # Account status
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    is_verified = db.Column(db.Boolean, default=False, nullable=False)
+    role = db.Column(db.String(20), default='user', nullable=False)
+    
+    # Security
+    login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime)
+    last_login = db.Column(db.DateTime)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    subscriptions = db.relationship('Subscription', backref='user', lazy=True, cascade='all, delete-orphan')
+    bots = db.relationship('Bot', backref='user', lazy=True, cascade='all, delete-orphan')
+    trades = db.relationship('Trade', backref='user', lazy=True, cascade='all, delete-orphan')
+    
+    def __init__(self, email, username, password, **kwargs):
+        self.email = email
+        self.username = username
+        self.set_password(password)
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def set_password(self, password):
+        """Hash and set password"""
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """Check if provided password matches hash"""
+        return check_password_hash(self.password_hash, password)
+    
+    def is_locked(self):
+        """Check if account is locked"""
+        if self.locked_until:
+            return datetime.utcnow() < self.locked_until
+        return False
+    
+    def lock_account(self, duration_minutes=30):
+        """Lock account for specified duration"""
+        self.locked_until = datetime.utcnow() + timedelta(minutes=duration_minutes)
+        self.login_attempts = 0
+        db.session.commit()
+    
+    def unlock_account(self):
+        """Unlock account"""
+        self.locked_until = None
+        self.login_attempts = 0
+        db.session.commit()
+    
+    def increment_login_attempts(self):
+        """Increment failed login attempts"""
+        self.login_attempts += 1
+        if self.login_attempts >= 5:
+            self.lock_account()
+        db.session.commit()
+    
+    def reset_login_attempts(self):
+        """Reset login attempts on successful login"""
+        self.login_attempts = 0
+        self.last_login = datetime.utcnow()
+        db.session.commit()
+    
+    def get_current_subscription(self):
+        """Get user's current active subscription"""
+        from .subscription import Subscription
+        return Subscription.query.filter_by(
+            user_id=self.id,
+            is_active=True
+        ).first()
+    
+    def has_feature(self, feature_name):
+        """Check if user has access to a specific feature"""
+        subscription = self.get_current_subscription()
+        if not subscription:
+            return False
+        return subscription.has_feature(feature_name)
+    
+    def can_create_bot(self):
+        """Check if user can create more bots"""
+        subscription = self.get_current_subscription()
+        if not subscription:
+            return False
         
-        Args:
-            user_id (str): User ID
-            
-        Returns:
-            dict: User document, or None if not found
-        """
-        users = User.get_collection()
+        current_bot_count = len([bot for bot in self.bots if bot.is_active])
+        max_bots = subscription.get_feature_limit('max_bots')
+        return current_bot_count < max_bots
+    
+    def get_available_strategies(self):
+        """Get list of available trading strategies for user"""
+        subscription = self.get_current_subscription()
+        if not subscription:
+            return []
+        return subscription.get_available_strategies()
+    
+    def generate_tokens(self):
+        """Generate JWT access and refresh tokens"""
+        additional_claims = {
+            'user_id': self.id,
+            'email': self.email,
+            'role': self.role,
+            'subscription_type': self.get_current_subscription().plan_type if self.get_current_subscription() else 'free'
+        }
         
-        try:
-            return users.find_one({'_id': ObjectId(user_id)})
-        except:
+        access_token = create_access_token(
+            identity=self.id,
+            additional_claims=additional_claims
+        )
+        refresh_token = create_refresh_token(identity=self.id)
+        
+        return {
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'token_type': 'Bearer'
+        }
+    
+    def to_dict(self, include_sensitive=False):
+        """Convert user to dictionary"""
+        data = {
+            'id': self.id,
+            'email': self.email,
+            'username': self.username,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'phone': self.phone,
+            'is_active': self.is_active,
+            'is_verified': self.is_verified,
+            'role': self.role,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+        
+        if include_sensitive:
+            data.update({
+                'login_attempts': self.login_attempts,
+                'locked_until': self.locked_until.isoformat() if self.locked_until else None
+            })
+        
+        # Include subscription info
+        subscription = self.get_current_subscription()
+        if subscription:
+            data['subscription'] = subscription.to_dict()
+        
+        return data
+    
+    @classmethod
+    def find_by_email(cls, email):
+        """Find user by email"""
+        return cls.query.filter_by(email=email).first()
+    
+    @classmethod
+    def find_by_username(cls, username):
+        """Find user by username"""
+        return cls.query.filter_by(username=username).first()
+    
+    @classmethod
+    def find_by_id(cls, user_id):
+        """Find user by ID"""
+        return cls.query.get(user_id)
+    
+    @classmethod
+    def create_user(cls, user_data):
+        """Create a new user with validation"""
+        # Check if email or username already exists
+        if cls.find_by_email(user_data['email']):
+            raise ValueError('Email already exists')
+        
+        if cls.find_by_username(user_data['username']):
+            raise ValueError('Username already exists')
+        
+        # Create user
+        user = cls(
+            email=user_data['email'],
+            username=user_data['username'],
+            password=user_data['password'],
+            first_name=user_data.get('first_name'),
+            last_name=user_data.get('last_name'),
+            phone=user_data.get('phone')
+        )
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        # Create free subscription
+        from .subscription import Subscription
+        Subscription.create_free_subscription(user.id)
+        
+        return user
+    
+    @classmethod
+    def authenticate(cls, email_or_username, password):
+        """Authenticate user with email/username and password"""
+        # Try to find by email first, then username
+        user = cls.find_by_email(email_or_username)
+        if not user:
+            user = cls.find_by_username(email_or_username)
+        
+        if not user:
+            return None
+        
+        # Check if account is locked
+        if user.is_locked():
+            return None
+        
+        # Check if account is active
+        if not user.is_active:
+            return None
+        
+        # Verify password
+        if user.check_password(password):
+            user.reset_login_attempts()
+            return user
+        else:
+            user.increment_login_attempts()
             return None
     
-    @staticmethod
-    def find_by_email(email):
-        """Find a user by email
-        
-        Args:
-            email (str): User email
-            
-        Returns:
-            dict: User document, or None if not found
-        """
-        users = User.get_collection()
-        return users.find_one({'email': email})
-    
-    @staticmethod
-    def find_by_username(username):
-        """Find a user by username
-        
-        Args:
-            username (str): Username
-            
-        Returns:
-            dict: User document, or None if not found
-        """
-        users = User.get_collection()
-        return users.find_one({'username': username})
-    
-    @staticmethod
-    def update(user_id, update_data):
-        """Update a user
-        
-        Args:
-            user_id (str): User ID
-            update_data (dict): Data to update
-            
-        Returns:
-            bool: True if update was successful, False otherwise
-        """
-        users = User.get_collection()
-        
-        # Add updated_at timestamp
-        update_data['updated_at'] = datetime.utcnow()
-        
-        try:
-            result = users.update_one(
-                {'_id': ObjectId(user_id)},
-                {'$set': update_data}
-            )
-            return result.modified_count > 0
-        except:
-            return False
-    
-    @staticmethod
-    def delete(user_id):
-        """Delete a user
-        
-        Args:
-            user_id (str): User ID
-            
-        Returns:
-            bool: True if deletion was successful, False otherwise
-        """
-        users = User.get_collection()
-        
-        try:
-            result = users.delete_one({'_id': ObjectId(user_id)})
-            return result.deleted_count > 0
-        except:
-            return False
-    
-    @staticmethod
-    def list_all(limit=100, skip=0):
-        """List all users with pagination
-        
-        Args:
-            limit (int): Maximum number of users to return
-            skip (int): Number of users to skip
-            
-        Returns:
-            list: List of user documents
-        """
-        users = User.get_collection()
-        
-        cursor = users.find().limit(limit).skip(skip)
-        return list(cursor)
+    def __repr__(self):
+        return f'<User {self.username}>'

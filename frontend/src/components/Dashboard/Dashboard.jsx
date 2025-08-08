@@ -7,6 +7,9 @@ import ActiveBotsList from './ActiveBotsList';
 import RecentTradesList from './RecentTradesList';
 import PerformanceChart from './PerformanceChart';
 import AccountSummary from './AccountSummary';
+import RealTimeTicker from './RealTimeTicker';
+import AccountBalance from './AccountBalance';
+import MarketDataChart from './MarketDataChart';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -77,6 +80,15 @@ const Dashboard = () => {
           Create New Bot
         </Button>
       </Box>
+      
+      {/* Real-time Market Data */}
+      <RealTimeTicker />
+      
+      {/* Account Balance */}
+      <AccountBalance />
+      
+      {/* Market Data Chart */}
+      <MarketDataChart symbol="BTCUSDT" />
       
       <Grid container spacing={3}>
         {/* Account Summary */}

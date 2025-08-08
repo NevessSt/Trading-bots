@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
+import asyncio
 
 # Import trading engine components
 from bot_engine import TradingEngine, RiskManager
@@ -215,6 +216,129 @@ def get_trades():
             'pages': (total + limit - 1) // limit
         }
     }), 200
+
+@trading_bp.route('/realtime/<symbol>', methods=['GET'])
+@jwt_required()
+def get_realtime_data(symbol):
+    """Get real-time price data for a symbol"""
+    try:
+        engine = get_trading_engine()
+        data = engine.get_real_time_data(symbol.upper())
+        
+        if data:
+            return jsonify({
+                'symbol': data['symbol'],
+                'price': data['price'],
+                'change': data['change'],
+                'volume': data['volume'],
+                'high': data['high'],
+                'low': data['low'],
+                'timestamp': data['timestamp'].isoformat()
+            }), 200
+        else:
+            return jsonify({'error': 'No real-time data available for this symbol'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@trading_bp.route('/realtime', methods=['GET'])
+@jwt_required()
+def get_all_realtime_data():
+    """Get all real-time price data"""
+    try:
+        engine = get_trading_engine()
+        all_data = engine.get_all_real_time_data()
+        
+        # Format data for response
+        formatted_data = {}
+        for symbol, data in all_data.items():
+            formatted_data[symbol] = {
+                'symbol': data['symbol'],
+                'price': data['price'],
+                'change': data['change'],
+                'volume': data['volume'],
+                'high': data['high'],
+                'low': data['low'],
+                'timestamp': data['timestamp'].isoformat()
+            }
+        
+        return jsonify({'data': formatted_data}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@trading_bp.route('/market-data/<symbol>', methods=['GET'])
+@jwt_required()
+def get_market_data(symbol):
+    """Get historical market data for a symbol"""
+    try:
+        engine = get_trading_engine()
+        
+        # Get parameters
+        interval = request.args.get('interval', '1h')
+        limit = int(request.args.get('limit', 100))
+        
+        # Fetch market data
+        df = engine.get_market_data(symbol.upper(), interval, limit)
+        
+        if df.empty:
+            return jsonify({'error': 'No market data available'}), 404
+        
+        # Convert DataFrame to list of dictionaries
+        data = []
+        for index, row in df.iterrows():
+            data.append({
+                'timestamp': index.isoformat(),
+                'open': float(row['open']),
+                'high': float(row['high']),
+                'low': float(row['low']),
+                'close': float(row['close']),
+                'volume': float(row['volume'])
+            })
+        
+        return jsonify({
+            'symbol': symbol.upper(),
+            'interval': interval,
+            'data': data
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@trading_bp.route('/account/balance', methods=['GET'])
+@jwt_required()
+def get_account_balance():
+    """Get account balance information"""
+    try:
+        engine = get_trading_engine()
+        balance = engine.get_account_balance()
+        return jsonify(balance), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@trading_bp.route('/websocket/start/<symbol>', methods=['POST'])
+@jwt_required()
+def start_websocket_stream(symbol):
+    """Start WebSocket stream for a symbol"""
+    try:
+        engine = get_trading_engine()
+        
+        # Start WebSocket stream in background
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(engine.start_websocket_stream(symbol.upper()))
+        
+        return jsonify({'message': f'WebSocket stream started for {symbol.upper()}'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@trading_bp.route('/websocket/stop/<symbol>', methods=['POST'])
+@jwt_required()
+def stop_websocket_stream(symbol):
+    """Stop WebSocket stream for a symbol"""
+    try:
+        engine = get_trading_engine()
+        engine.stop_websocket_stream(symbol.upper())
+        return jsonify({'message': f'WebSocket stream stopped for {symbol.upper()}'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @trading_bp.route('/performance', methods=['GET'])
 @jwt_required()

@@ -3,11 +3,15 @@ import pandas as pd
 import numpy as np
 import time
 import uuid
+import asyncio
+import websockets
+import json
 from datetime import datetime, timedelta
 from threading import Thread
 from flask import current_app
 import os
 from ccxt.base.errors import BaseError, NetworkError, ExchangeError, InvalidOrder, InsufficientFunds
+from concurrent.futures import ThreadPoolExecutor
 
 # Import strategies
 from .strategies.rsi_strategy import RSIStrategy
@@ -43,6 +47,9 @@ class TradingEngine:
         self.testnet = testnet if testnet is not None else os.getenv('BINANCE_TESTNET', 'True').lower() == 'true'
         self.exchange = None
         self.active_bots = {}  # Dict of active bots: {bot_id: bot_thread}
+        self.websocket_connections = {}  # Dict of WebSocket connections: {symbol: connection}
+        self.real_time_data = {}  # Dict of real-time price data: {symbol: latest_data}
+        self.executor = ThreadPoolExecutor(max_workers=10)
         self.strategies = {
             'rsi': RSIStrategy,
             'macd': MACDStrategy,
@@ -861,3 +868,191 @@ class TradingEngine:
             'bot_id': bot_id,
             'user_id': user_id
         }, skip=skip, limit=limit)
+    
+    async def start_websocket_stream(self, symbol):
+        """Start WebSocket stream for real-time price data
+        
+        Args:
+            symbol (str): Trading symbol (e.g., 'BTCUSDT')
+        """
+        try:
+            if symbol in self.websocket_connections:
+                return  # Already connected
+            
+            # Binance WebSocket URL for ticker stream
+            ws_url = f"wss://stream.binance.com:9443/ws/{symbol.lower()}@ticker"
+            
+            async def websocket_handler():
+                try:
+                    async with websockets.connect(ws_url) as websocket:
+                        self.websocket_connections[symbol] = websocket
+                        logger.info(f"WebSocket connected for {symbol}")
+                        
+                        async for message in websocket:
+                            data = json.loads(message)
+                            
+                            # Update real-time data
+                            self.real_time_data[symbol] = {
+                                'symbol': data['s'],
+                                'price': float(data['c']),
+                                'change': float(data['P']),
+                                'volume': float(data['v']),
+                                'high': float(data['h']),
+                                'low': float(data['l']),
+                                'timestamp': datetime.utcnow()
+                            }
+                            
+                            # Notify active bots about price update
+                            await self._notify_bots_price_update(symbol, self.real_time_data[symbol])
+                            
+                except websockets.exceptions.ConnectionClosed:
+                    logger.warning(f"WebSocket connection closed for {symbol}")
+                except Exception as e:
+                    logger.error(f"WebSocket error for {symbol}: {str(e)}")
+                finally:
+                    if symbol in self.websocket_connections:
+                        del self.websocket_connections[symbol]
+            
+            # Run WebSocket handler in executor
+            self.executor.submit(asyncio.run, websocket_handler())
+            
+        except Exception as e:
+            logger.error(f"Failed to start WebSocket stream for {symbol}: {str(e)}")
+    
+    async def _notify_bots_price_update(self, symbol, price_data):
+        """Notify active bots about price updates
+        
+        Args:
+            symbol (str): Trading symbol
+            price_data (dict): Real-time price data
+        """
+        for bot_id, bot_info in self.active_bots.items():
+            if (bot_info['config']['symbol'] == symbol and 
+                bot_info['is_running']):
+                # Update bot with latest price data
+                bot_info['latest_price'] = price_data
+    
+    def get_real_time_data(self, symbol):
+        """Get real-time data for a symbol
+        
+        Args:
+            symbol (str): Trading symbol
+            
+        Returns:
+            dict: Real-time price data or None
+        """
+        return self.real_time_data.get(symbol)
+    
+    def get_all_real_time_data(self):
+        """Get all real-time data
+        
+        Returns:
+            dict: All real-time price data
+        """
+        return self.real_time_data.copy()
+    
+    def stop_websocket_stream(self, symbol):
+        """Stop WebSocket stream for a symbol
+        
+        Args:
+            symbol (str): Trading symbol
+        """
+        if symbol in self.websocket_connections:
+            try:
+                # Close WebSocket connection
+                connection = self.websocket_connections[symbol]
+                if not connection.closed:
+                    asyncio.run(connection.close())
+                del self.websocket_connections[symbol]
+                
+                # Remove real-time data
+                if symbol in self.real_time_data:
+                    del self.real_time_data[symbol]
+                    
+                logger.info(f"WebSocket stream stopped for {symbol}")
+            except Exception as e:
+                logger.error(f"Error stopping WebSocket stream for {symbol}: {str(e)}")
+    
+    def get_market_data(self, symbol, interval='1h', limit=100):
+        """Get historical market data
+        
+        Args:
+            symbol (str): Trading symbol
+            interval (str): Candlestick interval
+            limit (int): Number of candles to fetch
+            
+        Returns:
+            pandas.DataFrame: OHLCV data
+        """
+        try:
+            if not self.exchange:
+                raise Exception("Exchange not initialized")
+            
+            # Fetch OHLCV data
+            ohlcv = self.exchange.fetch_ohlcv(symbol, interval, limit=limit)
+            
+            # Convert to DataFrame
+            df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+            df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+            df.set_index('timestamp', inplace=True)
+            
+            return df
+            
+        except Exception as e:
+            logger.error(f"Error fetching market data for {symbol}: {str(e)}")
+            return pd.DataFrame()
+    
+    def get_account_balance(self):
+        """Get account balance
+        
+        Returns:
+            dict: Account balance information
+        """
+        try:
+            if not self.exchange:
+                raise Exception("Exchange not initialized")
+            
+            balance = self.exchange.fetch_balance()
+            
+            # Format balance data
+            formatted_balance = {
+                'total_value': 0.0,
+                'available_balance': 0.0,
+                'assets': []
+            }
+            
+            for currency, amounts in balance.items():
+                if currency not in ['info', 'free', 'used', 'total'] and amounts['total'] > 0:
+                    asset_info = {
+                        'currency': currency,
+                        'free': amounts['free'],
+                        'used': amounts['used'],
+                        'total': amounts['total']
+                    }
+                    formatted_balance['assets'].append(asset_info)
+                    
+                    # Add to total value (simplified - would need price conversion in real implementation)
+                    if currency == 'USDT':
+                        formatted_balance['total_value'] += amounts['total']
+                        formatted_balance['available_balance'] += amounts['free']
+            
+            return formatted_balance
+            
+        except Exception as e:
+            logger.error(f"Error fetching account balance: {str(e)}")
+            return {'total_value': 0.0, 'available_balance': 0.0, 'assets': []}
+    
+    def cleanup(self):
+        """Cleanup resources"""
+        # Stop all WebSocket streams
+        for symbol in list(self.websocket_connections.keys()):
+            self.stop_websocket_stream(symbol)
+        
+        # Stop all active bots
+        for bot_id in list(self.active_bots.keys()):
+            self.active_bots[bot_id]['is_running'] = False
+        
+        # Shutdown executor
+        self.executor.shutdown(wait=True)
+        
+        logger.info("Trading engine cleanup completed")

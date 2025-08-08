@@ -11,6 +11,9 @@ const useTradingStore = create((set, get) => ({
   symbols: [],
   strategies: [],
   performance: null,
+  realTimeData: {},
+  marketData: {},
+  accountBalance: null,
   isLoading: false,
   error: null,
   
@@ -272,7 +275,89 @@ const useTradingStore = create((set, get) => ({
     set({ tradeFilters: { ...get().tradeFilters, ...filters } });
   },
   
-  clearError: () => set({ error: null })
+  clearError: () => set({ error: null }),
+  
+  // Real-time data methods
+  fetchRealTimeData: async (symbol) => {
+    try {
+      const response = await axios.get(`${API_URL}/trading/realtime/${symbol}`);
+      const currentData = get().realTimeData;
+      set({ 
+        realTimeData: { 
+          ...currentData, 
+          [symbol]: response.data 
+        } 
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch real-time data for ${symbol}:`, error);
+      return null;
+    }
+  },
+  
+  fetchAllRealTimeData: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/trading/realtime`);
+      set({ realTimeData: response.data.data });
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to fetch all real-time data:', error);
+      return {};
+    }
+  },
+  
+  fetchMarketData: async (symbol, interval = '1h', limit = 100) => {
+    try {
+      const response = await axios.get(`${API_URL}/trading/market-data/${symbol}`, {
+        params: { interval, limit }
+      });
+      const currentData = get().marketData;
+      set({ 
+        marketData: { 
+          ...currentData, 
+          [`${symbol}_${interval}`]: response.data 
+        } 
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch market data for ${symbol}:`, error);
+      return null;
+    }
+  },
+  
+  fetchAccountBalance: async () => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const response = await axios.get(`${API_URL}/trading/account/balance`);
+      set({ accountBalance: response.data, isLoading: false });
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || 'Failed to fetch account balance';
+      set({ isLoading: false, error: errorMessage });
+      return null;
+    }
+  },
+  
+  startWebSocketStream: async (symbol) => {
+    try {
+      await axios.post(`${API_URL}/trading/websocket/start/${symbol}`);
+      return true;
+    } catch (error) {
+      console.error(`Failed to start WebSocket stream for ${symbol}:`, error);
+      return false;
+    }
+  },
+  
+  stopWebSocketStream: async (symbol) => {
+    try {
+      await axios.post(`${API_URL}/trading/websocket/stop/${symbol}`);
+      return true;
+    } catch (error) {
+      console.error(`Failed to stop WebSocket stream for ${symbol}:`, error);
+      return false;
+    }
+  }
 }));
 
 export default useTradingStore;

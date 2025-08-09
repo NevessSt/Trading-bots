@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+
+{% block title %}Trading Strategies - TradingBot Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-brain me-2 text-primary"></i>Trading Strategies
+    </h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStrategyModal">
+        <i class="fas fa-plus me-2"></i>Create Strategy
+    </button>
+</div>
+
+<!-- Strategy Types Info -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-th fa-2x"></i>
+                </div>
+                <h6 class="card-title">Grid Trading</h6>
+                <p class="card-text small text-muted">Place buy and sell orders at regular intervals</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="text-success mb-2">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+                <h6 class="card-title">DCA (Dollar Cost Average)</h6>
+                <p class="card-text small text-muted">Gradually build positions over time</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-bolt fa-2x"></i>
+                </div>
+                <h6 class="card-title">Scalping</h6>
+                <p class="card-text small text-muted">Quick trades for small profits</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="text-info mb-2">
+                    <i class="fas fa-cogs fa-2x"></i>
+                </div>
+                <h6 class="card-title">Custom</h6>
+                <p class="card-text small text-muted">Build your own strategy logic</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Strategies List -->
+<div class="row">
+    {% if strategies %}
+        {% for strategy in strategies %}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">{{ strategy.name }}</h6>
+                        <small class="text-muted">{{ strategy.strategy_type.title() }} Strategy</small>
+                    </div>
+                    <div>
+                        <span class="badge {{ 'bg-success' if strategy.is_active else 'bg-secondary' }}">
+                            {{ 'Running' if strategy.is_active else 'Stopped' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ strategy.description or 'No description provided' }}</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                Created: {{ strategy.created_at.strftime('%m/%d/%Y') }}
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                Updated: {{ strategy.updated_at.strftime('%m/%d/%Y') }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-strategy" data-strategy-id="{{ strategy.id }}">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-outline-info view-details" data-strategy-id="{{ strategy.id }}">
+                                <i class="fas fa-eye me-1"></i>Details
+                            </button>
+                        </div>
+                        
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn {{ 'btn-outline-warning' if strategy.is_active else 'btn-outline-success' }} toggle-strategy" 
+                                    data-strategy-id="{{ strategy.id }}" data-active="{{ strategy.is_active }}">
+                                <i class="fas {{ 'fa-pause' if strategy.is_active else 'fa-play' }} me-1"></i>
+                                {{ 'Stop' if strategy.is_active else 'Start' }}
+                            </button>
+                            <button class="btn btn-outline-danger delete-strategy" data-strategy-id="{{ strategy.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-brain fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Trading Strategies</h4>
+                <p class="text-muted mb-4">Create your first automated trading strategy</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStrategyModal">
+                    <i class="fas fa-plus me-2"></i>Create Your First Strategy
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create Strategy Modal -->
+<div class="modal fade" id="createStrategyModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Create New Strategy
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createStrategyForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="strategyName" class="form-label">Strategy Name *</label>
+                            <input type="text" class="form-control" id="strategyName" name="name" placeholder="e.g., BTC Grid Strategy" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="strategyType" class="form-label">Strategy Type *</label>
+                            <select class="form-select" id="strategyType" name="strategy_type" required>
+                                <option value="">Select Strategy Type</option>
+                                <option value="grid">Grid Trading</option>
+                                <option value="dca">Dollar Cost Average (DCA)</option>
+                                <option value="scalping">Scalping</option>
+                                <option value="custom">Custom Strategy</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Describe your strategy..."></textarea>
+                    </div>
+                    
+                    <!-- Strategy Parameters (Dynamic based on type) -->
+                    <div id="strategyParameters">
+                        <!-- Parameters will be loaded dynamically -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveStrategy">
+                    <i class="fas fa-save me-2"></i>Create Strategy
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Strategy Details Modal -->
+<div class="modal fade" id="strategyDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>Strategy Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="strategyDetailsContent">
+                <!-- Details will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Strategy type change handler
+    $('#strategyType').change(function() {
+        const strategyType = $(this).val();
+        loadStrategyParameters(strategyType);
+    });
+    
+    // Save strategy
+    $('#saveStrategy').click(function() {
+        const form = $('#createStrategyForm');
+        const btn = $(this);
+        const originalText = btn.html();
+        
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        
+        btn.html('<span class="loading"></span> Creating...').prop('disabled', true);
+        
+        const formData = {
+            name: $('#strategyName').val(),
+            strategy_type: $('#strategyType').val(),
+            description: $('#description').val(),
+            parameters: collectStrategyParameters()
+        };
+        
+        $.ajax({
+            url: '/api/strategies',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                showAlert('Strategy created successfully!', 'success');
+                $('#createStrategyModal').modal('hide');
+                setTimeout(() => location.reload(), 1000);
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                showAlert(response.error || 'Failed to create strategy', 'danger');
+                btn.html(originalText).prop('disabled', false);
+            }
+        });
+    });
+    
+    // Toggle strategy status
+    $('.toggle-strategy').click(function() {
+        const btn = $(this);
+        const strategyId = btn.data('strategy-id');
+        const isActive = btn.data('active');
+        const action = isActive ? 'stop' : 'start';
+        
+        if (confirm(`Are you sure you want to ${action} this strategy?`)) {
+            btn.prop('disabled', true);
+            
+            // Simulate toggle (in production, implement actual API call)
+            setTimeout(() => {
+                showAlert(`Strategy ${action}ed successfully!`, 'success');
+                location.reload();
+            }, 1000);
+        }
+    });
+    
+    // Delete strategy
+    $('.delete-strategy').click(function() {
+        const btn = $(this);
+        const strategyId = btn.data('strategy-id');
+        
+        if (confirm('Are you sure you want to delete this strategy? This action cannot be undone.')) {
+            btn.prop('disabled', true);
+            
+            // Simulate deletion (in production, implement actual API call)
+            setTimeout(() => {
+                showAlert('Strategy deleted successfully!', 'success');
+                location.reload();
+            }, 1000);
+        }
+    });
+    
+    // View strategy details
+    $('.view-details').click(function() {
+        const strategyId = $(this).data('strategy-id');
+        loadStrategyDetails(strategyId);
+        $('#strategyDetailsModal').modal('show');
+    });
+    
+    function loadStrategyParameters(strategyType) {
+        const container = $('#strategyParameters');
+        container.empty();
+        
+        if (!strategyType) return;
+        
+        let parametersHtml = '<h6 class="mb-3">Strategy Parameters</h6>';
+        
+        switch (strategyType) {
+            case 'grid':
+                parametersHtml += `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Trading Pair *</label>
+                            <input type="text" class="form-control" name="symbol" placeholder="e.g., BTCUSDT" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Grid Count *</label>
+                            <input type="number" class="form-control" name="grid_count" min="3" max="50" value="10" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Lower Price *</label>
+                            <input type="number" class="form-control" name="lower_price" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Upper Price *</label>
+                            <input type="number" class="form-control" name="upper_price" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Investment Amount ($) *</label>
+                            <input type="number" class="form-control" name="investment_amount" min="10" step="0.01" required>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'dca':
+                parametersHtml += `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Trading Pair *</label>
+                            <input type="text" class="form-control" name="symbol" placeholder="e.g., BTCUSDT" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Order Amount ($) *</label>
+                            <input type="number" class="form-control" name="order_amount" min="10" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Frequency *</label>
+                            <select class="form-select" name="frequency" required>
+                                <option value="hourly">Every Hour</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Price Drop Trigger (%) *</label>
+                            <input type="number" class="form-control" name="price_drop" min="1" max="50" value="5" required>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'scalping':
+                parametersHtml += `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Trading Pair *</label>
+                            <input type="text" class="form-control" name="symbol" placeholder="e.g., BTCUSDT" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Position Size ($) *</label>
+                            <input type="number" class="form-control" name="position_size" min="10" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Profit Target (%) *</label>
+                            <input type="number" class="form-control" name="profit_target" min="0.1" max="5" step="0.1" value="0.5" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Stop Loss (%) *</label>
+                            <input type="number" class="form-control" name="stop_loss" min="0.1" max="5" step="0.1" value="0.3" required>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'custom':
+                parametersHtml += `
+                    <div class="mb-3">
+                        <label class="form-label">Custom Parameters (JSON)</label>
+                        <textarea class="form-control" name="custom_params" rows="5" placeholder='{"symbol": "BTCUSDT", "custom_logic": "your_logic_here"}'></textarea>
+                        <div class="form-text">Enter your custom strategy parameters in JSON format</div>
+                    </div>
+                `;
+                break;
+        }
+        
+        container.html(parametersHtml);
+    }
+    
+    function collectStrategyParameters() {
+        const strategyType = $('#strategyType').val();
+        const parameters = {};
+        
+        $('#strategyParameters input, #strategyParameters select, #strategyParameters textarea').each(function() {
+            const name = $(this).attr('name');
+            const value = $(this).val();
+            
+            if (name && value) {
+                if ($(this).attr('type') === 'number') {
+                    parameters[name] = parseFloat(value);
+                } else {
+                    parameters[name] = value;
+                }
+            }
+        });
+        
+        return parameters;
+    }
+    
+    function loadStrategyDetails(strategyId) {
+        const content = $('#strategyDetailsContent');
+        content.html('<div class="text-center"><div class="loading"></div><p class="mt-2">Loading strategy details...</p></div>');
+        
+        // Simulate loading details (in production, fetch from API)
+        setTimeout(() => {
+            const detailsHtml = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Strategy Information</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Name:</strong></td><td>Demo Grid Strategy</td></tr>
+                            <tr><td><strong>Type:</strong></td><td>Grid Trading</td></tr>
+                            <tr><td><strong>Status:</strong></td><td><span class="badge bg-success">Active</span></td></tr>
+                            <tr><td><strong>Created:</strong></td><td>2024-01-15</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Performance Metrics</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Total Trades:</strong></td><td>45</td></tr>
+                            <tr><td><strong>Win Rate:</strong></td><td>67.8%</td></tr>
+                            <tr><td><strong>Total P&L:</strong></td><td class="profit-positive">+$234.56</td></tr>
+                            <tr><td><strong>ROI:</strong></td><td class="profit-positive">+12.3%</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <hr>
+                <h6>Strategy Parameters</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><strong>Trading Pair:</strong> BTCUSDT</li>
+                            <li><strong>Grid Count:</strong> 10</li>
+                            <li><strong>Investment:</strong> $1,000</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><strong>Lower Price:</strong> $30,000</li>
+                            <li><strong>Upper Price:</strong> $50,000</li>
+                            <li><strong>Grid Spacing:</strong> $2,000</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            content.html(detailsHtml);
+        }, 1000);
+    }
+    
+    // Clear form when modal is hidden
+    $('#createStrategyModal').on('hidden.bs.modal', function() {
+        $('#createStrategyForm')[0].reset();
+        $('#strategyParameters').empty();
+        $('#saveStrategy').html('<i class="fas fa-save me-2"></i>Create Strategy').prop('disabled', false);
+    });
+});
+</script>
+{% endblock %}

@@ -2,7 +2,12 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import string
+import json
 from db import db
+from utils.encryption import get_encryption_manager, EncryptionError
+import logging
+
+logger = logging.getLogger(__name__)
 
 class APIKey(db.Model):
     """API Key model for managing exchange API keys"""
@@ -13,8 +18,9 @@ class APIKey(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     exchange = db.Column(db.String(50), nullable=False)  # binance, coinbase, etc.
     key_name = db.Column(db.String(100), nullable=False)  # User-friendly name
-    api_key = db.Column(db.String(255), nullable=False)  # Public API key
-    api_secret_hash = db.Column(db.String(255), nullable=False)  # Hashed secret
+    api_key = db.Column(db.String(255), nullable=False)  # Public API key (not encrypted)
+    api_secret_encrypted = db.Column(db.Text, nullable=False)  # Encrypted secret
+    passphrase_encrypted = db.Column(db.Text)  # Encrypted passphrase (for some exchanges)
     
     # Status and permissions
     is_active = db.Column(db.Boolean, default=True, nullable=False)
@@ -31,12 +37,12 @@ class APIKey(db.Model):
     
     # Relationships are defined via backref in User model
     
-    def __init__(self, user_id, exchange, key_name, api_key, api_secret, **kwargs):
+    def __init__(self, user_id, exchange, key_name, api_key, api_secret, passphrase=None, **kwargs):
         self.user_id = user_id
         self.exchange = exchange
         self.key_name = key_name
         self.api_key = api_key
-        self.set_secret(api_secret)
+        self.set_credentials(api_secret, passphrase)
         self.is_active = True  # Set default value
         self.usage_count = 0  # Set default value
         self.created_at = datetime.utcnow()
@@ -45,13 +51,67 @@ class APIKey(db.Model):
             if hasattr(self, key):
                 setattr(self, key, value)
     
-    def set_secret(self, secret):
-        """Hash and store the API secret"""
-        self.api_secret_hash = generate_password_hash(secret)
+    def set_credentials(self, api_secret, passphrase=None):
+        """Encrypt and store the API credentials"""
+        try:
+            encryption_manager = get_encryption_manager()
+            self.api_secret_encrypted = encryption_manager.encrypt(api_secret)
+            
+            if passphrase:
+                self.passphrase_encrypted = encryption_manager.encrypt(passphrase)
+            else:
+                self.passphrase_encrypted = None
+                
+        except EncryptionError as e:
+            logger.error(f"Failed to encrypt API credentials: {str(e)}")
+            raise ValueError(f"Failed to encrypt API credentials: {str(e)}")
     
-    def check_secret(self, secret):
-        """Verify the API secret"""
-        return check_password_hash(self.api_secret_hash, secret)
+    def get_credentials(self):
+        """Decrypt and return the API credentials"""
+        try:
+            encryption_manager = get_encryption_manager()
+            
+            credentials = {
+                'api_key': self.api_key,
+                'api_secret': encryption_manager.decrypt(self.api_secret_encrypted)
+            }
+            
+            if self.passphrase_encrypted:
+                credentials['passphrase'] = encryption_manager.decrypt(self.passphrase_encrypted)
+            
+            return credentials
+            
+        except EncryptionError as e:
+            logger.error(f"Failed to decrypt API credentials: {str(e)}")
+            raise ValueError(f"Failed to decrypt API credentials: {str(e)}")
+    
+    def verify_secret(self, secret):
+        """Verify the API secret by decrypting and comparing"""
+        try:
+            credentials = self.get_credentials()
+            return credentials['api_secret'] == secret
+        except Exception:
+            return False
+    
+    def update_credentials(self, api_secret=None, passphrase=None):
+        """Update encrypted credentials"""
+        try:
+            if api_secret is not None:
+                encryption_manager = get_encryption_manager()
+                self.api_secret_encrypted = encryption_manager.encrypt(api_secret)
+            
+            if passphrase is not None:
+                encryption_manager = get_encryption_manager()
+                if passphrase:
+                    self.passphrase_encrypted = encryption_manager.encrypt(passphrase)
+                else:
+                    self.passphrase_encrypted = None
+            
+            self.updated_at = datetime.utcnow()
+            
+        except EncryptionError as e:
+            logger.error(f"Failed to update API credentials: {str(e)}")
+            raise ValueError(f"Failed to update API credentials: {str(e)}")
     
     def update_usage(self):
         """Update usage statistics"""
@@ -60,7 +120,7 @@ class APIKey(db.Model):
     
     def is_valid(self):
         """Check if API key is valid and active"""
-        return self.is_active and self.api_key and self.api_secret_hash
+        return bool(self.is_active and self.api_key and self.api_secret_encrypted)
     
     def to_dict(self, include_secret=False):
         """Convert to dictionary for JSON serialization"""
@@ -80,7 +140,8 @@ class APIKey(db.Model):
         
         # Never include the actual secret in serialization
         if include_secret:
-            data['has_secret'] = bool(self.api_secret_hash)
+            data['has_secret'] = bool(self.api_secret_encrypted)
+            data['has_passphrase'] = bool(self.passphrase_encrypted)
         
         return data
     

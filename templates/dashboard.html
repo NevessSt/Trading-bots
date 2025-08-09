@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TradingBot Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard
+    </h2>
+    <div class="text-muted">
+        <i class="fas fa-clock me-1"></i>
+        <span id="currentTime"></span>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Total Trades</h6>
+                        <h3 class="card-title mb-0">{{ total_trades }}</h3>
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-exchange-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card {{ 'success' if total_profit >= 0 else 'danger' }}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Total P&L</h6>
+                        <h3 class="card-title mb-0 {{ 'profit-positive' if total_profit >= 0 else 'profit-negative' }}">
+                            {{ "${:,.2f}".format(total_profit) }}
+                        </h3>
+                    </div>
+                    <div class="{{ 'text-success' if total_profit >= 0 else 'text-danger' }}">
+                        <i class="fas {{ 'fa-arrow-up' if total_profit >= 0 else 'fa-arrow-down' }} fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Active Strategies</h6>
+                        <h3 class="card-title mb-0">{{ active_strategies }}</h3>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-brain fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Win Rate</h6>
+                        <h3 class="card-title mb-0" id="winRate">--%</h3>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-percentage fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Portfolio Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Trade Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tradeDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Trades and Market Overview -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Trades
+                </h5>
+                <a href="{{ url_for('performance') }}" class="btn btn-sm btn-outline-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_trades %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Side</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>P&L</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in recent_trades %}
+                            <tr>
+                                <td>
+                                    <strong>{{ trade.symbol }}</strong>
+                                    <br><small class="text-muted">{{ trade.exchange }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if trade.side == 'buy' else 'bg-danger' }}">
+                                        {{ trade.side.upper() }}
+                                    </span>
+                                </td>
+                                <td>{{ "{:,.6f}".format(trade.quantity) }}</td>
+                                <td>${{ "{:,.2f}".format(trade.price) }}</td>
+                                <td class="{{ 'profit-positive' if trade.profit_loss >= 0 else 'profit-negative' }}">
+                                    {{ "${:,.2f}".format(trade.profit_loss) }}
+                                </td>
+                                <td>
+                                    <small>{{ trade.executed_at.strftime('%m/%d %H:%M') }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No trades yet</h5>
+                    <p class="text-muted">Start by setting up your API keys and trading strategies</p>
+                    <a href="{{ url_for('api_keys') }}" class="btn btn-primary">
+                        <i class="fas fa-key me-2"></i>Configure API Keys
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Market Overview -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-globe me-2"></i>Market Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="marketData">
+                    <div class="text-center">
+                        <div class="loading"></div>
+                        <p class="mt-2 text-muted">Loading market data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('api_keys') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-key me-2"></i>Manage API Keys
+                    </a>
+                    <a href="{{ url_for('strategies') }}" class="btn btn-outline-success">
+                        <i class="fas fa-brain me-2"></i>Create Strategy
+                    </a>
+                    <a href="{{ url_for('risk_settings') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-shield-alt me-2"></i>Risk Settings
+                    </a>
+                    <a href="{{ url_for('market_data') }}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-candlestick me-2"></i>Market Data
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        $('#currentTime').text(now.toLocaleString());
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+    
+    // Calculate and display win rate
+    const totalTrades = {{ total_trades }};
+    const recentTrades = {{ recent_trades|tojson }};
+    
+    if (totalTrades > 0 && recentTrades.length > 0) {
+        const winningTrades = recentTrades.filter(trade => trade.profit_loss > 0).length;
+        const winRate = ((winningTrades / recentTrades.length) * 100).toFixed(1);
+        $('#winRate').text(winRate + '%');
+    }
+    
+    // Performance Chart
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    const performanceChart = new Chart(performanceCtx, {
+        type: 'line',
+        data: {
+            labels: generateDateLabels(30),
+            datasets: [{
+                label: 'Portfolio Value',
+                data: generatePerformanceData(30),
+                borderColor: 'rgb(37, 99, 235)',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Trade Distribution Chart
+    const distributionCtx = document.getElementById('tradeDistributionChart').getContext('2d');
+    const distributionChart = new Chart(distributionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Winning Trades', 'Losing Trades'],
+            datasets: [{
+                data: calculateTradeDistribution(),
+                backgroundColor: [
+                    'rgb(16, 185, 129)',
+                    'rgb(239, 68, 68)'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Load market data
+    loadMarketData();
+    
+    function generateDateLabels(days) {
+        const labels = [];
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        }
+        return labels;
+    }
+    
+    function generatePerformanceData(days) {
+        const data = [];
+        let baseValue = 10000;
+        
+        for (let i = 0; i < days; i++) {
+            const change = (Math.random() - 0.5) * 200;
+            baseValue += change;
+            data.push(Math.max(baseValue, 5000));
+        }
+        
+        return data;
+    }
+    
+    function calculateTradeDistribution() {
+        if (recentTrades.length === 0) {
+            return [1, 1]; // Equal distribution if no trades
+        }
+        
+        const winningTrades = recentTrades.filter(trade => trade.profit_loss > 0).length;
+        const losingTrades = recentTrades.length - winningTrades;
+        
+        return [winningTrades || 1, losingTrades || 1];
+    }
+    
+    function loadMarketData() {
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'ADAUSDT'];
+        let marketHtml = '';
+        
+        symbols.forEach(symbol => {
+            $.get(`/api/market-data/${symbol}`)
+                .done(function(data) {
+                    const changeClass = data.change_24h >= 0 ? 'text-success' : 'text-danger';
+                    const changeIcon = data.change_24h >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    
+                    marketHtml += `
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                            <div>
+                                <strong>${symbol.replace('USDT', '/USDT')}</strong>
+                                <br><small class="text-muted">$${data.price.toLocaleString()}</small>
+                            </div>
+                            <div class="text-end ${changeClass}">
+                                <i class="fas ${changeIcon} me-1"></i>
+                                ${data.change_24h.toFixed(2)}%
+                            </div>
+                        </div>
+                    `;
+                    
+                    $('#marketData').html(marketHtml);
+                })
+                .fail(function() {
+                    $('#marketData').html('<p class="text-muted text-center">Unable to load market data</p>');
+                });
+        });
+    }
+});
+</script>
+{% endblock %}

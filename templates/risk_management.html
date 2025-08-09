@@ -1,0 +1,831 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Management - TradingBot Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-shield-alt me-2 text-primary"></i>Risk Management
+    </h2>
+    <div class="btn-group">
+        <button class="btn btn-outline-success" onclick="saveAllSettings()">
+            <i class="fas fa-save me-2"></i>Save All Settings
+        </button>
+        <button class="btn btn-outline-secondary" onclick="resetToDefaults()">
+            <i class="fas fa-undo me-2"></i>Reset to Defaults
+        </button>
+    </div>
+</div>
+
+<!-- Risk Overview Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card risk-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Portfolio Risk</h6>
+                        <h3 class="card-title mb-0" id="portfolioRisk">Medium</h3>
+                        <small class="text-warning">Based on current settings</small>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card risk-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Max Daily Loss</h6>
+                        <h3 class="card-title mb-0" id="maxDailyLoss">$500</h3>
+                        <small class="text-muted">Current limit</small>
+                    </div>
+                    <div class="text-danger">
+                        <i class="fas fa-arrow-down fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card risk-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Position Size</h6>
+                        <h3 class="card-title mb-0" id="positionSize">2%</h3>
+                        <small class="text-muted">Per trade</small>
+                    </div>
+                    <div class="text-info">
+                        <i class="fas fa-percentage fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card risk-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Active Stops</h6>
+                        <h3 class="card-title mb-0" id="activeStops">12</h3>
+                        <small class="text-success">Stop losses active</small>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-stop-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Settings Tabs -->
+<div class="card">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="riskTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="position-tab" data-bs-toggle="tab" data-bs-target="#position" type="button" role="tab">
+                    <i class="fas fa-coins me-2"></i>Position Sizing
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="stop-loss-tab" data-bs-toggle="tab" data-bs-target="#stop-loss" type="button" role="tab">
+                    <i class="fas fa-stop-circle me-2"></i>Stop Loss
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio" type="button" role="tab">
+                    <i class="fas fa-chart-pie me-2"></i>Portfolio Limits
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="alerts-tab" data-bs-toggle="tab" data-bs-target="#alerts" type="button" role="tab">
+                    <i class="fas fa-bell me-2"></i>Risk Alerts
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content" id="riskTabContent">
+            <!-- Position Sizing Tab -->
+            <div class="tab-pane fade show active" id="position" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-calculator me-2 text-primary"></i>Position Size Calculator
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Risk Per Trade (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="riskPerTrade" value="2" min="0.1" max="10" step="0.1">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="form-text">Percentage of portfolio to risk per trade</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Account Balance ($)</label>
+                                    <input type="number" class="form-control" id="accountBalance" value="10000" min="100">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Stop Loss Distance (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="stopLossDistance" value="5" min="0.5" max="20" step="0.5">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading">Calculated Position Size</h6>
+                                    <p class="mb-0">Maximum position: <strong id="calculatedPosition">$400</strong></p>
+                                    <small class="text-muted">Based on your risk parameters</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-cogs me-2 text-primary"></i>Advanced Settings
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Position Sizing Method</label>
+                                    <select class="form-select" id="positionSizingMethod">
+                                        <option value="fixed_percentage">Fixed Percentage</option>
+                                        <option value="kelly_criterion">Kelly Criterion</option>
+                                        <option value="fixed_amount">Fixed Amount</option>
+                                        <option value="volatility_adjusted">Volatility Adjusted</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Maximum Position Size ($)</label>
+                                    <input type="number" class="form-control" id="maxPositionSize" value="1000" min="10">
+                                    <div class="form-text">Hard limit regardless of calculation</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Minimum Position Size ($)</label>
+                                    <input type="number" class="form-control" id="minPositionSize" value="50" min="1">
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enablePositionScaling" checked>
+                                    <label class="form-check-label" for="enablePositionScaling">
+                                        Enable position scaling based on confidence
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableCorrelationCheck" checked>
+                                    <label class="form-check-label" for="enableCorrelationCheck">
+                                        Check asset correlation before opening positions
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stop Loss Tab -->
+            <div class="tab-pane fade" id="stop-loss" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-stop-circle me-2 text-danger"></i>Stop Loss Settings
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Default Stop Loss Type</label>
+                                    <select class="form-select" id="stopLossType">
+                                        <option value="percentage">Percentage Based</option>
+                                        <option value="atr">ATR Based</option>
+                                        <option value="support_resistance">Support/Resistance</option>
+                                        <option value="trailing">Trailing Stop</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Stop Loss Percentage (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="stopLossPercentage" value="5" min="1" max="20" step="0.5">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Trailing Stop Distance (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="trailingStopDistance" value="3" min="0.5" max="10" step="0.5">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enableStopLoss" checked>
+                                    <label class="form-check-label" for="enableStopLoss">
+                                        Enable automatic stop loss for all trades
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableBreakEvenStop">
+                                    <label class="form-check-label" for="enableBreakEvenStop">
+                                        Move stop to break-even when in profit
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-target me-2 text-success"></i>Take Profit Settings
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Take Profit Strategy</label>
+                                    <select class="form-select" id="takeProfitStrategy">
+                                        <option value="fixed_ratio">Fixed Risk:Reward Ratio</option>
+                                        <option value="percentage">Fixed Percentage</option>
+                                        <option value="multiple_targets">Multiple Targets</option>
+                                        <option value="trailing_profit">Trailing Profit</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Risk:Reward Ratio</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">1:</span>
+                                        <input type="number" class="form-control" id="riskRewardRatio" value="2" min="1" max="10" step="0.5">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Take Profit Percentage (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="takeProfitPercentage" value="10" min="2" max="50" step="1">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Partial Profit Taking (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="partialProfitPercentage" value="50" min="10" max="90" step="10">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="form-text">Percentage of position to close at first target</div>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableTakeProfit" checked>
+                                    <label class="form-check-label" for="enableTakeProfit">
+                                        Enable automatic take profit
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Portfolio Limits Tab -->
+            <div class="tab-pane fade" id="portfolio" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-chart-pie me-2 text-warning"></i>Portfolio Limits
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Maximum Daily Loss ($)</label>
+                                    <input type="number" class="form-control" id="maxDailyLossAmount" value="500" min="50">
+                                    <div class="form-text">Trading stops when this limit is reached</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Maximum Daily Loss (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="maxDailyLossPercent" value="5" min="1" max="20" step="0.5">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Maximum Open Positions</label>
+                                    <input type="number" class="form-control" id="maxOpenPositions" value="10" min="1" max="50">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Maximum Exposure Per Asset (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="maxExposurePerAsset" value="20" min="5" max="50" step="5">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableDailyLossLimit" checked>
+                                    <label class="form-check-label" for="enableDailyLossLimit">
+                                        Enable daily loss limit
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-clock me-2 text-info"></i>Time-Based Limits
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Trading Hours</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="time" class="form-control" id="tradingStartTime" value="09:00">
+                                            <div class="form-text">Start time</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="time" class="form-control" id="tradingEndTime" value="17:00">
+                                            <div class="form-text">End time</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Maximum Trades Per Day</label>
+                                    <input type="number" class="form-control" id="maxTradesPerDay" value="20" min="1" max="100">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Cool-down Period (minutes)</label>
+                                    <input type="number" class="form-control" id="cooldownPeriod" value="15" min="1" max="120">
+                                    <div class="form-text">Wait time between trades for same asset</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Trading Days</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tradingMon" checked>
+                                                <label class="form-check-label" for="tradingMon">Monday</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tradingTue" checked>
+                                                <label class="form-check-label" for="tradingTue">Tuesday</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tradingWed" checked>
+                                                <label class="form-check-label" for="tradingWed">Wednesday</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tradingThu" checked>
+                                                <label class="form-check-label" for="tradingThu">Thursday</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tradingFri" checked>
+                                                <label class="form-check-label" for="tradingFri">Friday</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tradingSat">
+                                                <label class="form-check-label" for="tradingSat">Saturday</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tradingSun">
+                                                <label class="form-check-label" for="tradingSun">Sunday</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Risk Alerts Tab -->
+            <div class="tab-pane fade" id="alerts" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-bell me-2 text-warning"></i>Alert Settings
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Alert Methods</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="alertEmail" checked>
+                                        <label class="form-check-label" for="alertEmail">
+                                            Email notifications
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="alertSMS">
+                                        <label class="form-check-label" for="alertSMS">
+                                            SMS notifications
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="alertPush" checked>
+                                        <label class="form-check-label" for="alertPush">
+                                            Push notifications
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Drawdown Alert Threshold (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="drawdownThreshold" value="10" min="5" max="30" step="1">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Large Position Alert ($)</label>
+                                    <input type="number" class="form-control" id="largePositionAlert" value="1000" min="100">
+                                    <div class="form-text">Alert when position size exceeds this amount</div>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="alertOnStopLoss" checked>
+                                    <label class="form-check-label" for="alertOnStopLoss">
+                                        Alert when stop loss is triggered
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>Emergency Settings
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Emergency Stop Loss (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="emergencyStopLoss" value="15" min="10" max="50" step="1">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="form-text">Close all positions if portfolio drops by this amount</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Circuit Breaker Threshold (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="circuitBreakerThreshold" value="20" min="10" max="50" step="1">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="form-text">Halt all trading if market moves by this amount</div>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enableEmergencyStop" checked>
+                                    <label class="form-check-label" for="enableEmergencyStop">
+                                        Enable emergency stop loss
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enableCircuitBreaker">
+                                    <label class="form-check-label" for="enableCircuitBreaker">
+                                        Enable circuit breaker
+                                    </label>
+                                </div>
+                                
+                                <div class="alert alert-danger">
+                                    <h6 class="alert-heading">Emergency Actions</h6>
+                                    <button class="btn btn-danger btn-sm me-2" onclick="emergencyStopAll()">
+                                        <i class="fas fa-stop me-1"></i>Stop All Trading
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" onclick="closeAllPositions()">
+                                        <i class="fas fa-times me-1"></i>Close All Positions
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Analysis Chart -->
+<div class="row g-4 mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Risk Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="riskChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>Risk Metrics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Value at Risk (VaR)</span>
+                        <strong id="varValue">$250</strong>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-warning" style="width: 25%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Maximum Drawdown</span>
+                        <strong id="maxDrawdown">8.5%</strong>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-danger" style="width: 35%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Sharpe Ratio</span>
+                        <strong id="sharpeRatio">1.45</strong>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-success" style="width: 70%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Portfolio Beta</span>
+                        <strong id="portfolioBeta">0.85</strong>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-info" style="width: 85%"></div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <small>
+                        <strong>Risk Score:</strong> <span id="riskScore">Medium (6/10)</span><br>
+                        <strong>Recommendation:</strong> Consider reducing position sizes during high volatility periods.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let riskChart;
+    
+    // Initialize risk chart
+    initializeRiskChart();
+    
+    // Update calculations when inputs change
+    $('#riskPerTrade, #accountBalance, #stopLossDistance').on('input', updatePositionCalculation);
+    
+    // Initial calculation
+    updatePositionCalculation();
+    
+    function initializeRiskChart() {
+        const ctx = document.getElementById('riskChart').getContext('2d');
+        riskChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Portfolio Value',
+                    data: [],
+                    borderColor: 'rgb(37, 99, 235)',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Risk Limit',
+                    data: [],
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderDash: [5, 5],
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Generate sample data
+        updateRiskChart();
+    }
+    
+    function updateRiskChart() {
+        const labels = [];
+        const portfolioData = [];
+        const riskLimitData = [];
+        
+        let portfolioValue = 10000;
+        const riskLimit = portfolioValue * 0.85; // 15% max loss
+        
+        for (let i = 29; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            
+            // Simulate portfolio fluctuation
+            const change = (Math.random() - 0.5) * 200;
+            portfolioValue = Math.max(portfolioValue + change, 8000);
+            
+            portfolioData.push(portfolioValue);
+            riskLimitData.push(riskLimit);
+        }
+        
+        riskChart.data.labels = labels;
+        riskChart.data.datasets[0].data = portfolioData;
+        riskChart.data.datasets[1].data = riskLimitData;
+        riskChart.update();
+    }
+    
+    function updatePositionCalculation() {
+        const riskPerTrade = parseFloat($('#riskPerTrade').val()) || 2;
+        const accountBalance = parseFloat($('#accountBalance').val()) || 10000;
+        const stopLossDistance = parseFloat($('#stopLossDistance').val()) || 5;
+        
+        const riskAmount = accountBalance * (riskPerTrade / 100);
+        const positionSize = riskAmount / (stopLossDistance / 100);
+        
+        $('#calculatedPosition').text('$' + positionSize.toLocaleString(undefined, {maximumFractionDigits: 0}));
+        
+        // Update risk level
+        updateRiskLevel(riskPerTrade);
+    }
+    
+    function updateRiskLevel(riskPerTrade) {
+        let riskLevel, riskClass;
+        
+        if (riskPerTrade <= 1) {
+            riskLevel = 'Low';
+            riskClass = 'text-success';
+        } else if (riskPerTrade <= 3) {
+            riskLevel = 'Medium';
+            riskClass = 'text-warning';
+        } else {
+            riskLevel = 'High';
+            riskClass = 'text-danger';
+        }
+        
+        $('#portfolioRisk').text(riskLevel).removeClass('text-success text-warning text-danger').addClass(riskClass);
+    }
+    
+    window.saveAllSettings = function() {
+        // Collect all form data
+        const settings = {
+            position: {
+                riskPerTrade: $('#riskPerTrade').val(),
+                positionSizingMethod: $('#positionSizingMethod').val(),
+                maxPositionSize: $('#maxPositionSize').val(),
+                minPositionSize: $('#minPositionSize').val(),
+                enablePositionScaling: $('#enablePositionScaling').is(':checked'),
+                enableCorrelationCheck: $('#enableCorrelationCheck').is(':checked')
+            },
+            stopLoss: {
+                stopLossType: $('#stopLossType').val(),
+                stopLossPercentage: $('#stopLossPercentage').val(),
+                trailingStopDistance: $('#trailingStopDistance').val(),
+                takeProfitStrategy: $('#takeProfitStrategy').val(),
+                riskRewardRatio: $('#riskRewardRatio').val(),
+                enableStopLoss: $('#enableStopLoss').is(':checked'),
+                enableTakeProfit: $('#enableTakeProfit').is(':checked')
+            },
+            portfolio: {
+                maxDailyLossAmount: $('#maxDailyLossAmount').val(),
+                maxDailyLossPercent: $('#maxDailyLossPercent').val(),
+                maxOpenPositions: $('#maxOpenPositions').val(),
+                maxExposurePerAsset: $('#maxExposurePerAsset').val(),
+                enableDailyLossLimit: $('#enableDailyLossLimit').is(':checked')
+            },
+            alerts: {
+                alertEmail: $('#alertEmail').is(':checked'),
+                alertSMS: $('#alertSMS').is(':checked'),
+                alertPush: $('#alertPush').is(':checked'),
+                drawdownThreshold: $('#drawdownThreshold').val(),
+                emergencyStopLoss: $('#emergencyStopLoss').val(),
+                enableEmergencyStop: $('#enableEmergencyStop').is(':checked')
+            }
+        };
+        
+        // Here you would send the settings to the backend
+        console.log('Saving settings:', settings);
+        
+        showAlert('Risk management settings saved successfully!', 'success');
+    };
+    
+    window.resetToDefaults = function() {
+        if (confirm('Are you sure you want to reset all settings to defaults? This action cannot be undone.')) {
+            // Reset all form fields to default values
+            $('#riskPerTrade').val(2);
+            $('#accountBalance').val(10000);
+            $('#stopLossDistance').val(5);
+            $('#positionSizingMethod').val('fixed_percentage');
+            $('#maxPositionSize').val(1000);
+            $('#minPositionSize').val(50);
+            $('#stopLossType').val('percentage');
+            $('#stopLossPercentage').val(5);
+            $('#trailingStopDistance').val(3);
+            $('#takeProfitStrategy').val('fixed_ratio');
+            $('#riskRewardRatio').val(2);
+            $('#maxDailyLossAmount').val(500);
+            $('#maxDailyLossPercent').val(5);
+            $('#maxOpenPositions').val(10);
+            $('#maxExposurePerAsset').val(20);
+            $('#drawdownThreshold').val(10);
+            $('#emergencyStopLoss').val(15);
+            
+            // Reset checkboxes
+            $('#enablePositionScaling, #enableCorrelationCheck, #enableStopLoss, #enableTakeProfit, #enableDailyLossLimit, #alertEmail, #alertPush, #enableEmergencyStop').prop('checked', true);
+            $('#enableBreakEvenStop, #alertSMS, #enableCircuitBreaker').prop('checked', false);
+            
+            updatePositionCalculation();
+            showAlert('Settings reset to defaults', 'info');
+        }
+    };
+    
+    window.emergencyStopAll = function() {
+        if (confirm('EMERGENCY STOP: This will immediately halt all trading activities. Are you sure?')) {
+            // Here you would send emergency stop command to backend
+            showAlert('EMERGENCY STOP ACTIVATED - All trading halted!', 'danger');
+        }
+    };
+    
+    window.closeAllPositions = function() {
+        if (confirm('This will close all open positions at market price. Are you sure?')) {
+            // Here you would send close all positions command to backend
+            showAlert('Closing all positions...', 'warning');
+        }
+    };
+});
+</script>
+{% endblock %}

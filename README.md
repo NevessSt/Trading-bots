@@ -1,6 +1,11 @@
-# Trading Bot System
+# 🚀 Advanced Trading Bot System
 
-A comprehensive cryptocurrency trading bot system with real-time monitoring, backtesting capabilities, and a modern web interface.
+> **Professional-grade cryptocurrency trading bot with enterprise security, real-time execution, and comprehensive monitoring.**
+
+[![License](https://img.shields.io/badge/license-Commercial-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://python.org)
+[![React](https://img.shields.io/badge/react-18+-blue.svg)](https://reactjs.org)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://docker.com)
 
 ## 🚀 Features
 

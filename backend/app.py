@@ -1,6 +1,6 @@
 import os
 from datetime import timedelta
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
@@ -65,6 +65,7 @@ def register_routes(app):
         from api.backtest_routes import backtest_bp
         from api.api_key_routes import api_key_bp
         from api.notification_routes import notification_bp
+        from api.license_routes import license_bp
         
         # Register blueprints
         app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -74,6 +75,7 @@ def register_routes(app):
         app.register_blueprint(backtest_bp, url_prefix='/api/backtest')
         app.register_blueprint(api_key_bp, url_prefix='/api/api-keys')
         app.register_blueprint(notification_bp, url_prefix='/api/notifications')
+        app.register_blueprint(license_bp, url_prefix='/api/license')
     except ImportError as e:
         print(f"Warning: Could not import some routes: {e}")
         print("Starting with basic routes only...")

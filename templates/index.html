@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}TradingBot Pro - Automated Trading Platform{% endblock %}
+
+{% block unauthenticated_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Hero Section -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary mb-3">
+                <i class="fas fa-robot me-3"></i>TradingBot Pro
+            </h1>
+            <p class="lead text-muted mb-4">
+                Advanced automated trading platform with intelligent strategies, real-time market analysis, and comprehensive risk management.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>Get Started
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-6">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="text-primary mb-3">
+                            <i class="fas fa-key fa-3x"></i>
+                        </div>
+                        <h5 class="card-title">Multi-Exchange Support</h5>
+                        <p class="card-text text-muted">
+                            Connect to multiple cryptocurrency exchanges with secure API key management and real-time synchronization.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="text-success mb-3">
+                            <i class="fas fa-brain fa-3x"></i>
+                        </div>
+                        <h5 class="card-title">Smart Trading Strategies</h5>
+                        <p class="card-text text-muted">
+                            Deploy advanced trading algorithms including grid trading, DCA, scalping, and custom strategies.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="text-warning mb-3">
+                            <i class="fas fa-chart-line fa-3x"></i>
+                        </div>
+                        <h5 class="card-title">Real-Time Analytics</h5>
+                        <p class="card-text text-muted">
+                            Monitor your trading performance with detailed analytics, profit/loss tracking, and market insights.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="text-danger mb-3">
+                            <i class="fas fa-shield-alt fa-3x"></i>
+                        </div>
+                        <h5 class="card-title">Risk Management</h5>
+                        <p class="card-text text-muted">
+                            Comprehensive risk controls with stop-loss, take-profit, position sizing, and daily loss limits.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Account Info -->
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">
+                    <i class="fas fa-play-circle me-2"></i>Try Demo Account
+                </h5>
+                <p class="card-text mb-3">
+                    Experience the platform with our demo account. No registration required!
+                </p>
+                <div class="row text-center">
+                    <div class="col-md-6">
+                        <strong>Username:</strong> <code>demo</code>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Password:</strong> <code>demo123</code>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-eye me-2"></i>Login to Demo
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="row mt-5 text-center">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <h3 class="text-primary fw-bold">99.9%</h3>
+                    <p class="text-muted">Uptime</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <h3 class="text-success fw-bold">24/7</h3>
+                    <p class="text-muted">Trading</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <h3 class="text-warning fw-bold">10+</h3>
+                    <p class="text-muted">Exchanges</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hero-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+}
+
+.stats-section {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 3rem 2rem;
+}
+</style>
+{% endblock %}

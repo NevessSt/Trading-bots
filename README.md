@@ -470,7 +470,7 @@ For support and questions:
 - **Issues**: Create a GitHub issue
 - **Discussions**: Use GitHub Discussions
 - **Documentation**: Check the wiki
-- **Email**: support@tradingbot.com
+- **Email**: danielmanji38@gmail.com
 
 ## 🗺️ Roadmap
 
@@ -840,3 +840,5 @@ This project is proprietary and confidential.
 
 ## Contact
 For any inquiries, please contact the project maintainers.
+## Email for help
+danielmanji38@gmail.com

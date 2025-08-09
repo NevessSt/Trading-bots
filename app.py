@@ -242,7 +242,7 @@ def performance():
 @app.route('/market-data')
 @login_required
 def market_data():
-    return render_template('market_data.html')
+    return render_template('market.html')
 
 @app.route('/api/market-data/<symbol>')
 @login_required
@@ -271,7 +271,7 @@ def risk_settings():
         db.session.add(settings)
         db.session.commit()
     
-    return render_template('risk_settings.html', settings=settings)
+    return render_template('risk_management.html', settings=settings)
 
 @app.route('/api/risk-settings', methods=['POST'])
 @login_required

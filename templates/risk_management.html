@@ -629,11 +629,28 @@ $(document).ready(function() {
     // Initialize risk chart
     initializeRiskChart();
     
+    // Load existing settings
+    loadRiskSettings();
+    
     // Update calculations when inputs change
     $('#riskPerTrade, #accountBalance, #stopLossDistance').on('input', updatePositionCalculation);
     
     // Initial calculation
     updatePositionCalculation();
+    
+    function loadRiskSettings() {
+        // Load settings from the backend if they exist
+        {% if settings %}
+            $('#maxDailyLossPercent').val({{ settings.max_daily_loss }});
+            $('#maxPositionSize').val({{ settings.max_position_size }});
+            $('#stopLossPercentage').val({{ settings.stop_loss_percentage }});
+            $('#riskRewardRatio').val({{ settings.take_profit_percentage / settings.stop_loss_percentage if settings.stop_loss_percentage > 0 else 2 }});
+            $('#maxOpenPositions').val({{ settings.max_open_positions }});
+            
+            // Update calculations with loaded values
+            updatePositionCalculation();
+        {% endif %}
+    }
     
     function initializeRiskChart() {
         const ctx = document.getElementById('riskChart').getContext('2d');
@@ -777,10 +794,25 @@ $(document).ready(function() {
             }
         };
         
-        // Here you would send the settings to the backend
-        console.log('Saving settings:', settings);
-        
-        showAlert('Risk management settings saved successfully!', 'success');
+        // Send settings to the backend API
+        $.ajax({
+            url: '/api/risk-settings',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                max_daily_loss: parseFloat($('#maxDailyLossPercent').val()) || 5.0,
+                max_position_size: parseFloat($('#maxPositionSize').val()) || 1000.0,
+                stop_loss_percentage: parseFloat($('#stopLossPercentage').val()) || 5.0,
+                take_profit_percentage: parseFloat($('#riskRewardRatio').val()) * parseFloat($('#stopLossPercentage').val()) || 10.0,
+                max_open_positions: parseInt($('#maxOpenPositions').val()) || 5
+            }),
+            success: function(response) {
+                showAlert('Risk management settings saved successfully!', 'success');
+            },
+            error: function(xhr, status, error) {
+                showAlert('Error saving settings: ' + (xhr.responseJSON?.error || error), 'danger');
+            }
+        });
     };
     
     window.resetToDefaults = function() {

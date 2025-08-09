@@ -384,18 +384,33 @@ $(document).ready(function() {
     }
     
     function loadMarketData() {
-        // Simulate real market data
-        const btcPrice = 45000 + (Math.random() - 0.5) * 2000;
-        const ethPrice = 3000 + (Math.random() - 0.5) * 200;
-        const btcChange = (Math.random() - 0.5) * 10;
-        const ethChange = (Math.random() - 0.5) * 10;
+        // Load BTC data
+        $.ajax({
+            url: '/api/market-data/BTCUSDT',
+            method: 'GET',
+            success: function(data) {
+                $('#btcPrice').text('$' + data.price.toLocaleString(undefined, {maximumFractionDigits: 0}));
+                updatePriceChange('#btcChange', data.change_24h);
+            },
+            error: function() {
+                console.error('Failed to load BTC data');
+            }
+        });
         
-        $('#btcPrice').text('$' + btcPrice.toLocaleString(undefined, {maximumFractionDigits: 0}));
-        $('#ethPrice').text('$' + ethPrice.toLocaleString(undefined, {maximumFractionDigits: 0}));
+        // Load ETH data
+        $.ajax({
+            url: '/api/market-data/ETHUSDT',
+            method: 'GET',
+            success: function(data) {
+                $('#ethPrice').text('$' + data.price.toLocaleString(undefined, {maximumFractionDigits: 0}));
+                updatePriceChange('#ethChange', data.change_24h);
+            },
+            error: function() {
+                console.error('Failed to load ETH data');
+            }
+        });
         
-        updatePriceChange('#btcChange', btcChange);
-        updatePriceChange('#ethChange', ethChange);
-        
+        // Update market cap and fear & greed (keep simulated for now)
         $('#marketCap').text('$' + (2.1 + Math.random() * 0.2).toFixed(1) + 'T');
         
         const fearGreed = Math.floor(Math.random() * 100);
@@ -446,32 +461,41 @@ $(document).ready(function() {
         tbody.empty();
         
         watchlistSymbols.forEach(symbol => {
-            const price = Math.random() * 1000 + 100;
-            const change = (Math.random() - 0.5) * 10;
-            const isPositive = change >= 0;
-            
-            const row = `
-                <tr class="watchlist-row" data-symbol="${symbol}">
-                    <td><strong>${symbol.replace('USDT', '/USDT')}</strong></td>
-                    <td>$${price.toFixed(2)}</td>
-                    <td class="${isPositive ? 'text-success' : 'text-danger'}">
-                        ${(isPositive ? '+' : '')}${change.toFixed(2)}%
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromWatchlist('${symbol}')">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-            tbody.append(row);
+            $.ajax({
+                url: `/api/market-data/${symbol}`,
+                method: 'GET',
+                success: function(data) {
+                    const isPositive = data.change_24h >= 0;
+                    
+                    const row = `
+                        <tr class="watchlist-row" data-symbol="${symbol}">
+                            <td><strong>${symbol.replace('USDT', '/USDT')}</strong></td>
+                            <td>$${data.price.toFixed(2)}</td>
+                            <td class="${isPositive ? 'text-success' : 'text-danger'}">
+                                ${(isPositive ? '+' : '')}${data.change_24h.toFixed(2)}%
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeFromWatchlist('${symbol}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                },
+                error: function() {
+                    console.error(`Failed to load data for ${symbol}`);
+                }
+            });
         });
         
-        // Add click handler for watchlist rows
-        $('.watchlist-row').click(function() {
-            const symbol = $(this).data('symbol');
-            $('#symbolSelect').val(symbol).trigger('change');
-        });
+        // Add click handler for watchlist rows (with delay to ensure rows are loaded)
+        setTimeout(() => {
+            $('.watchlist-row').click(function() {
+                const symbol = $(this).data('symbol');
+                $('#symbolSelect').val(symbol).trigger('change');
+            });
+        }, 1000);
     }
     
     function loadOrderBook() {

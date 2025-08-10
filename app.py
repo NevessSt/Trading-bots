@@ -8,10 +8,44 @@ import json
 import requests
 from functools import wraps
 
+# Import license validation
+try:
+    from backend.license_check import verify_license, check_feature, get_license_status
+except ImportError:
+    print("Warning: License validation not available. Running in development mode.")
+    def verify_license():
+        return True, "Development mode"
+    def check_feature(feature):
+        return True
+    def get_license_status():
+        return {'valid': True, 'message': 'Development mode', 'license_type': 'development'}
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trading_bot.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# License validation decorator
+def license_required(feature=None):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            is_valid, message = verify_license()
+            if not is_valid:
+                if request.is_json:
+                    return jsonify({'error': 'License validation failed', 'message': message}), 403
+                flash(f'License Error: {message}', 'error')
+                return redirect(url_for('license_status'))
+            
+            if feature and not check_feature(feature):
+                if request.is_json:
+                    return jsonify({'error': 'Feature not available', 'feature': feature}), 403
+                flash(f'Feature "{feature}" not available in your license', 'warning')
+                return redirect(url_for('license_status'))
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -148,6 +182,7 @@ def logout():
 
 @app.route('/dashboard')
 @login_required
+@license_required('basic_trading')
 def dashboard():
     # Get user statistics
     total_trades = Trade.query.filter_by(user_id=current_user.id).count()
@@ -165,12 +200,14 @@ def dashboard():
 
 @app.route('/api-keys')
 @login_required
+@license_required('basic_trading')
 def api_keys():
     keys = APIKey.query.filter_by(user_id=current_user.id).all()
     return render_template('api_keys.html', api_keys=keys)
 
 @app.route('/api/api-keys', methods=['POST'])
 @login_required
+@license_required('basic_trading')
 def add_api_key():
     data = request.get_json()
     
@@ -196,6 +233,7 @@ def strategies():
 
 @app.route('/api/strategies', methods=['POST'])
 @login_required
+@license_required('advanced_trading')
 def create_strategy():
     data = request.get_json()
     
@@ -214,6 +252,7 @@ def create_strategy():
 
 @app.route('/performance')
 @login_required
+@license_required('portfolio_management')
 def performance():
     # Calculate performance metrics
     trades = Trade.query.filter_by(user_id=current_user.id).all()
@@ -241,11 +280,13 @@ def performance():
 
 @app.route('/market-data')
 @login_required
+@license_required('market_data')
 def market_data():
     return render_template('market.html')
 
 @app.route('/api/market-data/<symbol>')
 @login_required
+@license_required('market_data')
 def get_market_data(symbol):
     # Mock market data - in production, integrate with real exchange APIs
     import random
@@ -264,6 +305,7 @@ def get_market_data(symbol):
 
 @app.route('/risk-settings')
 @login_required
+@license_required('risk_management')
 def risk_settings():
     settings = RiskSetting.query.filter_by(user_id=current_user.id).first()
     if not settings:
@@ -275,6 +317,7 @@ def risk_settings():
 
 @app.route('/api/risk-settings', methods=['POST'])
 @login_required
+@license_required('risk_management')
 def update_risk_settings():
     data = request.get_json()
     
@@ -293,6 +336,89 @@ def update_risk_settings():
     db.session.commit()
     
     return jsonify({'message': 'Risk settings updated successfully'})
+
+@app.route('/license-status')
+def license_status():
+    """Display license status information."""
+    license_info = get_license_status()
+    return render_template('license_status.html', license_info=license_info)
+
+@app.route('/api/license-status')
+def api_license_status():
+    """API endpoint for license status."""
+    license_info = get_license_status()
+    return jsonify(license_info)
+
+@app.route('/activate-license', methods=['GET', 'POST'])
+@login_required
+def activate_license():
+    """License activation page"""
+    if request.method == 'POST':
+        license_code = request.form.get('license_code', '').strip()
+        
+        if not license_code:
+            flash('Please enter a license code', 'error')
+            return render_template('activate_license.html')
+        
+        try:
+            from backend.license_activation import LicenseActivator
+            activator = LicenseActivator()
+            success, message = activator.activate_license(license_code)
+            
+            if success:
+                flash(message, 'success')
+                return redirect(url_for('license_status'))
+            else:
+                flash(message, 'error')
+                
+        except Exception as e:
+            flash(f'Activation failed: {str(e)}', 'error')
+    
+    return render_template('activate_license.html')
+
+@app.route('/api/activate-license', methods=['POST'])
+@login_required
+def api_activate_license():
+    """API endpoint for license activation"""
+    data = request.get_json()
+    license_code = data.get('license_code', '').strip()
+    
+    if not license_code:
+        return jsonify({
+            'success': False,
+            'message': 'License code is required'
+        }), 400
+    
+    try:
+        from backend.license_activation import LicenseActivator
+        activator = LicenseActivator()
+        success, message = activator.activate_license(license_code)
+        
+        return jsonify({
+            'success': success,
+            'message': message
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Activation failed: {str(e)}'
+        }), 500
+
+@app.route('/api/machine-id')
+@login_required
+def api_machine_id():
+    """API endpoint to get machine ID"""
+    try:
+        from tools.machine_id import generate_machine_id
+        machine_id = generate_machine_id()
+        return jsonify({
+            'machine_id': machine_id
+        })
+    except Exception as e:
+        return jsonify({
+            'error': f'Failed to get machine ID: {str(e)}'
+        }), 500
 
 if __name__ == '__main__':
     with app.app_context():

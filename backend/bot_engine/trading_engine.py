@@ -13,6 +13,16 @@ import os
 from ccxt.base.errors import BaseError, NetworkError, ExchangeError, InvalidOrder, InsufficientFunds
 from concurrent.futures import ThreadPoolExecutor
 
+# Import license validation
+try:
+    from backend.license_check import verify_license, check_feature
+except ImportError:
+    logger.warning("License validation not available. Running in development mode.")
+    def verify_license():
+        return True, "Development mode"
+    def check_feature(feature):
+        return True
+
 # Import strategies
 from .strategies.rsi_strategy import RSIStrategy
 from .strategies.macd_strategy import MACDStrategy
@@ -42,12 +52,19 @@ class TradingEngine:
             api_secret (str, optional): Binance API secret
             testnet (bool, optional): Use testnet environment
         """
+        # Validate license before initialization
+        is_valid, message = verify_license()
+        if not is_valid:
+            raise Exception(f"License validation failed: {message}")
+        
         self.api_key = api_key or os.getenv('BINANCE_API_KEY')
         self.api_secret = api_secret or os.getenv('BINANCE_API_SECRET')
         self.testnet = testnet if testnet is not None else os.getenv('BINANCE_TESTNET', 'True').lower() == 'true'
         self.exchange = None
         self.active_bots = {}  # Dict of active bots: {bot_id: bot_thread}
         self.websocket_connections = {}  # Dict of WebSocket connections: {symbol: connection}
+        
+        logger.info("Trading engine initialized with valid license")
         self.real_time_data = {}  # Dict of real-time price data: {symbol: latest_data}
         self.executor = ThreadPoolExecutor(max_workers=10)
         self.strategies = {
@@ -135,6 +152,22 @@ class TradingEngine:
             str: Bot ID
         """
         try:
+            # Validate license and features
+            is_valid, message = verify_license()
+            if not is_valid:
+                logger.error(f"License validation failed: {message}")
+                raise Exception(f"License validation failed: {message}")
+            
+            if not check_feature('basic_trading'):
+                logger.error("Basic trading feature not available in license")
+                raise Exception("Basic trading feature not available in license")
+            
+            # Check for advanced strategies
+            advanced_strategies = ['macd', 'bollinger_bands', 'fibonacci']
+            if strategy in advanced_strategies and not check_feature('advanced_trading'):
+                logger.error(f"Advanced strategy '{strategy}' not available in license")
+                raise Exception(f"Advanced strategy '{strategy}' not available in license")
+            
             # Validate parameters
             if not self.exchange:
                 logger.error("Exchange not initialized")

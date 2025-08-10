@@ -98,19 +98,65 @@ Create `.env.prod` file with production values:
 # Use strong, unique passwords for production
 POSTGRES_PASSWORD=very_secure_production_password
 REDIS_PASSWORD=very_secure_redis_password
-SECRET_KEY=very_long_random_secret_key
-JWT_SECRET=very_long_random_jwt_secret
-
-# Production Binance API (live trading)
-BINANCE_TESTNET=false
-
-# Add additional production-specific configurations
-FLASK_ENV=production
-SSL_CERT_PATH=/etc/nginx/ssl/cert.pem
-SSL_KEY_PATH=/etc/nginx/ssl/key.pem
 ```
 
-### 3. Development Setup
+### 3. License Setup
+
+**⚠️ IMPORTANT: This application requires a valid license to operate.**
+
+#### Quick Start - Trial License
+For immediate testing, create a 30-day trial license:
+
+```bash
+# Generate trial license for current machine
+python create_trial_license.py
+```
+
+This will:
+- Generate a unique machine ID for your system
+- Create a trial license valid for 30 days
+- Enable all features for evaluation
+
+#### License Features by Type
+
+| Feature | Trial | Standard | Premium | Enterprise |
+|---------|-------|----------|---------|------------|
+| Basic Trading | ✅ | ✅ | ✅ | ✅ |
+| Advanced Strategies | ✅ | ✅ | ✅ | ✅ |
+| Portfolio Management | ✅ | ❌ | ✅ | ✅ |
+| Risk Management | ✅ | ✅ | ✅ | ✅ |
+| Market Data Access | ✅ | ✅ | ✅ | ✅ |
+| API Access | ❌ | ✅ | ✅ | ✅ |
+| Multi-Exchange | ❌ | ❌ | ✅ | ✅ |
+| Custom Indicators | ❌ | ❌ | ✅ | ✅ |
+| White Label | ❌ | ❌ | ❌ | ✅ |
+
+#### Manual License Installation
+If you have a license file:
+
+1. Place your `license_key.bin` file in the root directory
+2. Ensure the license is bound to your machine ID
+3. Start the application
+
+#### License Validation
+The application validates licenses on:
+- Application startup
+- Trading bot creation
+- Feature access
+- API endpoint access
+
+To check your license status:
+- Visit: `http://localhost:5000/license-status`
+- Or check logs during application startup
+
+#### Obtaining a License
+For production licenses:
+1. Generate your machine ID: `python tools/machine_id.py`
+2. Contact support with your machine ID
+3. Receive your licensed `license_key.bin` file
+4. Place the file in the root directory
+
+### 4. Development Setup
 
 #### Backend Setup
 ```bash
@@ -135,7 +181,7 @@ npm install
 npm start
 ```
 
-### 4. Docker Development
+### 5. Docker Development
 ```bash
 # Start all services
 docker-compose up -d

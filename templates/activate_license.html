@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate License - Trading Bot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .activation-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .license-code-input {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        .activation-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .activation-header i {
+            font-size: 48px;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .steps {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .step-number {
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container">
+        <div class="activation-container">
+            <div class="activation-header">
+                <i class="fas fa-key"></i>
+                <h2>Activate Your License</h2>
+                <p class="text-muted">Enter your license code to activate your trading bot</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Activation Form -->
+            <form method="POST" id="activationForm">
+                <div class="mb-4">
+                    <label for="license_code" class="form-label">
+                        <i class="fas fa-ticket-alt"></i> License Code
+                    </label>
+                    <textarea class="form-control" id="license_code" name="license_code" rows="4" 
+                            placeholder="Enter your license code here..." required 
+                            oninput="cleanLicenseCode(this)"></textarea>
+                    <div class="form-text">
+                        Paste the complete license code you received from your purchase. Spaces and line breaks will be automatically removed.
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg" id="activateBtn">
+                        <i class="fas fa-unlock"></i> Activate License
+                    </button>
+                </div>
+            </form>
+
+            <!-- Information Box -->
+            <div class="info-box">
+                <h6><i class="fas fa-info-circle"></i> How License Activation Works</h6>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>Purchase a license and receive your unique license code</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>Enter the license code in the field above</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>Click "Activate License" to bind it to your machine</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div>Start using all licensed features immediately</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body text-center">
+                            <i class="fas fa-shield-alt text-success mb-2" style="font-size: 24px;"></i>
+                            <h6>Secure Activation</h6>
+                            <small class="text-muted">Your license is encrypted and bound to this machine</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body text-center">
+                            <i class="fas fa-clock text-info mb-2" style="font-size: 24px;"></i>
+                            <h6>Instant Access</h6>
+                            <small class="text-muted">Features are available immediately after activation</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+                <a href="{{ url_for('license_status') }}" class="btn btn-outline-info ms-2">
+                    <i class="fas fa-info-circle"></i> Check License Status
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form submission handling
+        document.getElementById('activationForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('activateBtn');
+            const originalText = btn.innerHTML;
+            
+            // Show loading state
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Activating...';
+            btn.disabled = true;
+            
+            // Re-enable button after a delay if form doesn't submit
+            setTimeout(() => {
+                if (btn.disabled) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }, 10000);
+        });
+
+        // Clean and format license code input
+         function cleanLicenseCode(textarea) {
+             // Remove spaces, line breaks, but keep original case for base64
+             let cleaned = textarea.value.replace(/\s+/g, '');
+             textarea.value = cleaned;
+         }
+    </script>
+</body>
+</html>

@@ -269,6 +269,13 @@
                         <a class="nav-link {{ 'active' if request.endpoint == 'risk_settings' }}" href="{{ url_for('risk_settings') }}">
                             <i class="fas fa-shield-alt me-2"></i>Risk Settings
                         </a>
+                        <hr class="my-2 mx-3">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'license_status' }}" href="{{ url_for('license_status') }}">
+                            <i class="fas fa-certificate me-2"></i>License Status
+                        </a>
+                        <a class="nav-link {{ 'active' if request.endpoint == 'activate_license' }}" href="{{ url_for('activate_license') }}">
+                            <i class="fas fa-key me-2"></i>Activate License
+                        </a>
                     </nav>
                 </div>
             </div>

@@ -1,0 +1,455 @@
+# Core Framework
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.3
+Flask-WTF==1.1.1
+WTForms==3.0.1
+Werkzeug==2.3.7
+FastAPI==0.104.1  # Alternative API framework
+uvicorn==0.24.0   # ASGI server for FastAPI
+
+# Database
+SQLAlchemy==2.0.21
+
+# Trading and Market Data
+ccxt==4.1.25           # Cryptocurrency exchange trading library
+python-binance==1.0.19 # Binance API client
+alpha-vantage==2.3.1   # Stock market data (alternative to alphavantage-api)
+yfinance==0.2.22       # Yahoo Finance data
+quandl==3.7.0          # Financial and economic datasets
+coinmarketcapapi==0.4  # CoinMarketCap API client
+
+# Data Analysis and Scientific Computing
+pandas==2.1.1
+numpy==1.25.2
+scipy==1.11.3
+scikit-learn==1.3.0
+TA-Lib==0.4.28
+
+# Visualization and Plotting
+matplotlib==3.7.2
+seaborn==0.12.2
+plotly==5.17.0
+
+# Async and Concurrency
+aiohttp==3.8.6
+aiofiles==23.2.1
+
+# Caching and Performance
+redis==5.0.1
+cachetools==5.3.2
+
+# Security and Encryption
+cryptography==41.0.7
+PyJWT==2.8.0
+bcrypt==4.0.1
+passlib==1.7.4
+
+# Configuration and Environment
+python-dotenv==1.0.0
+PyYAML==6.0.1
+
+# Logging and Monitoring
+loguru==0.7.2
+psutil==5.9.6
+APScheduler==3.10.4
+
+# Notifications
+twilio==8.10.0
+slack-sdk==3.22.0
+
+# Testing
+pytest==7.4.2
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# Development Tools
+black==23.9.1
+flake8==6.1.0
+mypy==1.6.1
+
+# Production Server
+gunicorn==21.2.0
+gevent==23.9.1
+
+# API Documentation
+Flask-RESTX==1.2.0
+flasgger==0.9.7.1
+
+# Time and Date Handling
+pytz==2023.3
+python-dateutil==2.8.2
+arrow==1.3.0
+
+# Mathematical and Statistical
+statsmodels==0.14.0    # Statistical models
+arch==6.2.0            # ARCH/GARCH models
+empyrical==0.5.5       # Financial risk and performance analytics
+pandas-ta==0.3.14b0    # Technical Analysis Indicators
+patsy==0.5.3           # Statistical models formula API
+
+# Machine Learning (Optional)
+tensorflow==2.13.0     # Deep learning framework
+torch==2.0.1           # PyTorch deep learning
+xgboost==1.7.6         # Gradient boosting
+lightgbm==4.1.0        # Gradient boosting framework
+scikit-optimize==0.9.0 # Hyperparameter optimization
+keras==2.13.1          # High-level neural networks API
+optuna==3.4.0          # Hyperparameter optimization framework
+ray[tune]==2.7.1       # Distributed computing and hyperparameter tuning
+
+# Feature Engineering
+featuretools==1.27.0    # Automated feature engineering
+tsfresh==0.20.1         # Time series feature extraction
+
+# Utilities
+tqdm==4.66.1
+click==8.1.7
+colorama==0.4.6
+tabulate==0.9.0
+jsonschema==4.19.1
+
+# File Handling
+openpyxl==3.1.2
+
+# Network and HTTP
+urllib3==2.0.7
+httpx==0.25.0
+
+# WebSocket for Real-time Data
+websockets==11.0.3
+
+# Job Queue (Optional)
+celery==5.3.4
+
+# Health Monitoring
+prometheus-client==0.18.0
+
+# CORS Support
+Flask-CORS==4.0.0
+
+# Session Management
+Flask-Session==0.5.0
+
+# Rate Limiting
+Flask-Limiter==3.5.0
+
+# Image Processing (for charts)
+Pillow==10.0.1
+
+# PDF Generation (for reports)
+reportlab==4.0.5
+
+# Excel Export
+xlsxwriter==3.1.9
+
+# Additional Financial Libraries
+pyfolio==0.9.2         # Portfolio and risk analytics
+empyrical==0.5.5       # Financial risk and performance analytics
+financial-indicators==0.1.2 # Technical indicators
+backtrader==1.9.78.123 # Backtesting framework
+zipline==2.2.0         # Algorithmic trading library
+
+# Typing Extensions
+typing_extensions==4.8.0
+
+# Pydantic for Data Validation
+pydantic==2.4.2
+
+# Email Templates
+Jinja2==3.1.2
+
+# Backup and Storage
+boto3==1.29.7
+
+# Memory Profiling
+memory-profiler==0.61.0
+
+# Additional Dependencies
+six==1.16.0
+attrs==23.1.0
+packaging==23.2
+setuptools==68.2.2
+wheel==0.41.3
+
+# Database Drivers
+psycopg2-binary==2.9.9
+PyMySQL==1.1.0
+
+# Additional Utilities
+more-itertools==10.1.0
+importlib-metadata==6.8.0
+zipp==3.17.0
+
+# Marshmallow for Serialization
+marshmallow==3.20.1
+marshmallow-sqlalchemy==0.29.0
+
+# API Specification
+apispec==6.3.0
+
+# Additional Flask Extensions
+Flask-RESTful==0.3.10
+Flask-Marshmallow==0.15.0
+
+# Date Utilities
+aniso8601==9.0.1
+
+# JSON Schema Validation
+jsonschema-specifications==2023.7.1
+referencing==0.30.2
+rpds-py==0.12.0
+
+# Platform Utilities
+platformdirs==3.11.0
+
+# Configuration Parsing
+tomli==2.0.1
+
+# Additional Scientific Libraries
+empyrical==0.5.5
+pyfolio==0.9.2
+
+# Network and HTTP
+websocket-client==1.6.4
+websockets==11.0.3  # WebSocket for real-time data
+httpx==0.25.0       # Modern HTTP client
+aiohttp==3.8.6      # Async HTTP
+urllib3==2.0.7      # HTTP utilities
+requests==2.31.0    # HTTP client
+
+# File Operations
+aiofiles==23.2.1
+
+# Caching
+cachetools==5.3.2
+
+# Progress Bars
+tqdm==4.66.1
+
+# Command Line Interface
+click==8.1.7
+
+# Terminal Colors
+colorama==0.4.6
+
+# Table Formatting
+tabulate==0.9.0
+
+# System Information
+psutil==5.9.6
+
+# Task Scheduling
+APScheduler==3.10.4
+
+# Logging
+loguru==0.7.2
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# YAML Configuration
+PyYAML==6.0.1
+
+# Time Zones
+pytz==2023.3
+
+# Date Parsing
+python-dateutil==2.8.2
+
+# Modern Date/Time
+arrow==1.3.0
+
+# Cryptography
+cryptography==41.0.7
+
+# JWT Tokens
+PyJWT==2.8.0
+
+# Password Hashing
+bcrypt==4.0.1
+passlib==1.7.4
+
+# Redis Client
+redis==5.0.1
+
+# Message Queue
+celery==5.3.4
+
+# Monitoring
+prometheus-client==0.18.0
+
+# Testing Framework
+pytest==7.4.2
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# Code Formatting
+black==23.9.1
+
+# Code Linting
+flake8==6.1.0
+
+# Type Checking
+mypy==1.6.1
+
+# Production WSGI Server
+gunicorn==21.2.0
+
+# Async Support
+gevent==23.9.1
+
+# API Documentation
+flasgger==0.9.7.1
+
+# CORS Support
+Flask-CORS==4.0.0
+
+# Rate Limiting
+Flask-Limiter==3.5.0
+
+# Session Management
+Flask-Session==0.5.0
+
+# Image Processing
+Pillow==10.0.1
+
+# PDF Reports
+reportlab==4.0.5
+
+# Excel Files
+xlsxwriter==3.1.9
+openpyxl==3.1.2
+
+# Financial Data
+yfinance==0.2.22
+quandl==3.7.0
+
+# Cloud Storage
+boto3==1.29.7
+
+# Performance Profiling
+memory-profiler==0.61.0
+
+# Notifications
+twilio==8.10.0
+slack-sdk==3.22.0
+
+# Socket.IO for real-time web communication
+Flask-SocketIO==5.3.6
+python-socketio==5.10.0
+python-engineio==4.8.0
+
+# Telegram Bot API (for notifications)
+python-telegram-bot==20.6  # Added for Telegram notifications
+
+# Data Validation
+pydantic==2.4.2
+
+# Type Extensions
+typing_extensions==4.8.0
+
+# Utility Libraries
+more-itertools==10.1.0
+retrying==1.3.4         # Retry operations
+tenacity==8.2.3         # Retry library with advanced features
+fuzzy-wuzzy==0.18.0     # String matching
+python-Levenshtein==0.21.1  # Fast string matching
+
+# Package Management
+packaging==23.2
+setuptools==68.2.2
+wheel==0.41.3
+
+# Metadata
+importlib-metadata==6.8.0
+zipp==3.17.0
+
+# Platform Detection
+platformdirs==3.11.0
+
+# TOML Support
+tomli==2.0.1
+
+# JSON Schema
+jsonschema==4.19.1
+jsonschema-specifications==2023.7.1
+referencing==0.30.2
+rpds-py==0.12.0
+
+# Serialization
+marshmallow==3.20.1
+marshmallow-sqlalchemy==0.29.0
+
+# Flask Extensions
+Flask-Marshmallow==0.15.0
+Flask-RESTful==0.3.10
+Flask-RESTX==1.2.0
+
+# API Specifications
+apispec==6.3.0
+
+# Date/Time Utilities
+aniso8601==9.0.1
+
+# Alternative Framework
+fastapi==0.104.1
+uvicorn==0.24.0
+
+# Database Drivers
+psycopg2-binary==2.9.9
+PyMySQL==1.1.0
+
+# Authentication and Security
+Flask-JWT-Extended==4.5.3  # JWT authentication for Flask
+OAuthLib==3.2.2           # OAuth implementation
+Flask-OAuthlib==0.9.6     # OAuth for Flask
+pyOpenSSL==23.3.0         # TLS/SSL toolkit
+argon2-cffi==23.1.0       # Password hashing
+
+# Distributed Computing
+dask==2023.10.1        # Parallel computing
+ray==2.7.1             # Distributed computing framework
+
+# Deployment Tools
+supervisor==4.2.5       # Process control system
+nginx-python==0.0.3     # Nginx configuration
+fabric==3.2.2          # Remote execution and deployment
+ansible==8.5.0         # Infrastructure automation
+terraform-python==0.1.0 # Infrastructure as code
+
+# Streaming Data Processing
+kafka-python==2.0.2    # Kafka client
+faust-streaming==0.10.16 # Stream processing
+
+# Containerization
+docker==6.1.3
+docker-compose==1.29.2
+
+# CI/CD
+pytest-github-actions-annotate-failures==0.2.0
+
+# Documentation
+Sphinx==7.2.6
+sphinx-rtd-theme==1.3.0
+mkdocs==1.5.3
+
+# Dependency Management
+pipdeptree==2.13.0
+pip-audit==2.6.1
+
+# Version Management
+bumpversion==0.6.0
+
+# Disclaimer: This requirements file includes packages for development, testing, and production.
+# For a minimal installation, consider creating separate requirements files for different environments.
+
+# Note: Some packages may have conflicting dependencies. It's recommended to use virtual environments
+# and install packages in groups as needed for your specific use case.
+
+# IMPORTANT: This trading bot requires a proper Python package structure.
+# The main application imports modules from the 'backend' directory, which should be set up as a Python package.
+# To run the application:
+# 1. Install the minimal required packages: pip install flask flask-socketio flask-sqlalchemy flask-login flask-wtf sqlalchemy ccxt python-binance alpha-vantage redis flask-cors
+# 2. Make sure the 'backend' directory contains all necessary modules and is properly structured with __init__.py files
+# 3. Run the application with: python main.py

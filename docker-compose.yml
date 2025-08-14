@@ -1,56 +1,91 @@
+# TradingBot Pro - Docker Compose Configuration
+# Development and testing environment setup
+
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15
-    container_name: trading_bot_db
-    environment:
-      POSTGRES_DB: trading_bot_db
-      POSTGRES_USER: trading_user
-      POSTGRES_PASSWORD: trading_password123
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - trading_network
-
-  # Redis for caching and session storage
-  redis:
-    image: redis:7-alpine
-    container_name: trading_bot_redis
-    ports:
-      - "6379:6379"
-    networks:
-      - trading_network
-
-  # Backend API
-  backend:
+  # Main TradingBot Application
+  tradingbot:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
-    container_name: trading_bot_backend
-    environment:
-      - DATABASE_URL=postgresql://trading_user:trading_password123@postgres:5432/trading_bot_db
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
-      - STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
-      - STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-      - FLASK_ENV=production
-      - FLASK_DEBUG=False
+      target: development
+    container_name: tradingbot-app
+    restart: unless-stopped
     ports:
       - "5000:5000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - DATABASE_URL=postgresql://tradingbot:tradingbot123@postgres:5432/tradingbot_dev
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - JWT_SECRET_KEY=dev-jwt-secret-key-change-in-production
+      - BINANCE_TESTNET=True
+      - COINBASE_SANDBOX=True
+      - LOG_LEVEL=INFO
+      - FLASK_HOST=0.0.0.0
+      - FLASK_PORT=5000
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./backups:/app/backups
+      - ./.env:/app/.env:ro
     depends_on:
       - postgres
       - redis
-    volumes:
-      - ./backend:/app
-      - /app/venv
     networks:
-      - trading_network
+      - tradingbot-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: tradingbot-postgres
     restart: unless-stopped
+    environment:
+      - POSTGRES_DB=tradingbot_dev
+      - POSTGRES_USER=tradingbot
+      - POSTGRES_PASSWORD=tradingbot123
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - tradingbot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tradingbot -d tradingbot_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache and Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: tradingbot-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis123
+    environment:
+      - REDIS_PASSWORD=redis123
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "6379:6379"
+    networks:
+      - tradingbot-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Frontend React App
   frontend:
@@ -64,34 +99,166 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      - tradingbot
     volumes:
       - ./frontend:/app
       - /app/node_modules
     networks:
-      - trading_network
+      - tradingbot-network
     restart: unless-stopped
 
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy (Optional)
   nginx:
     image: nginx:alpine
-    container_name: trading_bot_nginx
+    container_name: tradingbot-nginx
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
     depends_on:
-      - frontend
-      - backend
+      - tradingbot
     networks:
-      - trading_network
-    restart: unless-stopped
+      - tradingbot-network
+    profiles:
+      - production
 
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: tradingbot-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - tradingbot-network
+    profiles:
+      - monitoring
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: tradingbot-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - tradingbot-network
+    profiles:
+      - monitoring
+
+  # Celery Worker for Background Tasks
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: tradingbot-celery-worker
+    restart: unless-stopped
+    command: celery -A backend.tasks.celery worker --loglevel=info --concurrency=4
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://tradingbot:tradingbot123@postgres:5432/tradingbot_dev
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    volumes:
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - tradingbot-network
+    profiles:
+      - background-tasks
+
+  # Celery Beat Scheduler
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: tradingbot-celery-beat
+    restart: unless-stopped
+    command: celery -A backend.tasks.celery beat --loglevel=info
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://tradingbot:tradingbot123@postgres:5432/tradingbot_dev
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    volumes:
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - tradingbot-network
+    profiles:
+      - background-tasks
+
+  # pgAdmin for Database Management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: tradingbot-pgadmin
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@tradingbot.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - tradingbot-network
+    profiles:
+      - database-admin
+
+# Named Volumes
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  pgadmin_data:
+    driver: local
 
+# Networks
 networks:
-  trading_network:
+  tradingbot-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

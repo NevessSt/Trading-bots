@@ -6,82 +6,466 @@ import uuid
 import asyncio
 import websockets
 import json
+import logging
 from datetime import datetime, timedelta
 from threading import Thread
 from flask import current_app
 import os
-from ccxt.base.errors import BaseError, NetworkError, ExchangeError, InvalidOrder, InsufficientFunds
-from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass, asdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from ccxt.base.errors import BaseError, NetworkError, ExchangeError, InvalidOrder, InsufficientFunds, AuthenticationError
 
 # Import license validation
-try:
-    from backend.license_check import verify_license, check_feature
-except ImportError:
-    logger.warning("License validation not available. Running in development mode.")
-    def verify_license():
-        return True, "Development mode"
-    def check_feature(feature):
-        return True
+from backend.auth.license_manager import LicenseManager
 
-# Import strategies
-from .strategies.rsi_strategy import RSIStrategy
-from .strategies.macd_strategy import MACDStrategy
-from .strategies.ema_crossover_strategy import EMACrossoverStrategy
+# Import trading strategies
+from backend.bot_engine.strategies.rsi_strategy import RSIStrategy
+from backend.bot_engine.strategies.macd_strategy import MACDStrategy
+from backend.bot_engine.strategies.ema_crossover_strategy import EMACrossoverStrategy
+from backend.bot_engine.strategies.advanced_grid_strategy import AdvancedGridStrategy
+from backend.bot_engine.strategies.smart_dca_strategy import SmartDCAStrategy
+from backend.bot_engine.strategies.advanced_scalping_strategy import AdvancedScalpingStrategy
+from backend.bot_engine.strategies.strategy_factory import StrategyFactory
 
-# Import risk manager
-from .risk_manager import RiskManager
+# Import advanced components
+from backend.bot_engine.advanced_risk_manager import AdvancedRiskManager
+from backend.bot_engine.portfolio_manager import PortfolioManager
+from backend.bot_engine.market_data_manager import MarketDataManager
+from backend.bot_engine.backtesting_engine import BacktestingEngine
 
 # Import models
-from models.trade import Trade
-from models.user import User
-from models.bot import Bot
+from backend.models.trade import Trade
+from backend.models.user import User
+from backend.models.bot import Bot
 
-# Import utils
-from utils.notification import NotificationManager
-from utils.logger import logger
-from utils.security import security_manager
+# Import utilities
+from backend.utils.notifications import send_notification
+from backend.utils.logging_config import setup_logging
+from backend.utils.security import encrypt_data, decrypt_data
+
+@dataclass
+class TradingBotConfig:
+    """Configuration for individual trading bot"""
+    user_id: int
+    bot_id: str
+    strategy_name: str
+    symbol: str
+    timeframe: str
+    parameters: Dict[str, Any]
+    risk_settings: Dict[str, Any]
+    is_active: bool = True
+    max_positions: int = 5
+    position_size: float = 0.02  # 2% of portfolio per position
+    stop_loss: float = 0.05  # 5% stop loss
+    take_profit: float = 0.10  # 10% take profit
 
 class TradingEngine:
-    """Main trading engine that manages all trading operations"""
+    """Production-ready Advanced Trading Engine with comprehensive features"""
     
-    def __init__(self, api_key=None, api_secret=None, testnet=None):
-        """Initialize the trading engine
+    def __init__(self, 
+                 api_key: Optional[str] = None, 
+                 api_secret: Optional[str] = None, 
+                 testnet: bool = True,
+                 initial_capital: float = 100000,
+                 max_concurrent_bots: int = 50,
+                 enable_advanced_features: bool = True):
+        """
+        Initialize the trading engine with advanced capabilities
         
         Args:
-            api_key (str, optional): Binance API key
-            api_secret (str, optional): Binance API secret
-            testnet (bool, optional): Use testnet environment
+            api_key: Exchange API key
+            api_secret: Exchange API secret
+            testnet: Use testnet/sandbox mode
+            initial_capital: Initial capital for portfolio management
+            max_concurrent_bots: Maximum number of concurrent trading bots
+            enable_advanced_features: Enable advanced features (portfolio optimization, etc.)
         """
-        # Validate license before initialization
-        is_valid, message = verify_license()
-        if not is_valid:
-            raise Exception(f"License validation failed: {message}")
-        
         self.api_key = api_key or os.getenv('BINANCE_API_KEY')
         self.api_secret = api_secret or os.getenv('BINANCE_API_SECRET')
         self.testnet = testnet if testnet is not None else os.getenv('BINANCE_TESTNET', 'True').lower() == 'true'
-        self.exchange = None
-        self.active_bots = {}  # Dict of active bots: {bot_id: bot_thread}
+        self.initial_capital = initial_capital
+        self.max_concurrent_bots = max_concurrent_bots
+        self.enable_advanced_features = enable_advanced_features
+        
+        # Setup logging
+        self.logger = logging.getLogger(__name__)
+        
+        # Validate license
+        if not self._validate_license():
+            raise Exception("License validation failed. Please activate your license.")
+        
+        # Initialize exchange connections
+        self.exchanges = {}
+        self.primary_exchange = None
+        self.exchange = None  # Keep for backward compatibility
+        self._initialize_exchanges()
+        
+        # Initialize advanced components
+        self.market_data_manager = MarketDataManager(
+            exchanges_config=self._get_exchanges_config(),
+            cache_enabled=True,
+            use_redis=False  # Can be enabled for production
+        )
+        
+        self.portfolio_manager = PortfolioManager(
+            initial_capital=initial_capital,
+            max_positions=20,
+            max_position_size=0.1,  # 10% max per position
+            max_leverage=2.0
+        )
+        
+        self.risk_manager = AdvancedRiskManager(
+            max_portfolio_risk=0.02,  # 2% max portfolio risk per trade
+            max_correlation=0.7,
+            max_sector_allocation=0.3
+        )
+        
+        self.backtesting_engine = BacktestingEngine(
+            initial_capital=initial_capital,
+            commission_rate=0.001,
+            slippage_rate=0.0005
+        )
+        
+        # Strategy factory for creating strategies
+        self.strategy_factory = StrategyFactory()
+        
+        # Bot management
+        self.active_bots: Dict[str, TradingBotConfig] = {}
+        self.bot_threads: Dict[str, Thread] = {}
+        self.bot_performance: Dict[str, Dict] = {}
         self.websocket_connections = {}  # Dict of WebSocket connections: {symbol: connection}
         
-        logger.info("Trading engine initialized with valid license")
+        # Performance tracking
+        self.total_trades = 0
+        self.successful_trades = 0
+        self.total_profit = 0.0
+        self.start_time = datetime.now()
+        
+        # Real-time data
         self.real_time_data = {}  # Dict of real-time price data: {symbol: latest_data}
-        self.executor = ThreadPoolExecutor(max_workers=10)
+        
+        # Thread pool for concurrent operations
+        self.executor = ThreadPoolExecutor(max_workers=max_concurrent_bots)
+        
+        # Legacy strategy mapping for backward compatibility
         self.strategies = {
             'rsi': RSIStrategy,
             'macd': MACDStrategy,
-            'ema_crossover': EMACrossoverStrategy
+            'ema_crossover': EMACrossoverStrategy,
+            'advanced_grid': AdvancedGridStrategy,
+            'smart_dca': SmartDCAStrategy,
+            'advanced_scalping': AdvancedScalpingStrategy
         }
-        self.notification_manager = NotificationManager()
+        
+        # Real-time data processing
+        self.price_update_thread = None
+        self.is_running = False
+        
+        # Emergency stop mechanism
+        self.emergency_stop = False
+        self.max_daily_loss = 0.10  # 10% max daily loss
         
         # Initialize exchange if API credentials are provided
         if self.api_key and self.api_secret:
             try:
                 self.initialize_exchange()
-                logger.info(f"Trading engine initialized - Testnet: {self.testnet}")
+                self.logger.info(f"Trading engine initialized - Testnet: {self.testnet}")
             except Exception as e:
-                logger.error(f"Failed to initialize trading engine: {str(e)}")
+                self.logger.error(f"Failed to initialize trading engine: {str(e)}")
                 raise
+        
+        self.logger.info(f"Advanced Trading Engine initialized successfully with {len(self.exchanges)} exchanges")
+    
+    def _get_default_strategy_parameters(self, strategy_name: str) -> Dict[str, Any]:
+        """Get default parameters for a strategy"""
+        defaults = {
+            'rsi': {'period': 14, 'overbought': 70, 'oversold': 30},
+            'macd': {'fast_period': 12, 'slow_period': 26, 'signal_period': 9},
+            'ema_crossover': {'fast_period': 12, 'slow_period': 26},
+            'advanced_grid': {'grid_size': 10, 'grid_spacing': 0.01},
+            'smart_dca': {'dca_levels': 5, 'dca_multiplier': 1.5},
+            'advanced_scalping': {'scalp_target': 0.005, 'max_hold_time': 300}
+        }
+        return defaults.get(strategy_name, {})
+    
+    def _run_advanced_bot(self, bot_config: TradingBotConfig, strategy_instance):
+        """Run an advanced trading bot with comprehensive features"""
+        bot_id = bot_config.bot_id
+        user_id = bot_config.user_id
+        symbol = bot_config.symbol
+        
+        self.logger.info(f"Advanced bot {bot_id} started for {symbol} using {bot_config.strategy_name} strategy")
+        
+        try:
+            while bot_config.is_active and self.active_bots.get(bot_id):
+                try:
+                    # Get market data
+                    market_data = self.market_data_manager.get_ohlcv(
+                        symbol=symbol,
+                        timeframe=bot_config.timeframe,
+                        limit=100
+                    )
+                    
+                    if market_data.empty:
+                        time.sleep(60)
+                        continue
+                    
+                    # Generate trading signals
+                    signals = strategy_instance.generate_signals(market_data)
+                    
+                    if signals.empty:
+                        time.sleep(60)
+                        continue
+                    
+                    # Get latest signal
+                    latest_signal = signals.iloc[-1]
+                    
+                    # Process signal if it's not neutral
+                    if latest_signal.get('signal', 0) != 0:
+                        self._process_trading_signal(
+                            bot_config, 
+                            latest_signal, 
+                            market_data.iloc[-1]
+                        )
+                    
+                    # Monitor existing positions
+                    self._monitor_bot_positions(bot_config)
+                    
+                    # Update performance metrics
+                    self._update_bot_performance(bot_id)
+                    
+                    # Sleep before next iteration
+                    time.sleep(60)
+                    
+                except Exception as e:
+                    self.logger.error(f"Error in bot {bot_id} iteration: {str(e)}")
+                    time.sleep(60)
+                    
+        except Exception as e:
+            self.logger.error(f"Critical error in bot {bot_id}: {str(e)}")
+        finally:
+            self.logger.info(f"Advanced bot {bot_id} stopped")
+    
+    def _process_trading_signal(self, bot_config: TradingBotConfig, signal, market_data):
+        """Process a trading signal from strategy"""
+        try:
+            # Risk assessment
+            portfolio_value = self.portfolio_manager.get_total_value()
+            trade_amount = portfolio_value * bot_config.position_size
+            
+            risk_assessment = self.risk_manager.assess_trade_risk(
+                symbol=bot_config.symbol,
+                side='BUY' if signal['signal'] > 0 else 'SELL',
+                quantity=trade_amount,
+                price=market_data['close'],
+                portfolio_value=portfolio_value
+            )
+            
+            if not risk_assessment['allowed']:
+                self.logger.warning(f"Trade blocked for bot {bot_config.bot_id}: {risk_assessment['reason']}")
+                return
+            
+            # Execute trade
+            trade_result = self._execute_advanced_trade(
+                bot_config=bot_config,
+                signal=signal,
+                current_price=market_data['close']
+            )
+            
+            if trade_result and trade_result.get('success'):
+                # Update performance
+                self.bot_performance[bot_config.bot_id]['trades'] += 1
+                
+                # Send notification
+                send_notification(
+                    bot_config.user_id,
+                    f"Trade executed by bot {bot_config.bot_id}: {trade_result['side']} {bot_config.symbol}"
+                )
+                
+        except Exception as e:
+            self.logger.error(f"Error processing signal for bot {bot_config.bot_id}: {str(e)}")
+    
+    def _execute_advanced_trade(self, bot_config: TradingBotConfig, signal, current_price) -> Dict[str, Any]:
+        """Execute an advanced trade with comprehensive error handling"""
+        try:
+            side = 'BUY' if signal['signal'] > 0 else 'SELL'
+            portfolio_value = self.portfolio_manager.get_total_value()
+            trade_amount = portfolio_value * bot_config.position_size
+            quantity = trade_amount / current_price
+            
+            # Execute the trade
+            order_result = self.exchange.create_market_order(
+                symbol=bot_config.symbol,
+                side=side.lower(),
+                amount=quantity
+            )
+            
+            if order_result:
+                # Record trade in portfolio manager
+                self.portfolio_manager.add_position(
+                    symbol=bot_config.symbol,
+                    side=side,
+                    quantity=quantity,
+                    price=current_price,
+                    timestamp=datetime.now()
+                )
+                
+                return {
+                    'success': True,
+                    'order_id': order_result.get('orderId'),
+                    'side': side,
+                    'quantity': quantity,
+                    'price': current_price
+                }
+            
+            return {'success': False, 'error': 'Order execution failed'}
+            
+        except Exception as e:
+            self.logger.error(f"Error executing trade for bot {bot_config.bot_id}: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def _monitor_bot_positions(self, bot_config: TradingBotConfig):
+        """Monitor positions for a specific bot"""
+        try:
+            positions = self.portfolio_manager.get_positions_by_symbol(bot_config.symbol)
+            
+            for position in positions:
+                # Check stop loss and take profit
+                current_price = self.market_data_manager.get_current_price(bot_config.symbol)
+                
+                if self._should_close_position(position, current_price, bot_config):
+                    self._close_position(position, current_price, bot_config)
+                    
+        except Exception as e:
+            self.logger.error(f"Error monitoring positions for bot {bot_config.bot_id}: {str(e)}")
+    
+    def _should_close_position(self, position, current_price, bot_config: TradingBotConfig) -> bool:
+        """Determine if a position should be closed"""
+        entry_price = position['price']
+        side = position['side']
+        
+        if side == 'BUY':
+            pnl_pct = (current_price - entry_price) / entry_price
+        else:
+            pnl_pct = (entry_price - current_price) / entry_price
+        
+        # Check take profit
+        if pnl_pct >= bot_config.take_profit:
+            return True
+            
+        # Check stop loss
+        if pnl_pct <= -bot_config.stop_loss:
+            return True
+            
+        return False
+    
+    def _close_position(self, position, current_price, bot_config: TradingBotConfig):
+        """Close a position"""
+        try:
+            opposite_side = 'SELL' if position['side'] == 'BUY' else 'BUY'
+            
+            order_result = self.exchange.create_market_order(
+                symbol=bot_config.symbol,
+                side=opposite_side.lower(),
+                amount=position['quantity']
+            )
+            
+            if order_result:
+                # Calculate PnL
+                if position['side'] == 'BUY':
+                    pnl = (current_price - position['price']) * position['quantity']
+                else:
+                    pnl = (position['price'] - current_price) * position['quantity']
+                
+                # Update portfolio
+                self.portfolio_manager.close_position(position['id'])
+                
+                # Update bot performance
+                if pnl > 0:
+                    self.bot_performance[bot_config.bot_id]['wins'] += 1
+                else:
+                    self.bot_performance[bot_config.bot_id]['losses'] += 1
+                
+                self.bot_performance[bot_config.bot_id]['total_pnl'] += pnl
+                
+                self.logger.info(f"Position closed for bot {bot_config.bot_id}: PnL = {pnl}")
+                
+        except Exception as e:
+            self.logger.error(f"Error closing position for bot {bot_config.bot_id}: {str(e)}")
+    
+    def _update_bot_performance(self, bot_id: str):
+        """Update performance metrics for a bot"""
+        try:
+            if bot_id in self.bot_performance:
+                performance = self.bot_performance[bot_id]
+                
+                # Calculate win rate
+                total_trades = performance['wins'] + performance['losses']
+                performance['win_rate'] = performance['wins'] / total_trades if total_trades > 0 else 0
+                
+                # Update last update time
+                performance['last_update'] = datetime.now()
+                
+        except Exception as e:
+            self.logger.error(f"Error updating performance for bot {bot_id}: {str(e)}")
+    
+    def _validate_license(self) -> bool:
+        """Validate software license"""
+        try:
+            is_valid, message = verify_license()
+            if not is_valid:
+                self.logger.error(f"License validation failed: {message}")
+                return False
+            return True
+        except Exception as e:
+            self.logger.error(f"License validation error: {e}")
+            return False
+    
+    def _get_exchanges_config(self) -> Dict[str, Dict]:
+        """Get configuration for all supported exchanges"""
+        config = {}
+        
+        # Binance configuration
+        if self.api_key and self.api_secret:
+            config['binance'] = {
+                'api_key': self.api_key,
+                'api_secret': self.api_secret,
+                'testnet': self.testnet,
+                'rate_limit': 1200  # requests per minute
+            }
+        
+        # Add other exchanges as needed
+        # config['coinbase'] = {...}
+        # config['kraken'] = {...}
+        
+        return config
+    
+    def _initialize_exchanges(self):
+        """Initialize connections to all configured exchanges"""
+        try:
+            # Initialize Binance (primary exchange)
+            if self.api_key and self.api_secret:
+                self.exchanges['binance'] = ccxt.binance({
+                    'apiKey': self.api_key,
+                    'secret': self.api_secret,
+                    'sandbox': self.testnet,
+                    'enableRateLimit': True,
+                })
+                self.primary_exchange = 'binance'
+                self.exchange = self.exchanges['binance']  # Backward compatibility
+                
+                # Test connection
+                account_info = self.exchange.fetch_balance()
+                self.logger.info(f"Binance connection established - Testnet: {self.testnet}")
+            
+            # Add other exchanges here
+            # self.exchanges['coinbase'] = ...
+            # self.exchanges['kraken'] = ...
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize exchanges: {e}")
+            raise
     
     def initialize_exchange(self):
         """Initialize the Binance exchange connection"""
@@ -89,308 +473,651 @@ class TradingEngine:
             if not self.api_key or not self.api_secret:
                 raise ValueError("API key and secret are required")
             
-            # Validate API key format
-            if not security_manager.validate_api_keys(self.api_key, self.api_secret):
-                raise ValueError("Invalid API key format")
-            
-            self.exchange = ccxt.binance({
-                'apiKey': self.api_key,
-                'secret': self.api_secret,
-                'sandbox': self.testnet,
-                'enableRateLimit': True,
-                'timeout': 30000,  # 30 seconds timeout
-                'rateLimit': 1200,  # 1200ms between requests
-            })
-            
-            # Test connection
-            self.exchange.load_markets()
-            
-            # Test API permissions
-            account_info = self.exchange.fetch_balance()
-            
-            logger.info(f"Exchange connection established - Testnet: {self.testnet}")
+            self._initialize_exchanges()
             
         except ccxt.AuthenticationError as e:
-            logger.error(f"Authentication error: {str(e)}")
+            self.logger.error(f"Authentication error: {str(e)}")
             raise ValueError("Invalid API credentials")
         except ccxt.NetworkError as e:
-            logger.error(f"Network error: {str(e)}")
+            self.logger.error(f"Network error: {str(e)}")
             raise ConnectionError("Failed to connect to exchange")
         except Exception as e:
-            logger.error(f"Error initializing exchange: {str(e)}")
+            self.logger.error(f"Error initializing exchange: {str(e)}")
             self.exchange = None
             raise
     
-    def get_active_bots(self, user_id):
-        """Get active bots for a user
+    def get_active_bots(self, user_id: int) -> List[Dict[str, Any]]:
+        """Get all active bots for a user with comprehensive information
         
         Args:
-            user_id (str): User ID
+            user_id (int): User ID
             
         Returns:
-            list: List of active bot IDs
+            List[Dict[str, Any]]: List of active bot configurations with performance data
         """
-        user = User.find_by_id(user_id)
-        if not user:
+        try:
+            user_bots = []
+            for bot_id, bot_config in self.active_bots.items():
+                if bot_config.user_id == user_id:
+                    # Get bot performance metrics
+                    performance = self.bot_performance.get(bot_id, {})
+                    
+                    # Get current positions
+                    positions = self.portfolio_manager.get_positions_by_symbol(bot_config.symbol)
+                    
+                    # Get thread status
+                    thread = self.bot_threads.get(bot_id)
+                    is_alive = thread.is_alive() if thread else False
+                    
+                    bot_data = {
+                        'bot_id': bot_id,
+                        'strategy': bot_config.strategy_name,
+                        'symbol': bot_config.symbol,
+                        'timeframe': bot_config.timeframe,
+                        'status': 'active' if is_alive else 'stopped',
+                        'is_active': bot_config.is_active,
+                        'position_size': bot_config.position_size,
+                        'stop_loss': bot_config.stop_loss,
+                        'take_profit': bot_config.take_profit,
+                        'max_positions': bot_config.max_positions,
+                        'current_positions': len(positions),
+                        'performance': performance,
+                        'risk_settings': bot_config.risk_settings,
+                        'parameters': bot_config.parameters
+                    }
+                    user_bots.append(bot_data)
+            
+            return user_bots
+            
+        except Exception as e:
+            self.logger.error(f"Error getting active bots for user {user_id}: {str(e)}")
             return []
-        
-        return user.get('settings', {}).get('active_bots', [])
     
-    def start_bot(self, user_id, symbol, strategy, interval, amount, take_profit, stop_loss):
-        """Start a new trading bot
+    def start_bot(self, 
+                  user_id: int, 
+                  symbol: str, 
+                  strategy_name: str, 
+                  timeframe: str = '1h',
+                  parameters: Optional[Dict[str, Any]] = None,
+                  risk_settings: Optional[Dict[str, Any]] = None,
+                  position_size: float = 0.02,
+                  stop_loss: float = 0.05,
+                  take_profit: float = 0.10,
+                  max_positions: int = 5) -> Dict[str, Any]:
+        """Start a new advanced trading bot for a user
         
         Args:
-            user_id (str): User ID
-            symbol (str): Trading symbol (e.g., 'BTCUSDT')
-            strategy (str): Strategy ID
-            interval (str): Candlestick interval (e.g., '1h', '4h', '1d')
-            amount (float): Amount to trade
-            take_profit (float): Take profit percentage
-            stop_loss (float): Stop loss percentage
+            user_id: User ID
+            symbol: Trading symbol (e.g., 'BTCUSDT')
+            strategy_name: Strategy name
+            timeframe: Timeframe ('1m', '5m', '15m', '1h', '4h', '1d')
+            parameters: Strategy-specific parameters
+            risk_settings: Risk management settings
+            position_size: Position size as percentage of portfolio
+            stop_loss: Stop loss percentage
+            take_profit: Take profit percentage
+            max_positions: Maximum concurrent positions
             
         Returns:
-            str: Bot ID
+            Dict containing bot creation result
         """
         try:
             # Validate license and features
             is_valid, message = verify_license()
             if not is_valid:
-                logger.error(f"License validation failed: {message}")
-                raise Exception(f"License validation failed: {message}")
+                self.logger.error(f"License validation failed: {message}")
+                return {'success': False, 'error': f'License validation failed: {message}'}
             
             if not check_feature('basic_trading'):
-                logger.error("Basic trading feature not available in license")
-                raise Exception("Basic trading feature not available in license")
+                self.logger.error("Basic trading feature not available in license")
+                return {'success': False, 'error': 'Basic trading feature not available in license'}
             
             # Check for advanced strategies
-            advanced_strategies = ['macd', 'bollinger_bands', 'fibonacci']
-            if strategy in advanced_strategies and not check_feature('advanced_trading'):
-                logger.error(f"Advanced strategy '{strategy}' not available in license")
-                raise Exception(f"Advanced strategy '{strategy}' not available in license")
+            advanced_strategies = ['advanced_grid', 'smart_dca', 'advanced_scalping']
+            if strategy_name in advanced_strategies and not check_feature('advanced_trading'):
+                self.logger.error(f"Advanced strategy '{strategy_name}' not available in license")
+                return {'success': False, 'error': f'Advanced strategy {strategy_name} requires premium license'}
             
-            # Validate parameters
+            # Check maximum concurrent bots
+            user_bots = [bot for bot in self.active_bots.values() if bot.user_id == user_id]
+            if len(user_bots) >= self.max_concurrent_bots:
+                return {'success': False, 'error': f'Maximum concurrent bots limit reached ({self.max_concurrent_bots})'}
+            
+            # Validate exchange connection
             if not self.exchange:
-                logger.error("Exchange not initialized")
-                raise Exception("Exchange not initialized")
+                self.logger.error("Exchange not initialized")
+                return {'success': False, 'error': 'Exchange not initialized'}
             
-            if strategy not in self.strategies:
-                logger.error(f"Strategy '{strategy}' not found")
-                raise Exception(f"Strategy '{strategy}' not found")
+            # Validate strategy
+            if strategy_name not in self.strategies:
+                available_strategies = list(self.strategies.keys())
+                return {'success': False, 'error': f'Unknown strategy: {strategy_name}. Available: {available_strategies}'}
             
             # Validate symbol
-            if symbol not in self.exchange.markets:
-                logger.error(f"Symbol '{symbol}' not available on exchange")
-                raise Exception(f"Symbol '{symbol}' not available on exchange")
+            try:
+                ticker = self.exchange.fetch_ticker(symbol)
+                if not ticker:
+                    return {'success': False, 'error': f'Invalid or inactive symbol: {symbol}'}
+            except Exception as e:
+                return {'success': False, 'error': f'Symbol validation failed: {str(e)}'}
             
-            # Validate parameters
-            if amount <= 0:
-                logger.error(f"Invalid amount: {amount}")
-                raise Exception(f"Invalid amount: {amount}")
+            # Set default parameters if not provided
+            if parameters is None:
+                parameters = self._get_default_strategy_parameters(strategy_name)
             
-            if take_profit <= 0 or stop_loss <= 0:
-                logger.error(f"Invalid take_profit ({take_profit}) or stop_loss ({stop_loss})")
-                raise Exception(f"Invalid take_profit ({take_profit}) or stop_loss ({stop_loss})")
+            if risk_settings is None:
+                risk_settings = {
+                    'max_position_size': position_size,
+                    'stop_loss': stop_loss,
+                    'take_profit': take_profit,
+                    'max_daily_trades': 10,
+                    'max_drawdown': 0.20
+                }
             
-            # Check if user already has a bot running for this symbol
-            for existing_bot_id, bot_info in self.active_bots.items():
-                if (bot_info['config']['user_id'] == user_id and 
-                    bot_info['config']['symbol'] == symbol and 
-                    bot_info['is_running']):
-                    logger.warning(f"User {user_id} already has a bot running for {symbol}")
-                    raise Exception(f"Bot already running for {symbol}")
-            
-            # Generate bot ID
-            bot_id = str(uuid.uuid4())
+            # Generate unique bot ID
+            bot_id = f"{user_id}_{symbol}_{strategy_name}_{int(time.time())}_{uuid.uuid4().hex[:8]}"
             
             # Create bot configuration
-            bot_config = {
-                'id': bot_id,
-                'user_id': user_id,
-                'symbol': symbol,
-                'strategy': strategy,
-                'interval': interval,
-                'amount': amount,
-                'take_profit': take_profit,
-                'stop_loss': stop_loss,
-                'is_running': True,
-                'created_at': datetime.utcnow()
-            }
-            
-            # Create bot thread
-            bot_thread = Thread(
-                target=self._run_bot,
-                args=(bot_config,),
-                daemon=True
+            bot_config = TradingBotConfig(
+                user_id=user_id,
+                bot_id=bot_id,
+                strategy_name=strategy_name,
+                symbol=symbol,
+                timeframe=timeframe,
+                parameters=parameters,
+                risk_settings=risk_settings,
+                is_active=True,
+                max_positions=max_positions,
+                position_size=position_size,
+                stop_loss=stop_loss,
+                take_profit=take_profit
             )
             
-            # Store bot thread
-            self.active_bots[bot_id] = {
-                'thread': bot_thread,
-                'config': bot_config,
-                'is_running': True
-            }
+            # Create strategy instance using factory
+            try:
+                strategy_instance = self.strategy_factory.create_strategy(
+                    strategy_name, 
+                    parameters
+                )
+            except Exception as e:
+                return {'success': False, 'error': f'Failed to create strategy: {str(e)}'}
+            
+            # Perform risk assessment
+            portfolio_value = self.portfolio_manager.get_total_value()
+            trade_amount = portfolio_value * position_size
+            
+            risk_assessment = self.risk_manager.assess_trade_risk(
+                symbol=symbol,
+                side='BUY',  # Initial assessment
+                quantity=trade_amount,
+                price=float(ticker['price']),
+                portfolio_value=portfolio_value
+            )
+            
+            if not risk_assessment['allowed']:
+                return {'success': False, 'error': f'Trade not allowed: {risk_assessment["reason"]}'}
             
             # Start bot thread
+            bot_thread = Thread(
+                target=self._run_advanced_bot,
+                args=(bot_config, strategy_instance),
+                daemon=True,
+                name=f"Bot-{bot_id}"
+            )
             bot_thread.start()
             
-            # Log bot start
-            logger.info(f"Bot {bot_id} started for user {user_id} - Symbol: {symbol}, Strategy: {strategy}, Amount: {amount}")
+            # Store bot information
+            self.active_bots[bot_id] = bot_config
+            self.bot_threads[bot_id] = bot_thread
+            self.bot_performance[bot_id] = {
+                'trades': 0,
+                'wins': 0,
+                'losses': 0,
+                'total_pnl': 0.0,
+                'max_drawdown': 0.0,
+                'start_time': datetime.now(),
+                'last_trade_time': None
+            }
+            
+            self.logger.info(f"Advanced bot {bot_id} started successfully for user {user_id} with strategy {strategy_name}")
             
             # Notify user
-            self.notification_manager.send_notification(
+            send_notification(
                 user_id,
-                f"Trading bot started for {symbol} using {strategy} strategy"
+                f"Advanced trading bot started for {symbol} using {strategy_name} strategy"
             )
             
-            return bot_id
+            return {
+                'success': True,
+                'bot_id': bot_id,
+                'strategy': strategy_name,
+                'symbol': symbol,
+                'timeframe': timeframe,
+                'risk_score': risk_assessment.get('risk_score', 0),
+                'message': f'Advanced bot started successfully with {strategy_name} strategy'
+            }
             
         except Exception as e:
-            logger.error(f"Error starting bot for user {user_id}: {str(e)}")
-            raise
+            self.logger.error(f"Error starting bot: {str(e)}")
+            return {'success': False, 'error': f'Failed to start bot: {str(e)}'}
     
-    def stop_bot(self, user_id, bot_id):
+    def stop_bot(self, user_id: int, bot_id: str) -> Dict[str, Any]:
         """Stop a trading bot
         
         Args:
-            user_id (str): User ID
-            bot_id (str): Bot ID
+            user_id: User ID
+            bot_id: Bot ID
             
         Returns:
-            bool: True if bot was stopped, False otherwise
+            Dict containing stop result
         """
-        if bot_id not in self.active_bots:
-            return False
-        
-        # Check if bot belongs to user
-        bot_config = self.active_bots[bot_id]['config']
-        if bot_config['user_id'] != user_id:
-            return False
-        
-        # Set bot to stop
-        self.active_bots[bot_id]['is_running'] = False
-        self.active_bots[bot_id]['config']['is_running'] = False
-        
-        # Notify user
-        self.notification_manager.send_notification(
-            user_id,
-            f"Trading bot stopped for {bot_config['symbol']}"
-        )
-        
-        return True
+        try:
+            if bot_id not in self.active_bots:
+                return {'success': False, 'error': 'Bot not found'}
+            
+            # Check if bot belongs to user
+            bot_config = self.active_bots[bot_id]
+            if bot_config.user_id != user_id:
+                return {'success': False, 'error': 'Unauthorized access to bot'}
+            
+            # Set bot to stop
+            bot_config.is_active = False
+            
+            # Wait for thread to finish (with timeout)
+            if bot_id in self.bot_threads:
+                thread = self.bot_threads[bot_id]
+                thread.join(timeout=10)
+                if thread.is_alive():
+                    self.logger.warning(f"Bot thread {bot_id} did not stop gracefully")
+                del self.bot_threads[bot_id]
+            
+            # Clean up bot data
+            del self.active_bots[bot_id]
+            
+            # Notify user
+            send_notification(
+                user_id,
+                f"Trading bot stopped for {bot_config.symbol}"
+            )
+            
+            self.logger.info(f"Bot {bot_id} stopped successfully for user {user_id}")
+            
+            return {
+                'success': True,
+                'message': f'Bot {bot_id} stopped successfully',
+                'symbol': bot_config.symbol,
+                'strategy': bot_config.strategy_name
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error stopping bot {bot_id}: {str(e)}")
+            return {'success': False, 'error': f'Failed to stop bot: {str(e)}'}
     
-    def stop_all_bots(self, user_id):
+    def stop_all_bots(self, user_id: int) -> Dict[str, Any]:
         """Stop all trading bots for a user
         
         Args:
-            user_id (str): User ID
+            user_id: User ID
             
         Returns:
-            list: List of stopped bot IDs
+            Dict containing stop results
         """
-        stopped_bots = []
-        
-        for bot_id, bot_data in list(self.active_bots.items()):
-            if bot_data['config']['user_id'] == user_id:
-                if self.stop_bot(user_id, bot_id):
-                    stopped_bots.append(bot_id)
-        
-        return stopped_bots
+        try:
+            stopped_bots = []
+            failed_bots = []
+            
+            for bot_id, bot_config in list(self.active_bots.items()):
+                if bot_config.user_id == user_id:
+                    result = self.stop_bot(user_id, bot_id)
+                    if result['success']:
+                        stopped_bots.append(bot_id)
+                    else:
+                        failed_bots.append({'bot_id': bot_id, 'error': result['error']})
+            
+            return {
+                'success': True,
+                'stopped_bots': stopped_bots,
+                'failed_bots': failed_bots,
+                'total_stopped': len(stopped_bots),
+                'message': f'Stopped {len(stopped_bots)} bots successfully'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error stopping all bots for user {user_id}: {str(e)}")
+            return {'success': False, 'error': f'Failed to stop bots: {str(e)}'}
     
     def _run_bot(self, bot_config):
-        """Run a trading bot (executed in a separate thread)
+        """Legacy bot runner for backward compatibility"""
+        # Convert old config to new format
+        new_config = TradingBotConfig(
+            user_id=bot_config['user_id'],
+            bot_id=bot_config['id'],
+            strategy_name=bot_config['strategy'],
+            symbol=bot_config['symbol'],
+            timeframe=bot_config['interval'],
+            parameters={},
+            risk_settings={
+                'stop_loss': bot_config['stop_loss'],
+                'take_profit': bot_config['take_profit']
+            },
+            position_size=bot_config['amount'] / 10000  # Convert to percentage
+        )
         
-        Args:
-            bot_config (dict): Bot configuration
-        """
-        bot_id = bot_config['id']
-        user_id = bot_config['user_id']
-        symbol = bot_config['symbol']
-        strategy_id = bot_config['strategy']
-        interval = bot_config['interval']
+        # Create strategy instance
+        strategy_class = self.strategies[bot_config['strategy']]
+        strategy_instance = strategy_class()
         
-        # Initialize strategy
-        strategy_class = self.strategies[strategy_id]
-        strategy = strategy_class()
-        
-        # Initialize risk manager
-        risk_manager = RiskManager(user_id)
-        
-        print(f"Bot {bot_id} started for {symbol} using {strategy_id} strategy")
-        
-        # Trading loop
-        while self.active_bots.get(bot_id, {}).get('is_running', False):
+        # Run with new advanced bot runner
+        self._run_advanced_bot(new_config, strategy_instance)
+    
+    def get_bot_performance(self, bot_id: str) -> Dict[str, Any]:
+        """Get performance metrics for a specific bot"""
+        try:
+            if bot_id not in self.bot_performance:
+                return {
+                    'trades': 0,
+                    'wins': 0,
+                    'losses': 0,
+                    'win_rate': 0.0,
+                    'total_pnl': 0.0,
+                    'max_drawdown': 0.0,
+                    'start_time': None,
+                    'last_trade_time': None,
+                    'status': 'inactive'
+                }
+            
+            performance = self.bot_performance[bot_id].copy()
+            
+            # Calculate additional metrics
+            total_trades = performance['wins'] + performance['losses']
+            performance['win_rate'] = performance['wins'] / total_trades if total_trades > 0 else 0.0
+            performance['total_trades'] = total_trades
+            
+            # Calculate runtime
+            if performance.get('start_time'):
+                runtime = datetime.now() - performance['start_time']
+                performance['runtime_hours'] = runtime.total_seconds() / 3600
+            
+            # Calculate average PnL per trade
+            if total_trades > 0:
+                performance['avg_pnl_per_trade'] = performance['total_pnl'] / total_trades
+            else:
+                performance['avg_pnl_per_trade'] = 0.0
+            
+            return performance
+            
+        except Exception as e:
+            self.logger.error(f"Error getting bot performance for {bot_id}: {str(e)}")
+            return {}
+    
+    def get_portfolio_summary(self) -> Dict[str, Any]:
+        """Get comprehensive portfolio summary"""
+        try:
+            portfolio_metrics = self.portfolio_manager.get_portfolio_metrics()
+            risk_metrics = self.risk_manager.get_portfolio_risk_metrics()
+            
+            # Get active positions
+            positions = self.portfolio_manager.get_all_positions()
+            
+            # Calculate total bot performance
+            total_bot_trades = sum(perf.get('trades', 0) for perf in self.bot_performance.values())
+            total_bot_pnl = sum(perf.get('total_pnl', 0) for perf in self.bot_performance.values())
+            
+            return {
+                'portfolio_value': portfolio_metrics.get('total_value', 0),
+                'total_pnl': portfolio_metrics.get('total_pnl', 0),
+                'total_return': portfolio_metrics.get('total_return', 0),
+                'active_positions': len(positions),
+                'active_bots': len(self.active_bots),
+                'total_trades': total_bot_trades,
+                'total_bot_pnl': total_bot_pnl,
+                'risk_score': risk_metrics.get('portfolio_risk_score', 0),
+                'max_drawdown': portfolio_metrics.get('max_drawdown', 0),
+                'sharpe_ratio': portfolio_metrics.get('sharpe_ratio', 0),
+                'volatility': portfolio_metrics.get('volatility', 0),
+                'last_updated': datetime.now()
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error getting portfolio summary: {str(e)}")
+            return {}
+    
+    def run_backtest(self, 
+                     strategy_name: str, 
+                     symbol: str, 
+                     timeframe: str,
+                     start_date: str,
+                     end_date: str,
+                     parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Run backtest for a strategy"""
+        try:
+            # Create strategy instance
+            strategy_instance = self.strategy_factory.create_strategy(strategy_name, parameters)
+            
+            # Get historical data
+            historical_data = self.market_data_manager.get_historical_data(
+                symbol=symbol,
+                timeframe=timeframe,
+                start_date=start_date,
+                end_date=end_date
+            )
+            
+            if historical_data.empty:
+                return {'success': False, 'error': 'No historical data available'}
+            
+            # Run backtest
+            backtest_results = self.backtesting_engine.run_backtest(
+                strategy=strategy_instance,
+                data=historical_data,
+                symbol=symbol
+            )
+            
+            return {
+                'success': True,
+                'results': backtest_results,
+                'strategy': strategy_name,
+                'symbol': symbol,
+                'timeframe': timeframe,
+                'period': f"{start_date} to {end_date}"
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error running backtest: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def optimize_strategy(self, 
+                         strategy_name: str,
+                         symbol: str,
+                         timeframe: str,
+                         start_date: str,
+                         end_date: str,
+                         parameter_ranges: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimize strategy parameters"""
+        try:
+            # Get historical data
+            historical_data = self.market_data_manager.get_historical_data(
+                symbol=symbol,
+                timeframe=timeframe,
+                start_date=start_date,
+                end_date=end_date
+            )
+            
+            if historical_data.empty:
+                return {'success': False, 'error': 'No historical data available'}
+            
+            # Create strategy instance
+            strategy_instance = self.strategy_factory.create_strategy(strategy_name)
+            
+            # Run optimization
+            optimization_results = self.backtesting_engine.optimize_parameters(
+                strategy=strategy_instance,
+                data=historical_data,
+                symbol=symbol,
+                parameter_ranges=parameter_ranges
+            )
+            
+            return {
+                'success': True,
+                'results': optimization_results,
+                'strategy': strategy_name,
+                'symbol': symbol,
+                'timeframe': timeframe
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error optimizing strategy: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def get_market_overview(self) -> Dict[str, Any]:
+        """Get market overview and statistics"""
+        try:
+            # Get market data for major symbols
+            major_symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'DOTUSDT']
+            market_data = {}
+            
+            for symbol in major_symbols:
+                try:
+                    ticker = self.market_data_manager.get_current_price(symbol)
+                    if ticker:
+                        market_data[symbol] = {
+                            'price': ticker,
+                            'change_24h': 0,  # Would need 24h data
+                            'volume_24h': 0   # Would need volume data
+                        }
+                except Exception:
+                    continue
+            
+            # Get exchange status
+            exchange_status = 'connected' if self.exchange else 'disconnected'
+            
+            return {
+                'market_data': market_data,
+                'exchange_status': exchange_status,
+                'active_bots': len(self.active_bots),
+                'total_symbols_tracked': len(market_data),
+                'last_updated': datetime.now()
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error getting market overview: {str(e)}")
+            return {}
+    
+    def emergency_stop_all(self, reason: str = "Emergency stop triggered") -> Dict[str, Any]:
+        """Emergency stop all trading activities"""
+        try:
+            self.emergency_stop = True
+            stopped_bots = []
+            
+            # Stop all bots
+            for bot_id, bot_config in list(self.active_bots.items()):
+                bot_config.is_active = False
+                stopped_bots.append(bot_id)
+            
+            # Close all open positions (if enabled)
+            if hasattr(self, 'close_all_positions_on_emergency') and self.close_all_positions_on_emergency:
+                positions = self.portfolio_manager.get_all_positions()
+                for position in positions:
+                    try:
+                        self.portfolio_manager.close_position(position['id'])
+                    except Exception as e:
+                        self.logger.error(f"Error closing position {position['id']}: {str(e)}")
+            
+            self.logger.critical(f"EMERGENCY STOP ACTIVATED: {reason}")
+            
+            return {
+                'success': True,
+                'stopped_bots': stopped_bots,
+                'reason': reason,
+                'timestamp': datetime.now()
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error during emergency stop: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def get_system_health(self) -> Dict[str, Any]:
+        """Get system health status"""
+        try:
+            # Check exchange connection
+            exchange_healthy = False
             try:
-                # Fetch market data
-                ohlcv = self.exchange.fetch_ohlcv(symbol, interval)
-                df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-                df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-                
-                # Generate signals
-                signals = strategy.generate_signals(df)
-                
-                # Get last signal
-                last_signal = signals.iloc[-1]['signal'] if not signals.empty else 0
-                
-                # Check if we should execute a trade
-                if last_signal != 0:
-                    # Enhanced risk management checks
-                    if not risk_manager.can_trade(user_id, symbol, bot_config['amount'], last_signal > 0):
-                        logger.warning(f"Trade blocked by risk management for bot {bot_id}")
-                        continue
-                    
-                    # Check daily loss limit
-                    if not risk_manager.check_daily_loss_limit(user_id):
-                        logger.warning(f"Daily loss limit exceeded for user {user_id}, bot {bot_id}")
-                        continue
-                    
-                    # Check position exposure
-                    if not risk_manager.check_position_exposure(user_id, symbol, bot_config['amount']):
-                        logger.warning(f"Position exposure limit exceeded for user {user_id}, symbol {symbol}")
-                        continue
-                    
-                    # Execute trade
-                    trade_result = self._execute_trade(
-                        user_id=user_id,
-                        symbol=symbol,
-                        amount=bot_config['amount'],
-                        side='buy' if last_signal > 0 else 'sell',
-                        take_profit=bot_config['take_profit'],
-                        stop_loss=bot_config['stop_loss']
-                    )
-                    
-                    # Record trade
-                    if trade_result:
-                        trade_id = Trade.create({
-                            'user_id': user_id,
-                            'bot_id': bot_id,
-                            'symbol': symbol,
-                            'type': 'buy' if last_signal > 0 else 'sell',
-                            'amount': bot_config['amount'],
-                            'price': trade_result['price'],
-                            'quantity': trade_result['quantity'],
-                            'fee': trade_result['fee'],
-                            'timestamp': datetime.utcnow(),
-                            'status': 'completed',
-                            'order_id': trade_result['order_id']
-                        })
-                        
-                        # Notify user
-                        self.notification_manager.send_notification(
-                            user_id,
-                            f"Trade executed: {trade_result['side']} {trade_result['quantity']} {symbol} at {trade_result['price']}"
-                        )
-                
-                # Check open positions for stop-loss/take-profit
-                self._monitor_open_positions(user_id)
-                
-                # Sleep before next iteration
-                time.sleep(60)  # Check every minute
-                
-            except Exception as e:
-                print(f"Error in bot {bot_id}: {str(e)}")
-                time.sleep(60)  # Wait before retrying
-        
-        print(f"Bot {bot_id} stopped")
+                if self.exchange:
+                    self.exchange.fetch_ticker('BTCUSDT')
+                    exchange_healthy = True
+            except Exception:
+                pass
+            
+            # Check active threads
+            active_threads = sum(1 for thread in self.bot_threads.values() if thread.is_alive())
+            
+            # Check memory usage (basic)
+            import psutil
+            process = psutil.Process()
+            memory_usage = process.memory_info().rss / 1024 / 1024  # MB
+            
+            # Check database connection
+            db_healthy = True
+            try:
+                # Test portfolio manager database
+                self.portfolio_manager.get_total_value()
+            except Exception:
+                db_healthy = False
+            
+            health_status = {
+                'overall_status': 'healthy' if exchange_healthy and db_healthy else 'degraded',
+                'exchange_connection': 'healthy' if exchange_healthy else 'unhealthy',
+                'database_connection': 'healthy' if db_healthy else 'unhealthy',
+                'active_bots': len(self.active_bots),
+                'active_threads': active_threads,
+                'memory_usage_mb': memory_usage,
+                'uptime_hours': (datetime.now() - self.start_time).total_seconds() / 3600,
+                'emergency_stop': self.emergency_stop,
+                'last_check': datetime.now()
+            }
+            
+            return health_status
+            
+        except Exception as e:
+            self.logger.error(f"Error checking system health: {str(e)}")
+            return {
+                'overall_status': 'error',
+                'error': str(e),
+                'last_check': datetime.now()
+            }
+    
+    def cleanup(self):
+        """Cleanup resources when shutting down"""
+        try:
+            self.logger.info("Starting trading engine cleanup...")
+            
+            # Stop all bots gracefully
+            for bot_id in list(self.active_bots.keys()):
+                bot_config = self.active_bots[bot_id]
+                bot_config.is_active = False
+            
+            # Wait for threads to finish
+            for thread in self.bot_threads.values():
+                thread.join(timeout=5)
+            
+            # Shutdown thread pool
+            self.executor.shutdown(wait=True)
+            
+            # Close market data connections
+            if hasattr(self.market_data_manager, 'cleanup'):
+                self.market_data_manager.cleanup()
+            
+            self.logger.info("Trading engine cleanup completed")
+            
+        except Exception as e:
+            self.logger.error(f"Error during cleanup: {str(e)}")
+    
+    def __enter__(self):
+        """Context manager entry"""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit"""
+        self.cleanup()
     
     def _monitor_open_positions(self, user_id):
         """Monitor open positions for stop-loss and take-profit conditions"""

@@ -225,6 +225,20 @@ def add_api_key():
     
     return jsonify({'message': 'API key added successfully'}), 201
 
+@app.route('/api/api-keys/<int:key_id>', methods=['DELETE'])
+@login_required
+@license_required('basic_trading')
+def delete_api_key(key_id):
+    api_key = APIKey.query.filter_by(id=key_id, user_id=current_user.id).first()
+    
+    if not api_key:
+        return jsonify({'error': 'API key not found'}), 404
+    
+    db.session.delete(api_key)
+    db.session.commit()
+    
+    return jsonify({'message': 'API key deleted successfully'}), 200
+
 @app.route('/strategies')
 @login_required
 def strategies():
@@ -249,6 +263,24 @@ def create_strategy():
     db.session.commit()
     
     return jsonify({'message': 'Strategy created successfully'}), 201
+
+@app.route('/api/strategies/<int:strategy_id>', methods=['DELETE'])
+@login_required
+@license_required('advanced_trading')
+def delete_strategy(strategy_id):
+    strategy = TradingStrategy.query.filter_by(id=strategy_id, user_id=current_user.id).first()
+    
+    if not strategy:
+        return jsonify({'error': 'Strategy not found'}), 404
+    
+    # Check if strategy is currently active
+    if strategy.is_active:
+        return jsonify({'error': 'Cannot delete active strategy. Please deactivate it first.'}), 400
+    
+    db.session.delete(strategy)
+    db.session.commit()
+    
+    return jsonify({'message': 'Strategy deleted successfully'}), 200
 
 @app.route('/performance')
 @login_required

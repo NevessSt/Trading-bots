@@ -66,6 +66,7 @@ def register_routes(app):
         from api.api_key_routes import api_key_bp
         from api.notification_routes import notification_bp
         from api.license_routes import license_bp
+        from api.billing_routes import billing_bp
         
         # Register blueprints
         app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -76,6 +77,7 @@ def register_routes(app):
         app.register_blueprint(api_key_bp, url_prefix='/api/api-keys')
         app.register_blueprint(notification_bp, url_prefix='/api/notifications')
         app.register_blueprint(license_bp, url_prefix='/api/license')
+        app.register_blueprint(billing_bp, url_prefix='/api/billing')
     except ImportError as e:
         print(f"Warning: Could not import some routes: {e}")
         print("Starting with basic routes only...")

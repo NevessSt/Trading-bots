@@ -15,17 +15,17 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - ENVIRONMENT=development
-      - DEBUG=True
-      - DATABASE_URL=postgresql://tradingbot:tradingbot123@postgres:5432/tradingbot_dev
-      - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=dev-secret-key-change-in-production
-      - JWT_SECRET_KEY=dev-jwt-secret-key-change-in-production
-      - BINANCE_TESTNET=True
-      - COINBASE_SANDBOX=True
-      - LOG_LEVEL=INFO
-      - FLASK_HOST=0.0.0.0
-      - FLASK_PORT=5000
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-True}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://tradingbot:${POSTGRES_PASSWORD:-tradingbot123}@postgres:5432/tradingbot_dev}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - BINANCE_TESTNET=${BINANCE_TESTNET:-True}
+      - COINBASE_SANDBOX=${COINBASE_SANDBOX:-True}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - FLASK_HOST=${FLASK_HOST:-0.0.0.0}
+      - FLASK_PORT=${FLASK_PORT:-5000}
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
@@ -49,9 +49,9 @@ services:
     container_name: tradingbot-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=tradingbot_dev
-      - POSTGRES_USER=tradingbot
-      - POSTGRES_PASSWORD=tradingbot123
+      - POSTGRES_DB=${POSTGRES_DB:-tradingbot_dev}
+      - POSTGRES_USER=${POSTGRES_USER:-tradingbot}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -71,9 +71,9 @@ services:
     image: redis:7-alpine
     container_name: tradingbot-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass redis123
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     environment:
-      - REDIS_PASSWORD=redis123
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
@@ -82,7 +82,7 @@ services:
     networks:
       - tradingbot-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -94,8 +94,8 @@ services:
       dockerfile: Dockerfile
     container_name: trading_bot_frontend
     environment:
-      - REACT_APP_API_URL=http://localhost:5000
-      - REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:5000}
+      - REACT_APP_STRIPE_PUBLISHABLE_KEY=${REACT_APP_STRIPE_PUBLISHABLE_KEY:-pk_test_your_stripe_publishable_key}
     ports:
       - "3000:3000"
     depends_on:
@@ -154,8 +154,8 @@ services:
     container_name: tradingbot-grafana
     restart: unless-stopped
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
@@ -181,7 +181,7 @@ services:
     command: celery -A backend.tasks.celery worker --loglevel=info --concurrency=4
     environment:
       - ENVIRONMENT=development
-      - DATABASE_URL=postgresql://tradingbot:tradingbot123@postgres:5432/tradingbot_dev
+      - DATABASE_URL=${DATABASE_URL:-postgresql://tradingbot:${POSTGRES_PASSWORD}@postgres:5432/tradingbot_dev}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
@@ -207,7 +207,7 @@ services:
     command: celery -A backend.tasks.celery beat --loglevel=info
     environment:
       - ENVIRONMENT=development
-      - DATABASE_URL=postgresql://tradingbot:tradingbot123@postgres:5432/tradingbot_dev
+      - DATABASE_URL=${DATABASE_URL:-postgresql://tradingbot:${POSTGRES_PASSWORD}@postgres:5432/tradingbot_dev}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
@@ -228,8 +228,8 @@ services:
     container_name: tradingbot-pgadmin
     restart: unless-stopped
     environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@tradingbot.com
-      - PGADMIN_DEFAULT_PASSWORD=admin123
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL:-admin@tradingbot.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
       - PGADMIN_CONFIG_SERVER_MODE=False
     volumes:
       - pgadmin_data:/var/lib/pgadmin

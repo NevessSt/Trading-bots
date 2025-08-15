@@ -58,6 +58,16 @@ TradingBot Pro is a professional-grade cryptocurrency trading bot designed for s
 - **Security**: JWT authentication, rate limiting, and SSL/TLS encryption
 - **Database**: PostgreSQL for data persistence with Redis caching
 
+## 📸 Screenshots
+
+*Screenshots of the trading dashboard, bot management interface, and analytics will be added here. The application features:*
+
+- **Modern React Dashboard**: Real-time portfolio and bot performance monitoring
+- **Bot Management Interface**: Create, configure, and manage trading bots
+- **Trading Analytics**: Comprehensive trade history and performance metrics
+- **Settings Panel**: API key management and configuration options
+- **License Management**: Activation and feature access control
+
 ## 📋 Prerequisites
 
 - **Docker & Docker Compose**: For containerized deployment
@@ -75,31 +85,59 @@ git clone <repository-url>
 cd trading-bot-system
 ```
 
+### 2. Paper Trading Configuration
+
+**For Development (Testnet/Sandbox)**:
+- Set `BINANCE_TESTNET=True` for Binance testnet
+- Set `COINBASE_SANDBOX=True` for Coinbase Pro sandbox
+- Set `PAPER_TRADING_MODE=True` for simulated trading
+- Set `TRADING_ENABLED=False` to disable live trading
+
+**For Live Trading (Production)**:
+- Set `BINANCE_TESTNET=False` for live Binance
+- Set `COINBASE_SANDBOX=False` for live Coinbase Pro
+- Set `PAPER_TRADING_MODE=False` for real trading
+- Set `TRADING_ENABLED=True` to enable live trading
+- **WARNING**: Only enable live trading with proper risk management!
+
 ### 2. Environment Configuration
 
-#### Development Environment
-Create `.env` file in the root directory:
+**IMPORTANT**: Copy `.env.example` to `.env` before running:
+
+```bash
+# Copy environment template
+cp .env.example .env
+cp backend/.env.example backend/.env
+```
+
+Then edit `.env` and `backend/.env` with your actual values:
+
+#### Required Environment Variables
 ```env
+# Security (CHANGE IN PRODUCTION!)
+SECRET_KEY=your-secret-key-change-in-production-make-it-long-and-random-32chars
+JWT_SECRET_KEY=your-jwt-secret-key-change-in-production-make-it-long-and-random
+
 # Database Configuration
-POSTGRES_DB=trading_bot_db
-POSTGRES_USER=trading_user
-POSTGRES_PASSWORD=your_secure_password
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
+DATABASE_URL=postgresql://username:password@localhost:5432/trading_bot
+# Or for development: sqlite:///trading_bot.db
 
 # Redis Configuration
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=your_redis_password
+REDIS_URL=redis://localhost:6379/0
 
-# Flask Configuration
-FLASK_ENV=development
-SECRET_KEY=your_secret_key_here
-JWT_SECRET=your_jwt_secret_here
+# Exchange API Credentials (TESTNET/SANDBOX for development)
+BINANCE_API_KEY=your_binance_api_key_here
+BINANCE_SECRET_KEY=your_binance_secret_key_here
+BINANCE_TESTNET=True
 
-# Binance API (Use testnet for development)
-BINANCE_API_KEY=your_binance_api_key
-BINANCE_SECRET_KEY=your_binance_secret_key
+COINBASE_API_KEY=your_coinbase_api_key_here
+COINBASE_SECRET_KEY=your_coinbase_secret_key_here
+COINBASE_PASSPHRASE=your_coinbase_passphrase_here
+COINBASE_SANDBOX=True
+
+# Trading Configuration
+PAPER_TRADING_MODE=True
+TRADING_ENABLED=False
 BINANCE_TESTNET=true
 
 # Stripe (for subscription management)
@@ -114,12 +152,90 @@ MAIL_USERNAME=your_email@gmail.com
 MAIL_PASSWORD=your_app_password
 ```
 
-#### Production Environment
-Create `.env.prod` file with production values:
+## 🚀 Production Deployment
+
+### 1. Environment Setup
+
+Before deploying to production, make sure to set up your environment properly:
+
+```bash
+# Copy environment template if you haven't already
+cp .env.example .env
+```
+
+Edit your `.env` file with production values, making sure to set:
+
 ```env
-# Use strong, unique passwords for production
-POSTGRES_PASSWORD=very_secure_production_password
-REDIS_PASSWORD=very_secure_redis_password
+# Security (REQUIRED - use strong, unique values)
+SECRET_KEY=your-very-secure-production-secret-key
+JWT_SECRET_KEY=your-very-secure-production-jwt-key
+
+# Database credentials
+POSTGRES_PASSWORD=your-very-secure-production-db-password
+POSTGRES_USER=tradingbot
+POSTGRES_DB=tradingbot_prod
+
+# Redis password
+REDIS_PASSWORD=your-very-secure-production-redis-password
+
+# Grafana admin credentials
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=your-very-secure-production-grafana-password
+
+# pgAdmin credentials
+PGADMIN_DEFAULT_EMAIL=admin@yourdomain.com
+PGADMIN_DEFAULT_PASSWORD=your-very-secure-production-pgadmin-password
+
+# Set to false for real trading
+BINANCE_TESTNET=false
+COINBASE_SANDBOX=false
+```
+
+### 2. Start Production Environment
+
+Use the production docker-compose configuration:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+This will:
+- Build optimized production containers
+- Configure proper networking and security
+- Set up monitoring and health checks
+- Enable SSL/TLS for secure connections
+
+### 3. Verify Deployment
+
+Check that all services are running properly:
+
+```bash
+docker compose ps
+```
+
+Access the application at:
+- Frontend: https://your-domain.com (or http://localhost if testing locally)
+- Backend API: https://your-domain.com/api (or http://localhost:5000 if testing locally)
+- Monitoring: https://your-domain.com/grafana (or http://localhost:3000 if testing locally)
+
+### 4. Production Maintenance
+
+#### Updating the Application
+```bash
+# Pull latest changes
+git pull
+
+# Rebuild and restart containers
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+#### Backing Up Data
+```bash
+# Backup PostgreSQL database
+docker exec tradingbot-postgres pg_dump -U tradingbot tradingbot_prod > backup_$(date +%Y%m%d).sql
+
+# Backup configuration
+cp .env .env.backup.$(date +%Y%m%d)
 ```
 
 ### 3. License Setup
@@ -217,52 +333,102 @@ docker-compose down
 
 ## 🚀 Production Deployment
 
-### Automated Deployment
-Use the provided deployment script:
+### Prerequisites
+- Docker and Docker Compose installed
+- Valid SSL certificates (for HTTPS)
+- Production environment variables configured
+- Exchange API keys (live, not testnet)
+
+### 1. Production Environment Setup
+
+**CRITICAL**: Create production `.env` file with secure values:
+
 ```bash
-python deploy_production.py
+# Copy and customize environment files
+cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-This script will:
-- Check prerequisites and dependencies
-- Run security checks
-- Create production Docker configurations
-- Backup existing deployment
-- Deploy with monitoring stack
-- Verify deployment health
+**Required Production Environment Variables**:
+```env
+# Security (MUST be changed!)
+SECRET_KEY=your-production-secret-key-32-chars-minimum
+JWT_SECRET_KEY=your-production-jwt-secret-key-32-chars-minimum
 
-### Manual Production Deployment
+# Database (PostgreSQL recommended)
+DATABASE_URL=postgresql://username:password@localhost:5432/trading_bot_prod
+POSTGRES_PASSWORD=your-secure-postgres-password
 
-#### 1. SSL Certificate Setup
-```bash
-# Create SSL directory
-mkdir -p nginx/ssl
+# Redis
+REDIS_PASSWORD=your-secure-redis-password
 
-# Generate self-signed certificate (for testing)
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout nginx/ssl/key.pem \
-  -out nginx/ssl/cert.pem
+# Live Exchange APIs (NOT testnet!)
+BINANCE_API_KEY=your_live_binance_api_key
+BINANCE_SECRET_KEY=your_live_binance_secret_key
+BINANCE_TESTNET=False
 
-# For production, use Let's Encrypt or your certificate provider
+COINBASE_API_KEY=your_live_coinbase_api_key
+COINBASE_SECRET_KEY=your_live_coinbase_secret_key
+COINBASE_PASSPHRASE=your_live_coinbase_passphrase
+COINBASE_SANDBOX=False
+
+# Trading Configuration
+PAPER_TRADING_MODE=False
+TRADING_ENABLED=True
+ENVIRONMENT=production
+DEBUG=False
+
+# Frontend
+REACT_APP_API_URL=https://yourdomain.com
+REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_key
 ```
 
-#### 2. Production Deployment
+### 2. Production Deployment Command
+
 ```bash
-# Deploy with production configuration
-docker-compose -f docker-compose.prod.yml up -d --build
+# Deploy with both development and production overrides
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 # Check service status
-docker-compose -f docker-compose.prod.yml ps
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
 
 # View logs
-docker-compose -f docker-compose.prod.yml logs -f
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
 ```
 
-#### 3. Monitoring Setup
+### 3. Post-Deployment Verification
+
+```bash
+# Run health checks
+./scripts/health-check.sh
+
+# Check API health
+curl -f http://localhost:5000/health
+
+# Verify database connection
+docker-compose exec backend python -c "from database import db; print('DB OK' if db else 'DB FAIL')"
+```
+
+### 4. Monitoring & Maintenance
+
 Access monitoring dashboards:
+- **Application**: http://localhost:3000
+- **API Health**: http://localhost:5000/health
 - **Grafana**: http://localhost:3001 (admin/admin)
 - **Prometheus**: http://localhost:9090
-- **Kibana**: http://localhost:5601
+
+**Regular Maintenance**:
+```bash
+# Weekly backup
+docker-compose exec postgres pg_dump -U trading_user trading_bot_db > backup_$(date +%Y%m%d).sql
+
+# Update containers
+docker-compose pull
+docker-compose up -d --build
+
+# Clean up old images
+docker system prune -f
+```
 
 ## 📊 Usage
 

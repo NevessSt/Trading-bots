@@ -450,6 +450,44 @@ def sample_bot_config():
     }
 
 
+# Additional fixtures for compatibility with existing tests
+@pytest.fixture
+def sample_user(session):
+    """Create a sample user (alias for test_user)."""
+    user = User(
+        email='sample@example.com',
+        username='sampleuser',
+        password_hash=AuthService.hash_password('password123'),
+        is_verified=True,
+        subscription_plan='basic'
+    )
+    session.add(user)
+    session.commit()
+    return user
+
+
+@pytest.fixture
+def sample_bot(session, sample_user):
+    """Create a sample bot (alias for test_bot)."""
+    bot = Bot(
+        user_id=sample_user.id,
+        name='Sample Bot',
+        strategy='grid_trading',
+        symbol='BTCUSDT',
+        base_amount=1000.0,
+        config={
+            'symbol': 'BTC/USDT',
+            'grid_size': 10,
+            'profit_target': 0.02,
+            'stop_loss': 0.05
+        },
+        is_active=False
+    )
+    session.add(bot)
+    session.commit()
+    return bot
+
+
 # Performance Testing Fixtures
 @pytest.fixture
 def performance_timer():

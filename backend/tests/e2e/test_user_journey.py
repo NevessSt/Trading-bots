@@ -5,12 +5,12 @@ from decimal import Decimal
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 
-from app.models.user import User
-from app.models.bot import Bot
-from app.models.trade import Trade
-from app.models.api_key import APIKey
-from app.models.subscription import Subscription
-from app.extensions import db
+from models.user import User
+from models.bot import Bot
+from models.trade import Trade
+from models.api_key import APIKey
+from models.subscription import Subscription
+from db import db
 
 
 class TestCompleteUserJourney:

@@ -15,10 +15,35 @@ from flask import Flask
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
-from app import create_app, db
-from app.models import User, Bot, Trade, APIKey, Subscription
-from app.utils.security import generate_api_key, hash_api_secret
-from tests.test_config import TestConfig, MOCK_MARKET_DATA, MOCK_EXCHANGE_RESPONSE
+import sys
+import os
+
+# Add backend directory to Python path
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+# Import from backend directory using explicit path
+import importlib.util
+app_spec = importlib.util.spec_from_file_location("app", os.path.join(backend_dir, "app.py"))
+app_module = importlib.util.module_from_spec(app_spec)
+app_spec.loader.exec_module(app_module)
+create_app = app_module.create_app
+from db import db
+from models.user import User
+from models.bot import Bot
+from models.trade import Trade
+from models.api_key import APIKey
+from models.subscription import Subscription
+from utils.security import generate_api_key, hash_api_secret
+# Import test_config from the same directory
+import importlib.util
+test_config_spec = importlib.util.spec_from_file_location("test_config", os.path.join(os.path.dirname(__file__), "test_config.py"))
+test_config_module = importlib.util.module_from_spec(test_config_spec)
+test_config_spec.loader.exec_module(test_config_module)
+TestConfig = test_config_module.TestConfig
+MOCK_MARKET_DATA = test_config_module.MOCK_MARKET_DATA
+MOCK_EXCHANGE_RESPONSE = test_config_module.MOCK_EXCHANGE_RESPONSE
 
 
 class TestDataFactory:

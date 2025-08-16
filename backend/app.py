@@ -82,6 +82,22 @@ def register_routes(app):
         print(f"Warning: Could not import some routes: {e}")
         print("Starting with basic routes only...")
     
+    # Root route
+    @app.route('/', methods=['GET'])
+    def root():
+        return jsonify({
+            'message': 'Trading Bot API',
+            'version': '1.0.0',
+            'status': 'running',
+            'endpoints': {
+                'health': '/api/health',
+                'auth': '/api/auth',
+                'user': '/api/user',
+                'trading': '/api',
+                'admin': '/api/admin'
+            }
+        })
+    
     # Health check route
     @app.route('/api/health', methods=['GET'])
     def health_check():

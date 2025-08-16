@@ -17,32 +17,35 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from ccxt.base.errors import BaseError, NetworkError, ExchangeError, InvalidOrder, InsufficientFunds, AuthenticationError
 
 # Import license validation
-from backend.auth.license_manager import LicenseManager
+from auth.license_manager import LicenseManager
 
 # Import trading strategies
-from backend.bot_engine.strategies.rsi_strategy import RSIStrategy
-from backend.bot_engine.strategies.macd_strategy import MACDStrategy
-from backend.bot_engine.strategies.ema_crossover_strategy import EMACrossoverStrategy
-from backend.bot_engine.strategies.advanced_grid_strategy import AdvancedGridStrategy
-from backend.bot_engine.strategies.smart_dca_strategy import SmartDCAStrategy
-from backend.bot_engine.strategies.advanced_scalping_strategy import AdvancedScalpingStrategy
-from backend.bot_engine.strategies.strategy_factory import StrategyFactory
+from .strategies.rsi_strategy import RSIStrategy
+from .strategies.macd_strategy import MACDStrategy
+from .strategies.ema_crossover_strategy import EMACrossoverStrategy
+from .strategies.advanced_grid_strategy import AdvancedGridStrategy
+from .strategies.smart_dca_strategy import SmartDCAStrategy
+from .strategies.advanced_scalping_strategy import AdvancedScalpingStrategy
+from .strategies.strategy_factory import StrategyFactory
 
 # Import advanced components
-from backend.bot_engine.advanced_risk_manager import AdvancedRiskManager
-from backend.bot_engine.portfolio_manager import PortfolioManager
-from backend.bot_engine.market_data_manager import MarketDataManager
-from backend.bot_engine.backtesting_engine import BacktestingEngine
+from .advanced_risk_manager import AdvancedRiskManager
+from .portfolio_manager import PortfolioManager
+from .market_data_manager import MarketDataManager
+from .backtesting_engine import BacktestingEngine
 
 # Import models
-from backend.models.trade import Trade
-from backend.models.user import User
-from backend.models.bot import Bot
+from models.trade import Trade
+from models.user import User
+from models.bot import Bot
 
 # Import utilities
-from backend.utils.notifications import send_notification
-from backend.utils.logging_config import setup_logging
-from backend.utils.security import encrypt_data, decrypt_data
+from utils.notification import NotificationManager
+
+# Create notification manager instance
+notification_manager = NotificationManager()
+from utils.logging_config import setup_logging
+from utils.security import SecurityManager
 
 @dataclass
 class TradingBotConfig:
@@ -278,7 +281,7 @@ class TradingEngine:
                 self.bot_performance[bot_config.bot_id]['trades'] += 1
                 
                 # Send notification
-                send_notification(
+                notification_manager.send_notification(
                     bot_config.user_id,
                     f"Trade executed by bot {bot_config.bot_id}: {trade_result['side']} {bot_config.symbol}"
                 )
@@ -682,7 +685,7 @@ class TradingEngine:
             self.logger.info(f"Advanced bot {bot_id} started successfully for user {user_id} with strategy {strategy_name}")
             
             # Notify user
-            send_notification(
+            notification_manager.send_notification(
                 user_id,
                 f"Advanced trading bot started for {symbol} using {strategy_name} strategy"
             )
@@ -735,7 +738,7 @@ class TradingEngine:
             del self.active_bots[bot_id]
             
             # Notify user
-            send_notification(
+            notification_manager.send_notification(
                 user_id,
                 f"Trading bot stopped for {bot_config.symbol}"
             )

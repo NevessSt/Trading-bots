@@ -7,6 +7,7 @@ class Subscription(db.Model):
     """Subscription model for user billing and plans"""
     
     __tablename__ = 'subscriptions'
+    __table_args__ = {'extend_existing': True}
     
     # Subscription plans configuration
     PLANS = {

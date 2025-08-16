@@ -13,6 +13,7 @@ class APIKey(db.Model):
     """API Key model for managing exchange API keys"""
     
     __tablename__ = 'api_keys'
+    __table_args__ = {'extend_existing': True}
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)

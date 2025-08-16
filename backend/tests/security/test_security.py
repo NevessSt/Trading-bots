@@ -1,4 +1,6 @@
 """Security tests for the trading bot system."""
+import os
+import sys
 import pytest
 import json
 import time
@@ -8,9 +10,22 @@ import jwt
 import hashlib
 import secrets
 
-from app import create_app, db
-from app.models import User, Bot, APIKey
-from app.utils.security import generate_api_key, hash_api_secret
+# Add backend directory to Python path
+backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+# Import from backend directory using explicit path
+import importlib.util
+app_spec = importlib.util.spec_from_file_location("app", os.path.join(backend_dir, "app.py"))
+app_module = importlib.util.module_from_spec(app_spec)
+app_spec.loader.exec_module(app_module)
+create_app = app_module.create_app
+from db import db
+from models.user import User
+from models.bot import Bot
+from models.api_key import APIKey
+from utils.security import generate_api_key, hash_api_secret
 
 
 class TestAuthenticationSecurity:
@@ -199,7 +214,7 @@ class TestInputValidationSecurity:
             assert get_response.status_code == 200
             
             # Verify database integrity
-            from app.models import Bot
+            from models.bot import Bot
             bot = Bot.query.get(bot_id)
             assert bot is not None
     

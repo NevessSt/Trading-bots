@@ -1,5 +1,6 @@
 """Test configuration and fixtures."""
 import os
+import sys
 import pytest
 import tempfile
 from decimal import Decimal
@@ -11,21 +12,24 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 from flask_testing import TestCase
 
+# Add backend directory to Python path
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 # Set test environment before importing app
 os.environ['FLASK_ENV'] = 'testing'
 os.environ['TESTING'] = 'true'
 os.environ['WTF_CSRF_ENABLED'] = 'false'
 
-from app import create_app
+# Import from backend directory using explicit path
+import importlib.util
+app_spec = importlib.util.spec_from_file_location("app", os.path.join(backend_dir, "app.py"))
+app_module = importlib.util.module_from_spec(app_spec)
+app_spec.loader.exec_module(app_module)
+create_app = app_module.create_app
 from db import db as _db
-from models.user import User
-from models.bot import Bot
-from models.trade import Trade
-from models.subscription import Subscription
-from models.api_key import APIKey
-from services.auth_service import AuthService
-from services.trading_service import TradingService
-from services.subscription_service import SubscriptionService
+# Import models and services within fixtures to avoid duplicate table definitions
 
 
 class BaseTestCase(TestCase):
@@ -183,12 +187,12 @@ def admin_headers(client, admin_user):
 @pytest.fixture
 def test_user(session):
     """Create a test user."""
+    from models.user import User
     user = User(
         email='test@example.com',
         username='testuser',
         password='password123',
-        is_verified=True,
-        subscription_plan='basic'
+        is_verified=True
     )
     session.add(user)
     session.commit()
@@ -198,13 +202,13 @@ def test_user(session):
 @pytest.fixture
 def admin_user(session):
     """Create an admin user."""
+    from models.user import User
     user = User(
         email='admin@example.com',
         username='admin',
-        password_hash=AuthService.hash_password('admin123'),
+        password='admin123',
         is_verified=True,
-        role='admin',
-        subscription_plan='premium'
+        role='admin'
     )
     session.add(user)
     session.commit()
@@ -214,10 +218,11 @@ def admin_user(session):
 @pytest.fixture
 def unverified_user(session):
     """Create an unverified user."""
+    from models.user import User
     user = User(
         email='unverified@example.com',
         username='unverified',
-        password_hash=AuthService.hash_password('password123'),
+        password='password123',
         is_verified=False
     )
     session.add(user)
@@ -229,6 +234,7 @@ def unverified_user(session):
 @pytest.fixture
 def test_bot(session, test_user):
     """Create a test bot."""
+    from models.bot import Bot
     bot = Bot(
         user_id=test_user.id,
         name='Test Bot',
@@ -251,6 +257,7 @@ def test_bot(session, test_user):
 @pytest.fixture
 def active_bot(session, test_user):
     """Create an active test bot."""
+    from models.bot import Bot
     bot = Bot(
         user_id=test_user.id,
         name='Active Bot',
@@ -273,6 +280,7 @@ def active_bot(session, test_user):
 @pytest.fixture
 def test_trade(session, test_bot):
     """Create a test trade."""
+    from models.trade import Trade
     trade = Trade(
         bot_id=test_bot.id,
         symbol='BTC/USDT',
@@ -291,6 +299,7 @@ def test_trade(session, test_bot):
 @pytest.fixture
 def test_subscription(session, test_user):
     """Create a test subscription."""
+    from models.subscription import Subscription
     subscription = Subscription(
         user_id=test_user.id,
         plan='basic',
@@ -306,6 +315,7 @@ def test_subscription(session, test_user):
 @pytest.fixture
 def test_api_key(session, test_user):
     """Create a test API key."""
+    from models.api_key import APIKey
     api_key = APIKey(
         user_id=test_user.id,
         exchange='binance',
@@ -454,12 +464,13 @@ def sample_bot_config():
 @pytest.fixture
 def sample_user(session):
     """Create a sample user (alias for test_user)."""
+    from models.user import User
+    from services.auth_service import AuthService
     user = User(
         email='sample@example.com',
         username='sampleuser',
-        password_hash=AuthService.hash_password('password123'),
-        is_verified=True,
-        subscription_plan='basic'
+        password='password123',
+        is_verified=True
     )
     session.add(user)
     session.commit()
@@ -469,6 +480,7 @@ def sample_user(session):
 @pytest.fixture
 def sample_bot(session, sample_user):
     """Create a sample bot (alias for test_bot)."""
+    from models.bot import Bot
     bot = Bot(
         user_id=sample_user.id,
         name='Sample Bot',

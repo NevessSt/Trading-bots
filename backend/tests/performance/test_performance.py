@@ -1,4 +1,6 @@
 """Performance and load tests for the trading bot system."""
+import os
+import sys
 import pytest
 import time
 import threading
@@ -9,11 +11,23 @@ from decimal import Decimal
 from unittest.mock import patch, MagicMock
 import json
 
-from app import create_app, db
-from app.models import User, Bot, Trade, APIKey
-from app.services.trading_service import TradingService
-from app.services.market_service import MarketService
-from app.services.portfolio_service import PortfolioService
+# Add backend directory to Python path
+backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+# Import from backend directory using explicit path
+import importlib.util
+app_spec = importlib.util.spec_from_file_location("app", os.path.join(backend_dir, "app.py"))
+app_module = importlib.util.module_from_spec(app_spec)
+app_spec.loader.exec_module(app_module)
+create_app = app_module.create_app
+from db import db
+from models.user import User
+from models.bot import Bot
+from models.trade import Trade
+from models.api_key import APIKey
+from services.trading_service import TradingService
 
 
 class TestDatabasePerformance:

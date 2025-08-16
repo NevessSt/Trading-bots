@@ -67,6 +67,13 @@ yarn-error.log*
 htmlcov/
 .pytest_cache/
 
+# Security & License Files
+*.key
+encryption.key
+license_key.bin
+*.pem
+*.crt
+
 # Misc
 .directory
 *.bak

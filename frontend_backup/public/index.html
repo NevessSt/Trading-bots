@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="AI-Powered Crypto Trading Bot - Automate your crypto trading with advanced AI strategies"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>CryptoTrader AI - Smart Crypto Trading Bot</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <script>
+      // Enhanced MetaMask blocking - runs immediately when page loads
+      (function() {
+        if (typeof window === 'undefined') return;
+        
+        // Create a mock ethereum object with all necessary properties to prevent undefined errors
+        const mockEthereum = {
+          isTrust: false,
+          isMetaMask: false,
+          isConnected: () => false,
+          request: () => Promise.reject(new Error('Ethereum provider blocked')),
+          enable: () => Promise.reject(new Error('Ethereum provider blocked')),
+          send: () => Promise.reject(new Error('Ethereum provider blocked')),
+          sendAsync: () => Promise.reject(new Error('Ethereum provider blocked')),
+          on: () => {},
+          removeListener: () => {},
+          removeAllListeners: () => {},
+          connect: () => Promise.reject(new Error('Failed to connect to MetaMask')),
+          disconnect: () => Promise.resolve(),
+          chainId: '0x1',
+          networkVersion: '1',
+          selectedAddress: null,
+          accounts: [],
+          _metamask: {
+            isUnlocked: () => Promise.resolve(false)
+          }
+        };
+        
+        // Block all ethereum-related properties with mock objects
+        const blockEthereumProperty = (propName, mockObject = undefined) => {
+          try {
+            Object.defineProperty(window, propName, {
+              get: function() {
+                console.log(`${propName} access blocked - returning mock object`);
+                return mockObject;
+              },
+              set: function(value) {
+                console.log(`${propName} injection blocked`);
+                // Silently ignore the assignment
+              },
+              configurable: false,
+              enumerable: false
+            });
+          } catch (e) {
+            // Property might already be defined, try to delete and redefine
+            try {
+              delete window[propName];
+              Object.defineProperty(window, propName, {
+                get: function() {
+                  console.log(`${propName} access blocked (redefined) - returning mock object`);
+                  return mockObject;
+                },
+                set: function(value) {
+                  console.log(`${propName} injection blocked (redefined)`);
+                },
+                configurable: false,
+                enumerable: false
+              });
+            } catch (e2) {
+              console.log(`Could not block ${propName}:`, e2.message);
+            }
+          }
+        };
+        
+        // Block common ethereum properties with mock objects
+        blockEthereumProperty('ethereum', mockEthereum);
+        blockEthereumProperty('web3', undefined);
+        blockEthereumProperty('Web3', undefined);
+        
+        // Override document.dispatchEvent to block MetaMask events
+        const originalDispatchEvent = document.dispatchEvent;
+        document.dispatchEvent = function(event) {
+          if (event.type && (event.type.includes('ethereum') || event.type.includes('metamask'))) {
+            console.log('MetaMask event blocked:', event.type);
+            return false;
+          }
+          return originalDispatchEvent.call(this, event);
+        };
+        
+        // Block chrome-extension requests globally
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+          if (typeof url === 'string' && (url.includes('chrome-extension') || url.includes('moz-extension'))) {
+            console.log('Extension fetch blocked:', url);
+            return Promise.reject(new Error('Extension requests blocked'));
+          }
+          return originalFetch.call(this, url, options);
+        };
+        
+        // Override XMLHttpRequest for chrome-extension requests
+        const originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, ...args) {
+          if (typeof url === 'string' && (url.includes('chrome-extension') || url.includes('moz-extension'))) {
+            console.log('Extension XHR blocked:', url);
+            throw new Error('Extension XHR requests blocked');
+          }
+          return originalXHROpen.call(this, method, url, ...args);
+        };
+        
+        // Enhanced error suppression with specific patterns
+        const suppressError = (event) => {
+          const errorMessage = event.error ? event.error.message : event.message || '';
+          const filename = event.filename || (event.error && event.error.stack) || '';
+          const stack = event.error ? event.error.stack : event.stack || '';
+          
+          // Comprehensive error patterns
+          const errorPatterns = [
+            'MetaMask',
+            'chrome-extension',
+            'moz-extension',
+            'ethereum',
+            'Failed to connect to MetaMask',
+            'inpage.js',
+            'isTrust',
+            'EthereumAdapter',
+            'nkbihfbeogaeaoehlefnkodbefgpgknn', // MetaMask extension ID
+            'egjidjbpglichdcondbcbdnbeeppgdph', // Another MetaMask extension ID
+            'Cannot read properties of undefined (reading \'isTrust\')',
+            'Cannot read property \'isTrust\'',
+            'web3',
+            'Web3'
+          ];
+          
+          const shouldSuppress = errorPatterns.some(pattern => 
+            errorMessage.includes(pattern) || 
+            filename.includes(pattern) || 
+            stack.includes(pattern)
+          );
+          
+          if (shouldSuppress) {
+            console.log('MetaMask/Extension error suppressed:', errorMessage);
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            return false;
+          }
+        };
+        
+        // Multiple error event listeners
+        window.addEventListener('error', suppressError, true);
+        window.addEventListener('error', suppressError, false);
+        document.addEventListener('error', suppressError, true);
+        
+        // Enhanced promise rejection suppression
+        const suppressRejection = (event) => {
+          const reason = event.reason;
+          const message = reason && reason.message ? reason.message : String(reason);
+          const stack = reason && reason.stack ? reason.stack : '';
+          
+          const rejectionPatterns = [
+            'MetaMask',
+            'chrome-extension',
+            'moz-extension',
+            'ethereum',
+            'Failed to connect to MetaMask',
+            'inpage.js',
+            'isTrust',
+            'EthereumAdapter',
+            'nkbihfbeogaeaoehlefnkodbefgpgknn',
+            'egjidjbpglichdcondbcbdnbeeppgdph',
+            'web3',
+            'Web3'
+          ];
+          
+          const shouldSuppress = rejectionPatterns.some(pattern => 
+            message.includes(pattern) || 
+            stack.includes(pattern)
+          );
+          
+          if (shouldSuppress) {
+            console.log('MetaMask/Extension promise rejection suppressed:', message);
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+          }
+        };
+        
+        window.addEventListener('unhandledrejection', suppressRejection);
+        
+        // Enhanced console error blocking
+        const originalConsoleError = console.error;
+        console.error = function(...args) {
+          const message = args.join(' ');
+          const consolePatterns = [
+            'MetaMask',
+            'chrome-extension',
+            'moz-extension',
+            'ethereum',
+            'Failed to connect to MetaMask',
+            'inpage.js',
+            'isTrust',
+            'EthereumAdapter',
+            'web3',
+            'Web3'
+          ];
+          
+          if (consolePatterns.some(pattern => message.includes(pattern))) {
+            console.log('MetaMask console error suppressed:', message);
+            return;
+          }
+          return originalConsoleError.apply(console, args);
+        };
+        
+        // Enhanced console warning blocking
+        const originalConsoleWarn = console.warn;
+        console.warn = function(...args) {
+          const message = args.join(' ');
+          const warnPatterns = [
+            'MetaMask',
+            'chrome-extension',
+            'moz-extension',
+            'ethereum',
+            'Failed to connect to MetaMask',
+            'inpage.js',
+            'isTrust',
+            'EthereumAdapter',
+            'web3',
+            'Web3'
+          ];
+          
+          if (warnPatterns.some(pattern => message.includes(pattern))) {
+            console.log('MetaMask console warning suppressed:', message);
+            return;
+          }
+          return originalConsoleWarn.apply(console, args);
+        };
+        
+        console.log('Enhanced MetaMask blocking initialized with isTrust protection');
+      })();
+    </script>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>

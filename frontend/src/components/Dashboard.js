@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLicense } from '../contexts/LicenseContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import {
@@ -21,6 +22,7 @@ import SubscriptionCard from './SubscriptionCard';
 
 const Dashboard = () => {
   const { user, subscription, isVerified } = useAuth();
+  const { hasValidLicense, getLicenseType, requiresLicense } = useLicense();
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateBot, setShowCreateBot] = useState(false);
@@ -158,6 +160,56 @@ const Dashboard = () => {
           <SubscriptionCard subscription={subscription} />
         </div>
 
+        {/* License Status Card */}
+        <div className="mb-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <KeyIcon className={`h-8 w-8 ${
+                  hasValidLicense ? 'text-green-500' : 'text-red-500'
+                }`} />
+                <div className="ml-4">
+                  <h3 className="text-lg font-medium text-gray-900">License Status</h3>
+                  <p className={`text-sm ${
+                    hasValidLicense ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {hasValidLicense ? 'Active License' : 'No Valid License'}
+                  </p>
+                  {hasValidLicense && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Type: {getLicenseType() || 'Unknown'}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                {!hasValidLicense && (
+                  <button
+                    onClick={() => window.location.href = '/license'}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Activate License
+                  </button>
+                )}
+                <button
+                  onClick={() => window.location.href = '/license'}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Manage License
+                </button>
+              </div>
+            </div>
+            {!hasValidLicense && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  <ExclamationTriangleIcon className="h-4 w-4 inline mr-1" />
+                  Some features may be limited without a valid license. Activate your license to unlock all trading capabilities.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
@@ -166,9 +218,9 @@ const Dashboard = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total P&L</p>
                 <p className={`text-2xl font-bold ${
-                  stats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'
+                  (stats.totalPnL || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  ${stats.totalPnL.toFixed(2)}
+                  ${(stats.totalPnL || 0).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -200,7 +252,7 @@ const Dashboard = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Success Rate</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {stats.successRate.toFixed(1)}%
+                  {(stats.successRate || 0).toFixed(1)}%
                 </p>
               </div>
             </div>

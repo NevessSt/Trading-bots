@@ -1,296 +1,194 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Badge } from '../ui/badge';
-import { CheckCircle, XCircle, Key, Shield, Clock, AlertTriangle } from 'lucide-react';
-import { useTradingStore } from '../../stores/useTradingStore';
+import React, { useState } from 'react';
+import { useLicense } from '../../contexts/LicenseContext';
 
-const LicenseActivation = () => {
+const LicenseActivation = ({ onActivationSuccess }) => {
+  const { activateLicense, validateLicenseKey, loading } = useLicense();
   const [licenseKey, setLicenseKey] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [validationResult, setValidationResult] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [licenseStatus, setLicenseStatus] = useState(null);
-  const { user } = useTradingStore();
+  const [isValidating, setIsValidating] = useState(false);
 
-  useEffect(() => {
-    checkLicenseStatus();
-  }, []);
-
-  const checkLicenseStatus = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/license/status', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setLicenseStatus(data);
-      }
-    } catch (err) {
-      console.error('Failed to check license status:', err);
-    }
-  };
-
-  const handleActivation = async (e) => {
-    e.preventDefault();
+  const handleValidate = async () => {
     if (!licenseKey.trim()) {
       setError('Please enter a license key');
       return;
     }
 
-    setLoading(true);
+    setIsValidating(true);
     setError('');
-    setSuccess('');
+    setValidationResult(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/license/activate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ license_key: licenseKey })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess('License activated successfully!');
-        setLicenseKey('');
-        await checkLicenseStatus();
-      } else {
-        setError(data.error || 'Failed to activate license');
+      const result = await validateLicenseKey(licenseKey.trim());
+      setValidationResult(result);
+      
+      if (!result.valid) {
+        setError(result.error || 'Invalid license key');
       }
     } catch (err) {
-      setError('Network error. Please try again.');
+      setError('Failed to validate license key');
     } finally {
-      setLoading(false);
+      setIsValidating(false);
     }
   };
 
-  const handleDeactivation = async () => {
-    if (!window.confirm('Are you sure you want to deactivate your license?')) {
+  const handleActivate = async () => {
+    if (!licenseKey.trim()) {
+      setError('Please enter a license key');
       return;
     }
 
-    setLoading(true);
     setError('');
     setSuccess('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/license/deactivate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const result = await activateLicense(licenseKey.trim());
+      
+      if (result.success) {
+        setSuccess(result.message || 'License activated successfully!');
+        setLicenseKey('');
+        setValidationResult(null);
+        
+        // Call success callback if provided
+        if (onActivationSuccess) {
+          onActivationSuccess();
         }
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess('License deactivated successfully');
-        await checkLicenseStatus();
       } else {
-        setError(data.error || 'Failed to deactivate license');
+        setError(result.message || 'License activation failed');
       }
     } catch (err) {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
+      setError('Failed to activate license');
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'active':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'expired':
-        return <Clock className="h-5 w-5 text-orange-500" />;
-      case 'invalid':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return <AlertTriangle className="h-5 w-5 text-gray-500" />;
-    }
+  const handleLicenseKeyChange = (e) => {
+    setLicenseKey(e.target.value);
+    setValidationResult(null);
+    setError('');
+    setSuccess('');
   };
 
-  const getStatusBadge = (status) => {
-    const variants = {
-      active: 'bg-green-100 text-green-800',
-      expired: 'bg-orange-100 text-orange-800',
-      invalid: 'bg-red-100 text-red-800',
-      inactive: 'bg-gray-100 text-gray-800'
-    };
-
-    return (
-      <Badge className={variants[status] || variants.inactive}>
-        {status?.toUpperCase() || 'INACTIVE'}
-      </Badge>
-    );
-  };
-
-  const formatDate = (dateString) => {
+  const formatExpirationDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      month: 'long',
+      day: 'numeric'
     });
   };
 
-  const isLicenseActive = licenseStatus?.status === 'active';
-
   return (
-    <div className="space-y-6">
-      {/* License Status Card */}
-      {licenseStatus && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              License Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {getStatusIcon(licenseStatus.status)}
-                <span className="font-medium">Status:</span>
-              </div>
-              {getStatusBadge(licenseStatus.status)}
-            </div>
+    <div className="bg-white shadow-sm rounded-lg p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">
+        Activate License
+      </h3>
+      
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="license-key" className="block text-sm font-medium text-gray-700 mb-2">
+            License Key
+          </label>
+          <textarea
+            id="license-key"
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+            placeholder="Paste your license key here..."
+            value={licenseKey}
+            onChange={handleLicenseKeyChange}
+            disabled={loading}
+          />
+        </div>
 
-            {licenseStatus.license_type && (
-              <div className="flex items-center justify-between">
-                <span className="font-medium">License Type:</span>
-                <Badge variant="outline">{licenseStatus.license_type.toUpperCase()}</Badge>
+        {/* Validation Result */}
+        {validationResult && validationResult.valid && (
+          <div className="bg-green-50 border border-green-200 rounded-md p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
               </div>
-            )}
-
-            {licenseStatus.activated_at && (
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Activated:</span>
-                <span className="text-sm text-gray-600">
-                  {formatDate(licenseStatus.activated_at)}
-                </span>
-              </div>
-            )}
-
-            {licenseStatus.expires_at && (
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Expires:</span>
-                <span className="text-sm text-gray-600">
-                  {formatDate(licenseStatus.expires_at)}
-                </span>
-              </div>
-            )}
-
-            {licenseStatus.features && licenseStatus.features.length > 0 && (
-              <div>
-                <span className="font-medium block mb-2">Available Features:</span>
-                <div className="flex flex-wrap gap-2">
-                  {licenseStatus.features.map((feature, index) => (
-                    <Badge key={index} variant="secondary">
-                      {feature.replace('_', ' ').toUpperCase()}
-                    </Badge>
-                  ))}
+              <div className="ml-3">
+                <h4 className="text-sm font-medium text-green-800">
+                  Valid License Key
+                </h4>
+                <div className="mt-2 text-sm text-green-700">
+                  <p><strong>Type:</strong> {validationResult.licenseData?.type}</p>
+                  <p><strong>Expires:</strong> {formatExpirationDate(validationResult.licenseData?.expires)}</p>
+                  <div className="mt-2">
+                    <p><strong>Features:</strong></p>
+                    <ul className="list-disc list-inside ml-4 mt-1">
+                      {validationResult.licenseData?.features && Object.entries(validationResult.licenseData.features).map(([key, value]) => (
+                        <li key={key} className={value ? 'text-green-700' : 'text-gray-500'}>
+                          {key.replace('_', ' ')}: {value ? '✓' : '✗'}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
+          </div>
+        )}
 
-            {isLicenseActive && (
-              <Button
-                onClick={handleDeactivation}
-                variant="outline"
-                className="w-full mt-4"
-                disabled={loading}
-              >
-                Deactivate License
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* License Activation Card */}
-      {!isLicenseActive && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="h-5 w-5" />
-              Activate License
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleActivation} className="space-y-4">
-              <div>
-                <label htmlFor="licenseKey" className="block text-sm font-medium mb-2">
-                  License Key
-                </label>
-                <Input
-                  id="licenseKey"
-                  type="text"
-                  value={licenseKey}
-                  onChange={(e) => setLicenseKey(e.target.value)}
-                  placeholder="Enter your license key"
-                  className="font-mono"
-                  disabled={loading}
-                />
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
               </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading || !licenseKey.trim()}
-              >
-                {loading ? 'Activating...' : 'Activate License'}
-              </Button>
-            </form>
-
-            {error && (
-              <Alert className="mt-4 border-red-200 bg-red-50">
-                <XCircle className="h-4 w-4 text-red-500" />
-                <AlertDescription className="text-red-700">
-                  {error}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {success && (
-              <Alert className="mt-4 border-green-200 bg-green-50">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <AlertDescription className="text-green-700">
-                  {success}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Need a License?</h4>
-              <p className="text-sm text-blue-700 mb-3">
-                Purchase a license to unlock all trading features including live trading, 
-                advanced strategies, and premium support.
-              </p>
-              <div className="text-xs text-blue-600">
-                <p>• Demo mode: Limited to testnet trading</p>
-                <p>• Full license: Live trading + all features</p>
-                <p>• Enterprise: Custom solutions available</p>
+              <div className="ml-3">
+                <h4 className="text-sm font-medium text-red-800">
+                  Error
+                </h4>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {success && (
+          <div className="bg-green-50 border border-green-200 rounded-md p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h4 className="text-sm font-medium text-green-800">
+                  Success
+                </h4>
+                <p className="mt-1 text-sm text-green-700">{success}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex space-x-3">
+          <button
+            onClick={handleValidate}
+            disabled={!licenseKey.trim() || isValidating || loading}
+            className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isValidating ? 'Validating...' : 'Validate Key'}
+          </button>
+          
+          <button
+            onClick={handleActivate}
+            disabled={!licenseKey.trim() || loading}
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Activating...' : 'Activate License'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

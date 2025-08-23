@@ -2,11 +2,16 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 import asyncio
+import os
 
-# Import trading engine components
-from bot_engine import TradingEngine, RiskManager
+# Import database and models
 from db import db
-from models import Trade, User, Bot
+from models.bot import Bot  # Direct import instead of commented out
+from models.trade import Trade  # Direct import instead of commented out
+from models.user import User  # Direct import instead of commented out
+
+# Import trading engine
+from bot_engine.trading_engine import TradingEngine
 
 # Create blueprint
 trading_bp = Blueprint('trading', __name__)
@@ -18,9 +23,19 @@ def get_trading_engine():
     """Get or initialize the trading engine"""
     global trading_engine
     if trading_engine is None:
+        # Get API keys from config, with fallback to environment variables
+        api_key = current_app.config.get('BINANCE_API_KEY') or os.environ.get('BINANCE_API_KEY')
+        api_secret = current_app.config.get('BINANCE_API_SECRET') or os.environ.get('BINANCE_API_SECRET')
+        
+        # Use demo/testnet keys if real keys are not provided
+        if not api_key or api_key == 'your-binance-api-key':
+            api_key = 'demo_api_key'
+        if not api_secret or api_secret == 'your-binance-api-secret':
+            api_secret = 'demo_api_secret'
+            
         trading_engine = TradingEngine(
-            api_key=current_app.config['BINANCE_API_KEY'],
-            api_secret=current_app.config['BINANCE_API_SECRET']
+            api_key=api_key,
+            api_secret=api_secret
         )
     return trading_engine
 
@@ -409,15 +424,53 @@ def get_available_strategies():
 @trading_bp.route('/bots', methods=['GET'])
 @jwt_required()
 def get_user_bots():
-    """Get all bots for the current user"""
-    user_id = get_jwt_identity()
-    
     try:
-        engine = get_trading_engine()
-        bots = engine.get_user_bots(user_id)
-        return jsonify({'bots': bots}), 200
+        user_id = get_jwt_identity()
+        
+        # Query user's bots - Bot is now properly imported
+        bots = Bot.query.filter_by(user_id=user_id).all()
+        
+        # Convert to dict format
+        bots_data = []
+        for bot in bots:
+            bot_dict = bot.to_dict()
+            # Add status field for frontend compatibility
+            if bot.is_running:
+                bot_dict['status'] = 'running'
+            elif bot.is_active:
+                bot_dict['status'] = 'stopped'
+            else:
+                bot_dict['status'] = 'inactive'
+            
+            # Add profit field for frontend compatibility
+            bot_dict['profit'] = bot_dict.get('total_profit_loss', 0)
+            bot_dict['risk_level'] = 'medium'  # Default risk level
+            
+            bots_data.append(bot_dict)
+        
+        return jsonify(bots_data), 200  # Return array directly for frontend compatibility
+        
     except Exception as e:
+        import traceback
+        error_details = {
+            'error': str(e),
+            'type': type(e).__name__,
+            'traceback': traceback.format_exc()
+        }
+        print(f"Error in get_user_bots: {error_details}")
         return jsonify({'error': str(e)}), 500
+
+@trading_bp.route('/debug-simple', methods=['GET'])
+def debug_simple():
+    return jsonify({'message': 'Simple route working', 'status': 'ok'}), 200
+
+@trading_bp.route('/debug-bot', methods=['GET'])
+def debug_bot_import():
+    try:
+        from models import Bot
+        return jsonify({'message': 'Bot model imported successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': f'Bot import failed: {str(e)}'}), 500
 
 @trading_bp.route('/bots', methods=['POST'])
 @jwt_required()
@@ -551,6 +604,50 @@ def stop_bot(bot_id):
             return jsonify({'message': 'Bot stopped successfully'}), 200
         else:
             return jsonify({'error': 'Bot not found or failed to stop'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@trading_bp.route('/bots/stats', methods=['GET'])
+@jwt_required()
+def get_bots_stats():
+    """Get statistics for all user bots"""
+    user_id = get_jwt_identity()
+    
+    try:
+        # Get all user bots from database
+        user_bots = Bot.query.filter_by(user_id=user_id).all()
+        
+        total_bots = len(user_bots)
+        active_bots = len([bot for bot in user_bots if bot.is_active])
+        running_bots = len([bot for bot in user_bots if bot.status == 'running'])
+        
+        # Calculate total profit/loss across all bots
+        total_profit_loss = 0
+        total_trades = 0
+        winning_trades = 0
+        
+        for bot in user_bots:
+            if hasattr(bot, 'total_profit_loss') and bot.total_profit_loss:
+                total_profit_loss += bot.total_profit_loss
+            if hasattr(bot, 'total_trades') and bot.total_trades:
+                total_trades += bot.total_trades
+            if hasattr(bot, 'winning_trades') and bot.winning_trades:
+                winning_trades += bot.winning_trades
+        
+        win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
+        
+        stats = {
+            'total_bots': total_bots,
+            'active_bots': active_bots,
+            'running_bots': running_bots,
+            'total_profit_loss': round(total_profit_loss, 2),
+            'total_trades': total_trades,
+            'winning_trades': winning_trades,
+            'win_rate': round(win_rate, 2)
+        }
+        
+        return jsonify({'stats': stats}), 200
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

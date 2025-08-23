@@ -7,14 +7,42 @@ from utils.logger import logger
 from utils.security import security_manager, rate_limit
 from utils.encryption import get_encryption_manager, EncryptionError
 from auth.license_manager import require_license
+
 from bot_engine import TradingEngine
 import re
 
-api_key_bp = Blueprint('api_keys', __name__, url_prefix='/api/keys')
+api_key_bp = Blueprint('api_keys', __name__)
 
-@api_key_bp.route('/add', methods=['POST'])
+@api_key_bp.route('/', methods=['GET'])
 @jwt_required()
-@require_license('live_trading')
+def get_api_keys():
+    """Get all API keys for the current user"""
+    try:
+        user_id = get_jwt_identity()
+        api_keys = APIKey.query.filter_by(user_id=user_id).all()
+        
+        # Return API keys without sensitive data
+        keys_data = []
+        for key in api_keys:
+            keys_data.append({
+                'id': key.id,
+                'name': key.key_name,
+                'exchange': key.exchange,
+                'testnet': key.testnet,
+                'is_active': key.is_active,
+                'created_at': key.created_at.isoformat() if key.created_at else None,
+                'last_used': key.last_used.isoformat() if key.last_used else None
+            })
+        
+        return jsonify(keys_data), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching API keys: {str(e)}")
+        return jsonify({'error': 'Failed to fetch API keys'}), 500
+
+@api_key_bp.route('/', methods=['POST'])
+@jwt_required()
+@require_license('api_key_management')
 @rate_limit(max_requests=5, window_minutes=60)
 def add_api_key():
     """Add or update user's exchange API keys with encrypted storage"""
@@ -74,7 +102,6 @@ def add_api_key():
                 trading_engine = TradingEngine(
                     api_key=api_key, 
                     api_secret=api_secret, 
-                    passphrase=passphrase,
                     testnet=testnet
                 )
                 
@@ -95,12 +122,12 @@ def add_api_key():
                 user_id=user_id,
                 exchange=exchange,
                 key_name=key_name,
+                api_key=api_key,
+                api_secret=api_secret,
+                passphrase=passphrase,
                 permissions=permissions,
                 testnet=testnet
             )
-            
-            # Set encrypted credentials
-            api_key_record.set_credentials(api_key, api_secret, passphrase)
             
             db.session.add(api_key_record)
             db.session.commit()
@@ -232,7 +259,6 @@ def test_api_key(key_id):
             trading_engine = TradingEngine(
                 api_key=credentials['api_key'],
                 api_secret=credentials['api_secret'],
-                passphrase=credentials.get('passphrase'),
                 testnet=api_key.testnet
             )
             
@@ -343,7 +369,6 @@ def update_api_key(key_id):
                         trading_engine = TradingEngine(
                             api_key=final_api_key,
                             api_secret=final_api_secret,
-                            passphrase=final_passphrase,
                             testnet=api_key.testnet
                         )
                         

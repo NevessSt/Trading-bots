@@ -191,6 +191,33 @@ class Trade(db.Model):
         }
     
     @classmethod
+    def find(cls, filters=None, limit=100, skip=0):
+        """Find trades with filters and pagination"""
+        query = cls.query
+        
+        if filters:
+            for key, value in filters.items():
+                if hasattr(cls, key):
+                    query = query.filter(getattr(cls, key) == value)
+        
+        return query.order_by(cls.created_at.desc())\
+                   .limit(limit)\
+                   .offset(skip)\
+                   .all()
+    
+    @classmethod
+    def count(cls, filters=None):
+        """Count trades with optional filters"""
+        query = cls.query
+        
+        if filters:
+            for key, value in filters.items():
+                if hasattr(cls, key):
+                    query = query.filter(getattr(cls, key) == value)
+                
+        return query.count()
+    
+    @classmethod
     def find_by_user_id(cls, user_id, limit=100, offset=0):
         """Find trades by user ID with pagination"""
         return cls.query.filter_by(user_id=user_id)\

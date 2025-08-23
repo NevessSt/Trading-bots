@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Trading Bot{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Trades
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_trades }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Win Rate
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ "%.1f" | format(stats.win_rate) }}%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Total P&L
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold {{ 'profit-positive' if stats.total_profit >= 0 else 'profit-negative' }}">
+                            ${{ "%.2f" | format(stats.total_profit) }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Active Bots
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ bots | selectattr('status', 'equalto', 'running') | list | length }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-robot fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Balance Over Time</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="balanceChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Profit Distribution</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="profitChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bots and Trades Row -->
+<div class="row">
+    <!-- Trading Bots -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Trading Bots</h6>
+            </div>
+            <div class="card-body">
+                {% if bots %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Strategy</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bot in bots %}
+                                <tr>
+                                    <td>{{ bot.name }}</td>
+                                    <td>{{ bot.strategy }}</td>
+                                    <td>
+                                        <span class="badge {{ 'bg-success' if bot.status == 'running' else 'bg-secondary' }}">
+                                            {{ bot.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if bot.status == 'running' %}
+                                            <button class="btn btn-sm btn-danger" onclick="stopBot({{ bot.id }})">
+                                                <i class="fas fa-stop"></i> Stop
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-success" onclick="startBot({{ bot.id }})">
+                                                <i class="fas fa-play"></i> Start
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-robot fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-muted">No trading bots found. Create your first bot to get started!</p>
+                        <button class="btn btn-primary btn-custom">
+                            <i class="fas fa-plus"></i> Create Bot
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Trades -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Trades</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_trades %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Profit</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in recent_trades %}
+                                <tr>
+                                    <td>{{ trade.symbol }}</td>
+                                    <td>
+                                        <span class="badge {{ 'bg-success' if trade.side == 'buy' else 'bg-danger' }}">
+                                            {{ trade.side.upper() }}
+                                        </span>
+                                    </td>
+                                    <td class="{{ 'profit-positive' if trade.profit >= 0 else 'profit-negative' }}">
+                                        ${{ "%.2f" | format(trade.profit) }}
+                                    </td>
+                                    <td>{{ trade.created_at[:10] }} {{ trade.created_at[11:16] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-muted">No trades yet. Start a bot to begin trading!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize charts
+let balanceChart, profitChart;
+
+// Load chart data and initialize charts
+function initializeCharts() {
+    fetch('/dashboard/api/trades')
+        .then(response => response.json())
+        .then(data => {
+            // Balance Chart
+            const ctx1 = document.getElementById('balanceChart').getContext('2d');
+            balanceChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: data.map(item => item.date),
+                    datasets: [{
+                        label: 'Balance',
+                        data: data.map(item => item.balance),
+                        borderColor: 'rgb(102, 126, 234)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+            
+            // Profit Chart
+            const ctx2 = document.getElementById('profitChart').getContext('2d');
+            const profits = data.map(item => item.profit);
+            const positiveCount = profits.filter(p => p > 0).length;
+            const negativeCount = profits.filter(p => p < 0).length;
+            
+            profitChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Profitable', 'Loss'],
+                    datasets: [{
+                        data: [positiveCount, negativeCount],
+                        backgroundColor: ['#28a745', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading chart data:', error);
+        });
+}
+
+// Bot control functions
+function startBot(botId) {
+    fetch(`/dashboard/bot/${botId}/start`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error starting bot:', error);
+        alert('Error starting bot');
+    });
+}
+
+function stopBot(botId) {
+    fetch(`/dashboard/bot/${botId}/stop`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error stopping bot:', error);
+        alert('Error stopping bot');
+    });
+}
+
+// Refresh data
+function refreshData() {
+    location.reload();
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+</script>
+{% endblock %}

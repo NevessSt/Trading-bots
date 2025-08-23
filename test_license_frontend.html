@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Activation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 License Activation Test</h1>
+        <p>This page tests license activation directly without the React frontend.</p>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" value="danielmanji38@gmail.com">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="newpassword123">
+        </div>
+        
+        <div class="form-group">
+            <label for="licenseKey">License Key:</label>
+            <textarea id="licenseKey" rows="4" placeholder="Paste license key here...">{"type":"enterprise","created":"2025-08-22T15:05:57.610385","expires":"2026-08-22T15:05:57.610402","features":{"max_bots":-1,"live_trading":true,"advanced_strategies":true,"api_access":true,"priority_support":true,"custom_indicators":true},"user_email":"danielmanji38@gmail.com"}|75a091027c610ca5</textarea>
+        </div>
+        
+        <button onclick="testLogin()">1. Test Login</button>
+        <button onclick="testLicenseStatus()">2. Check License Status</button>
+        <button onclick="testLicenseActivation()">3. Activate License</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+        const API_BASE = 'http://localhost:5000/api';
+        
+        function log(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            
+            if (!resultDiv.textContent) {
+                resultDiv.textContent = logEntry;
+            } else {
+                resultDiv.textContent += logEntry;
+            }
+            
+            resultDiv.className = `result ${type}`;
+            resultDiv.scrollTop = resultDiv.scrollHeight;
+        }
+        
+        function clearResults() {
+            document.getElementById('result').textContent = '';
+            document.getElementById('result').className = 'result';
+        }
+        
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            log('🔐 Testing login...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.access_token;
+                    log(`✅ Login successful! Token: ${authToken.substring(0, 20)}...`, 'success');
+                } else {
+                    log(`❌ Login failed: ${data.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Login error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testLicenseStatus() {
+            if (!authToken) {
+                log('❌ Please login first!', 'error');
+                return;
+            }
+            
+            log('📊 Checking license status...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/license/status`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const license = data.license || {};
+                    log(`✅ License status retrieved:`, 'success');
+                    log(`   Type: ${license.type || 'N/A'}`);
+                    log(`   Active: ${license.active || false}`);
+                    log(`   Expires: ${license.expires || 'N/A'}`);
+                } else {
+                    log(`❌ License status failed: ${data.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ License status error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testLicenseActivation() {
+            if (!authToken) {
+                log('❌ Please login first!', 'error');
+                return;
+            }
+            
+            const licenseKey = document.getElementById('licenseKey').value.trim();
+            if (!licenseKey) {
+                log('❌ Please enter a license key!', 'error');
+                return;
+            }
+            
+            log('🚀 Testing license activation...');
+            log(`License key: ${licenseKey.substring(0, 50)}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/license/activate`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ license_key: licenseKey })
+                });
+                
+                const data = await response.json();
+                
+                log(`Response status: ${response.status}`);
+                log(`Response data: ${JSON.stringify(data, null, 2)}`);
+                
+                if (response.ok) {
+                    const license = data.license || {};
+                    log(`🎉 LICENSE ACTIVATION SUCCESSFUL!`, 'success');
+                    log(`Message: ${data.message}`);
+                    log(`License type: ${license.type}`);
+                    log(`License active: ${license.active}`);
+                    log(`Expires: ${license.expires}`);
+                } else {
+                    log(`❌ License activation failed: ${data.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ License activation error: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+        
+        // Test on page load
+        window.addEventListener('load', () => {
+            log('🌐 License Activation Test Page Loaded');
+            log('📝 Instructions:');
+            log('1. Click "Test Login" to authenticate');
+            log('2. Click "Check License Status" to see current status');
+            log('3. Click "Activate License" to test activation');
+            log('4. Check browser console (F12) for any additional errors');
+        });
+    </script>
+</body>
+</html>

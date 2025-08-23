@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useLicense } from '../contexts/LicenseContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const CreateBotModal = ({ isOpen, onClose, onSuccess }) => {
+  const { requiresLicense, hasFeature } = useLicense();
   const [formData, setFormData] = useState({
     name: '',
     strategy: 'sma_crossover',
@@ -51,7 +53,7 @@ const CreateBotModal = ({ isOpen, onClose, onSuccess }) => {
 
   const fetchApiKeys = async () => {
     try {
-      const response = await axios.get('/api/api-keys');
+      const response = await axios.get('/api/api-keys/');
       setApiKeys(response.data.api_keys || []);
     } catch (error) {
       console.error('Failed to fetch API keys:', error);
@@ -82,6 +84,11 @@ const CreateBotModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check license before creating bot
+    if (!requiresLicense('bot_creation')) {
+      return;
+    }
     
     if (!formData.api_key_id) {
       toast.error('Please select an API key');

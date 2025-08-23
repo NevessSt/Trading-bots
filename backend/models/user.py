@@ -29,6 +29,15 @@ class User(db.Model):
     locked_until = db.Column(db.DateTime)
     last_login = db.Column(db.DateTime)
     
+    # Notification settings
+    notification_settings = db.Column(db.Text)  # JSON string for notification preferences
+    
+    # License information
+    license_key = db.Column(db.Text)  # Encrypted license key
+    license_type = db.Column(db.String(20), default='free', nullable=False)  # free, premium, enterprise
+    license_expires = db.Column(db.DateTime)  # License expiration date
+    license_activated = db.Column(db.DateTime)  # License activation date
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

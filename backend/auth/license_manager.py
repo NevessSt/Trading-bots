@@ -1,317 +1,266 @@
-import os
-import json
 import hashlib
 import hmac
-import base64
+import json
 from datetime import datetime, timedelta
-from cryptography.fernet import Fernet
-from typing import Optional, Dict, Any
-import logging
-
-logger = logging.getLogger(__name__)
-
-class LicenseError(Exception):
-    """Custom exception for license-related errors"""
-    pass
+from functools import wraps
+from flask import request, jsonify, current_app
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from models.user import User
+from database import db
 
 class LicenseManager:
-    """
-    Handles license activation, validation, and management for the trading bot system.
-    Uses HMAC-SHA256 for license signature verification and local storage.
-    """
+    """Manages license validation and feature access control"""
     
-    def __init__(self, license_file_path: str = None):
-        self.license_file_path = license_file_path or os.path.join(
-            os.path.dirname(__file__), '..', 'config', 'license.json'
-        )
-        self.secret_key = self._get_secret_key()
-        
-    def _get_secret_key(self) -> bytes:
-        """
-        Get the secret key for license signature verification.
-        In production, this should be securely stored and not hardcoded.
-        """
-        # Use the existing encryption key or generate a new one
-        key_file = os.path.join(os.path.dirname(__file__), '..', 'config', 'encryption.key')
-        try:
-            with open(key_file, 'rb') as f:
-                return f.read()
-        except FileNotFoundError:
-            logger.warning("Encryption key not found, using default key for license validation")
-            # Fallback key - in production, this should be properly managed
-            return b'trading_bot_license_key_2024'
-    
-    def generate_license_signature(self, license_data: Dict[str, Any]) -> str:
-        """
-        Generate HMAC-SHA256 signature for license data.
-        This method is typically used by the license server/generator.
-        """
-        # Create a canonical string from license data
-        canonical_data = json.dumps(license_data, sort_keys=True, separators=(',', ':'))
-        
-        # Generate HMAC signature
-        signature = hmac.new(
-            self.secret_key,
-            canonical_data.encode('utf-8'),
-            hashlib.sha256
-        ).hexdigest()
-        
-        return signature
-    
-    def verify_license_signature(self, license_data: Dict[str, Any], signature: str) -> bool:
-        """
-        Verify the HMAC-SHA256 signature of license data.
-        """
-        expected_signature = self.generate_license_signature(license_data)
-        return hmac.compare_digest(expected_signature, signature)
-    
-    def activate_license(self, license_key: str, user_email: str) -> Dict[str, Any]:
-        """
-        Activate a license with the provided license key and user email.
-        
-        Args:
-            license_key: The license key provided by the user
-            user_email: User's email address
-            
-        Returns:
-            Dict containing activation status and details
-        """
-        try:
-            # Decode the license key (base64 encoded JSON)
-            try:
-                license_data_json = base64.b64decode(license_key).decode('utf-8')
-                license_data = json.loads(license_data_json)
-            except Exception as e:
-                return {
-                    'success': False,
-                    'error': 'Invalid license key format',
-                    'details': str(e)
-                }
-            
-            # Verify required fields
-            required_fields = ['license_id', 'user_email', 'expiry_date', 'features', 'signature']
-            if not all(field in license_data for field in required_fields):
-                return {
-                    'success': False,
-                    'error': 'License key missing required fields'
-                }
-            
-            # Verify signature
-            signature = license_data.pop('signature')
-            if not self.verify_license_signature(license_data, signature):
-                return {
-                    'success': False,
-                    'error': 'Invalid license signature'
-                }
-            
-            # Verify user email matches
-            if license_data['user_email'].lower() != user_email.lower():
-                return {
-                    'success': False,
-                    'error': 'License key does not match user email'
-                }
-            
-            # Check expiry date
-            expiry_date = datetime.fromisoformat(license_data['expiry_date'])
-            if datetime.now() > expiry_date:
-                return {
-                    'success': False,
-                    'error': 'License has expired'
-                }
-            
-            # Store license locally
-            local_license = {
-                'license_id': license_data['license_id'],
-                'user_email': license_data['user_email'],
-                'expiry_date': license_data['expiry_date'],
-                'features': license_data['features'],
-                'activated_at': datetime.now().isoformat(),
-                'signature': signature
-            }
-            
-            self._save_license(local_license)
-            
-            return {
-                'success': True,
-                'license_id': license_data['license_id'],
-                'expiry_date': license_data['expiry_date'],
-                'features': license_data['features']
-            }
-            
-        except Exception as e:
-            logger.error(f"License activation error: {str(e)}")
-            return {
-                'success': False,
-                'error': 'License activation failed',
-                'details': str(e)
-            }
-    
-    def validate_license(self) -> Dict[str, Any]:
-        """
-        Validate the current license stored locally.
-        
-        Returns:
-            Dict containing validation status and license details
-        """
-        try:
-            license_data = self._load_license()
-            if not license_data:
-                return {
-                    'valid': False,
-                    'error': 'No license found'
-                }
-            
-            # Verify signature
-            signature = license_data.pop('signature', '')
-            activated_at = license_data.pop('activated_at', '')
-            
-            if not self.verify_license_signature(license_data, signature):
-                return {
-                    'valid': False,
-                    'error': 'Invalid license signature'
-                }
-            
-            # Check expiry
-            expiry_date = datetime.fromisoformat(license_data['expiry_date'])
-            if datetime.now() > expiry_date:
-                return {
-                    'valid': False,
-                    'error': 'License has expired',
-                    'expiry_date': license_data['expiry_date']
-                }
-            
-            return {
-                'valid': True,
-                'license_id': license_data['license_id'],
-                'user_email': license_data['user_email'],
-                'expiry_date': license_data['expiry_date'],
-                'features': license_data['features'],
-                'activated_at': activated_at,
-                'days_remaining': (expiry_date - datetime.now()).days
-            }
-            
-        except Exception as e:
-            logger.error(f"License validation error: {str(e)}")
-            return {
-                'valid': False,
-                'error': 'License validation failed',
-                'details': str(e)
-            }
-    
-    def has_feature(self, feature_name: str) -> bool:
-        """
-        Check if the current license includes a specific feature.
-        
-        Args:
-            feature_name: Name of the feature to check
-            
-        Returns:
-            True if feature is available, False otherwise
-        """
-        license_status = self.validate_license()
-        if not license_status.get('valid', False):
-            return False
-        
-        features = license_status.get('features', [])
-        return feature_name in features
-    
-    def get_license_info(self) -> Dict[str, Any]:
-        """
-        Get current license information for display purposes.
-        """
-        return self.validate_license()
-    
-    def deactivate_license(self) -> bool:
-        """
-        Deactivate the current license by removing the local license file.
-        
-        Returns:
-            True if successfully deactivated, False otherwise
-        """
-        try:
-            if os.path.exists(self.license_file_path):
-                os.remove(self.license_file_path)
-            return True
-        except Exception as e:
-            logger.error(f"License deactivation error: {str(e)}")
-            return False
-    
-    def _save_license(self, license_data: Dict[str, Any]) -> None:
-        """
-        Save license data to local file.
-        """
-        os.makedirs(os.path.dirname(self.license_file_path), exist_ok=True)
-        with open(self.license_file_path, 'w') as f:
-            json.dump(license_data, f, indent=2)
-    
-    def _load_license(self) -> Optional[Dict[str, Any]]:
-        """
-        Load license data from local file.
-        """
-        try:
-            if not os.path.exists(self.license_file_path):
-                return None
-            
-            with open(self.license_file_path, 'r') as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Error loading license: {str(e)}")
-            return None
-
-
-# License decorator for protecting endpoints
-def require_license(feature: str = None):
-    """
-    Decorator to require valid license for accessing endpoints.
-    
-    Args:
-        feature: Specific feature name to check (optional)
-    """
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            license_manager = LicenseManager()
-            license_status = license_manager.validate_license()
-            
-            if not license_status.get('valid', False):
-                from flask import jsonify
-                return jsonify({
-                    'error': 'Valid license required',
-                    'details': license_status.get('error', 'Unknown error')
-                }), 403
-            
-            if feature and not license_manager.has_feature(feature):
-                from flask import jsonify
-                return jsonify({
-                    'error': f'Feature "{feature}" not available in current license'
-                }), 403
-            
-            return func(*args, **kwargs)
-        
-        wrapper.__name__ = func.__name__
-        return wrapper
-    return decorator
-
-
-# Example license generator (for testing purposes)
-def generate_test_license(user_email: str, days_valid: int = 30) -> str:
-    """
-    Generate a test license key for development/testing purposes.
-    In production, this would be handled by a secure license server.
-    """
-    license_manager = LicenseManager()
-    
-    license_data = {
-        'license_id': f"TEST-{hashlib.md5(user_email.encode()).hexdigest()[:8].upper()}",
-        'user_email': user_email,
-        'expiry_date': (datetime.now() + timedelta(days=days_valid)).isoformat(),
-        'features': ['live_trading', 'backtesting', 'real_time_data', 'advanced_strategies']
+    # License types and their features
+    LICENSE_FEATURES = {
+        'free': {
+            'max_bots': 1,
+            'live_trading': False,
+            'advanced_strategies': False,
+            'api_access': False,
+            'priority_support': False,
+            'custom_indicators': False,
+            'bot_creation': True,  # Allow basic bot creation for free users
+            'bot_control': True,   # Allow basic bot control for free users
+            'bot_management': True, # Allow basic bot management for free users
+            'api_key_management': False
+        },
+        'premium': {
+            'max_bots': 10,
+            'live_trading': True,
+            'advanced_strategies': True,
+            'api_access': True,
+            'priority_support': True,
+            'custom_indicators': True,
+            'bot_creation': True,
+            'bot_control': True,
+            'bot_management': True,
+            'api_key_management': True
+        },
+        'enterprise': {
+            'max_bots': -1,  # Unlimited
+            'live_trading': True,
+            'advanced_strategies': True,
+            'api_access': True,
+            'priority_support': True,
+            'custom_indicators': True,
+            'bot_creation': True,
+            'bot_control': True,
+            'bot_management': True,
+            'api_key_management': True
+        }
     }
     
-    signature = license_manager.generate_license_signature(license_data)
-    license_data['signature'] = signature
+    @staticmethod
+    def generate_license_key(license_type='premium', duration_days=365, user_email=None):
+        """Generate a new license key"""
+        try:
+            # Create license data
+            license_data = {
+                'type': license_type,
+                'created': datetime.utcnow().isoformat(),
+                'expires': (datetime.utcnow() + timedelta(days=duration_days)).isoformat(),
+                'features': LicenseManager.LICENSE_FEATURES.get(license_type, {}),
+                'user_email': user_email
+            }
+            
+            # Convert to JSON string
+            license_json = json.dumps(license_data, separators=(',', ':'))
+            
+            # Create signature
+            secret_key = current_app.config.get('SECRET_KEY', 'default-secret-key')
+            signature = hmac.new(
+                secret_key.encode(),
+                license_json.encode(),
+                hashlib.sha256
+            ).hexdigest()[:16]
+            
+            # Combine license data and signature
+            license_key = f"{license_json}|{signature}"
+            
+            return license_key
+            
+        except Exception as e:
+            current_app.logger.error(f"Error generating license key: {str(e)}")
+            return None
     
-    # Encode as base64
-    license_json = json.dumps(license_data)
-    license_key = base64.b64encode(license_json.encode('utf-8')).decode('utf-8')
+    @staticmethod
+    def validate_license_key(license_key):
+        """Validate a license key and return license data"""
+        try:
+            if not license_key or '|' not in license_key:
+                return None, "Invalid license key format"
+            
+            # Split license data and signature
+            license_json, signature = license_key.rsplit('|', 1)
+            
+            # Verify signature
+            secret_key = current_app.config.get('SECRET_KEY', 'default-secret-key')
+            expected_signature = hmac.new(
+                secret_key.encode(),
+                license_json.encode(),
+                hashlib.sha256
+            ).hexdigest()[:16]
+            
+            if not hmac.compare_digest(signature, expected_signature):
+                return None, "Invalid license signature"
+            
+            # Parse license data
+            license_data = json.loads(license_json)
+            
+            # Check expiration
+            expires = datetime.fromisoformat(license_data['expires'])
+            if datetime.utcnow() > expires:
+                return None, "License has expired"
+            
+            return license_data, None
+            
+        except json.JSONDecodeError:
+            return None, "Invalid license data format"
+        except Exception as e:
+            current_app.logger.error(f"Error validating license: {str(e)}")
+            return None, "License validation error"
     
-    return license_key
+    @staticmethod
+    def activate_license(user_id, license_key):
+        """Activate a license for a user"""
+        try:
+            # Validate license key
+            license_data, error = LicenseManager.validate_license_key(license_key)
+            if error:
+                return False, error
+            
+            # Get user
+            user = User.query.get(user_id)
+            if not user:
+                return False, "User not found"
+            
+            # Update user license
+            user.license_key = license_key
+            user.license_type = license_data['type']
+            user.license_expires = datetime.fromisoformat(license_data['expires'])
+            user.license_activated = datetime.utcnow()
+            
+            db.session.commit()
+            
+            return True, "License activated successfully"
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error activating license: {str(e)}")
+            return False, "License activation failed"
+    
+    @staticmethod
+    def deactivate_license(user_id):
+        """Deactivate a user's license"""
+        try:
+            user = User.query.get(user_id)
+            if not user:
+                return False, "User not found"
+            
+            user.license_key = None
+            user.license_type = 'free'
+            user.license_expires = None
+            user.license_activated = None
+            
+            db.session.commit()
+            
+            return True, "License deactivated successfully"
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error deactivating license: {str(e)}")
+            return False, "License deactivation failed"
+    
+    @staticmethod
+    def get_user_license_info(user_id):
+        """Get license information for a user"""
+        try:
+            user = User.query.get(user_id)
+            if not user:
+                return None, "User not found"
+            
+            # Check if user has an active license
+            if not user.license_key or not user.license_expires:
+                return {
+                    'type': 'free',
+                    'active': False,
+                    'expires': None,
+                    'features': LicenseManager.LICENSE_FEATURES['free']
+                }, None
+            
+            # Check if license is still valid
+            if datetime.utcnow() > user.license_expires:
+                # License expired, reset to free
+                user.license_key = None
+                user.license_type = 'free'
+                user.license_expires = None
+                user.license_activated = None
+                db.session.commit()
+                
+                return {
+                    'type': 'free',
+                    'active': False,
+                    'expires': None,
+                    'features': LicenseManager.LICENSE_FEATURES['free']
+                }, None
+            
+            return {
+                'type': user.license_type,
+                'active': True,
+                'expires': user.license_expires.isoformat(),
+                'activated': user.license_activated.isoformat() if user.license_activated else None,
+                'features': LicenseManager.LICENSE_FEATURES.get(user.license_type, LicenseManager.LICENSE_FEATURES['free'])
+            }, None
+            
+        except Exception as e:
+            current_app.logger.error(f"Error getting license info: {str(e)}")
+            return None, "Error retrieving license information"
+    
+    @staticmethod
+    def check_feature_access(user_id, feature):
+        """Check if user has access to a specific feature"""
+        license_info, error = LicenseManager.get_user_license_info(user_id)
+        if error or not license_info:
+            return False
+        
+        return license_info['features'].get(feature, False)
+
+def require_license(feature=None):
+    """Decorator to require a valid license for accessing endpoints"""
+    def decorator(f):
+        @wraps(f)
+        @jwt_required()
+        def decorated_function(*args, **kwargs):
+            try:
+                user_id = get_jwt_identity()
+                
+                # Get user license info
+                license_info, error = LicenseManager.get_user_license_info(user_id)
+                if error:
+                    return jsonify({'error': error}), 500
+                
+                # If no specific feature is required, just check for active license
+                if feature is None:
+                    if not license_info['active']:
+                        return jsonify({
+                            'error': 'Valid license required',
+                            'license_required': True
+                        }), 403
+                else:
+                    # Check specific feature access
+                    if not license_info['features'].get(feature, False):
+                        return jsonify({
+                            'error': f'License does not include {feature} feature',
+                            'feature_required': feature,
+                            'current_license': license_info['type']
+                        }), 403
+                
+                return f(*args, **kwargs)
+                
+            except Exception as e:
+                current_app.logger.error(f"License check error: {str(e)}")
+                return jsonify({'error': 'License validation failed'}), 500
+        
+        return decorated_function
+    return decorator

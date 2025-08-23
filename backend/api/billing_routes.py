@@ -8,6 +8,9 @@ from models.user import User, db
 from models.subscription import Subscription
 from utils.logger import logger
 
+# Import log_security_event function
+log_security_event = logger.log_security_event
+
 billing_bp = Blueprint('billing', __name__, url_prefix='/api/billing')
 
 # Initialize Stripe
@@ -50,31 +53,32 @@ def get_subscription():
     """Get user's current subscription"""
     try:
         user = request.current_user
-        subscription = User.get_subscription(str(user['_id']))
+        subscription = user.get_current_subscription()
         
         if not subscription:
-            return jsonify({'error': 'No subscription found'}), 404
+            # Create a free subscription if none exists
+            from models.subscription import Subscription
+            subscription = Subscription.create_free_subscription(user.id)
         
         # Get plan features
-        plan = subscription.get('plan', 'free')
-        features = Subscription.get_plan_features(plan)
+        plan_config = subscription.get_plan_config()
         
         # Get usage statistics
         from models.bot import Bot
-        current_bots = Bot.count_by_user_id(str(user['_id']))
+        current_bots = Bot.query.filter_by(user_id=user.id, is_active=True).count()
         
         return jsonify({
             'subscription': {
-                'id': str(subscription['_id']),
-                'plan': plan,
-                'status': subscription.get('status', 'active'),
-                'created_at': subscription.get('created_at').isoformat() if subscription.get('created_at') else None,
-                'next_billing_date': subscription.get('next_billing_date').isoformat() if subscription.get('next_billing_date') else None,
-                'stripe_subscription_id': subscription.get('stripe_subscription_id'),
-                'features': features,
+                'id': subscription.id,
+                'plan': subscription.plan_type,
+                'status': subscription.status,
+                'created_at': subscription.created_at.isoformat() if subscription.created_at else None,
+                'next_billing_date': subscription.end_date.isoformat() if subscription.end_date else None,
+                'stripe_subscription_id': subscription.stripe_subscription_id,
+                'features': plan_config['features'],
                 'usage': {
                     'current_bots': current_bots,
-                    'max_bots': features.get('max_bots', 1)
+                    'max_bots': plan_config['features'].get('max_bots', 1)
                 }
             }
         }), 200
@@ -112,7 +116,7 @@ def create_checkout_session():
             
             # Update user with Stripe customer ID
             user.stripe_customer_id = stripe_customer_id
-            user.save()
+            db.session.commit()
         
         # Create checkout session
         success_url = current_app.config.get('FRONTEND_URL', 'http://localhost:3000') + '/billing/success?session_id={CHECKOUT_SESSION_ID}'
@@ -241,7 +245,7 @@ def cancel_subscription():
     """Cancel user's subscription"""
     try:
         user = request.current_user
-        subscription = user.subscription
+        subscription = user.get_current_subscription()
         
         if not subscription:
             return jsonify({'error': 'No active subscription found'}), 404
@@ -256,7 +260,7 @@ def cancel_subscription():
         
         # Log event
         log_security_event('subscription_cancelled', str(user.id), {
-            'plan': subscription.plan,
+            'plan': subscription.plan_type,
             'ip_address': request.remote_addr
         })
         
@@ -280,18 +284,21 @@ def _handle_successful_payment(session):
         
         # Update user subscription
         user = User.query.get(user_id)
-        if user and user.subscription:
-            user.subscription.upgrade_subscription(plan_id, stripe_subscription.id)
-        else:
-            # Create new subscription if user doesn't have one
-            subscription = Subscription(
-                user_id=user_id,
-                plan=plan_id,
-                stripe_subscription_id=stripe_subscription.id,
-                status='active'
-            )
-            db.session.add(subscription)
-            db.session.commit()
+        if user:
+            subscription = user.get_current_subscription()
+            if subscription:
+                subscription.upgrade_plan(plan_id, stripe_subscription.id)
+            else:
+                # Create new subscription if user doesn't have one
+                subscription = Subscription(
+                    user_id=user_id,
+                    plan_type=plan_id,
+                    stripe_subscription_id=stripe_subscription.id,
+                    status='active',
+                    is_active=True
+                )
+                db.session.add(subscription)
+                db.session.commit()
         
         # Log event
         logger.log_security_event('subscription_upgraded', user_id, {
@@ -310,20 +317,21 @@ def _handle_successful_renewal(invoice):
         customer_id = invoice['customer']
         
         # Find user by Stripe customer ID
-        users = User.get_collection()
-        user = users.find_one({'stripe_customer_id': customer_id})
+        user = User.query.filter_by(stripe_customer_id=customer_id).first()
         
         if user:
             # Update next billing date
             from datetime import timedelta
             next_billing = datetime.utcnow() + timedelta(days=30)
             
-            Subscription.update_by_user_id(str(user['_id']), {
-                'status': 'active',
-                'next_billing_date': next_billing
-            })
+            subscription = user.get_current_subscription()
+            if subscription:
+                subscription.status = 'active'
+                subscription.current_period_end = next_billing
+                subscription.end_date = next_billing
+                db.session.commit()
             
-            current_app.logger.info(f"Subscription renewed for user {user['_id']}")
+            current_app.logger.info(f"Subscription renewed for user {user.id}")
         
     except Exception as e:
         current_app.logger.error(f"Handle successful renewal error: {str(e)}")
@@ -334,21 +342,21 @@ def _handle_failed_payment(invoice):
         customer_id = invoice['customer']
         
         # Find user by Stripe customer ID
-        users = User.get_collection()
-        user = users.find_one({'stripe_customer_id': customer_id})
+        user = User.query.filter_by(stripe_customer_id=customer_id).first()
         
         if user:
             # Update subscription status
-            Subscription.update_by_user_id(str(user['_id']), {
-                'status': 'past_due'
-            })
+            subscription = user.get_current_subscription()
+            if subscription:
+                subscription.status = 'past_due'
+                db.session.commit()
             
             # Log event
-            log_security_event('payment_failed', str(user['_id']), {
+            log_security_event('payment_failed', str(user.id), {
                 'invoice_id': invoice['id']
             })
             
-            current_app.logger.warning(f"Payment failed for user {user['_id']}")
+            current_app.logger.warning(f"Payment failed for user {user.id}")
         
     except Exception as e:
         current_app.logger.error(f"Handle failed payment error: {str(e)}")
@@ -359,14 +367,15 @@ def _handle_subscription_cancelled(subscription):
         customer_id = subscription['customer']
         
         # Find user by Stripe customer ID
-        users = User.get_collection()
-        user = users.find_one({'stripe_customer_id': customer_id})
+        user = User.query.filter_by(stripe_customer_id=customer_id).first()
         
         if user:
             # Cancel local subscription
-            Subscription.cancel_subscription(str(user['_id']))
+            subscription = user.get_current_subscription()
+            if subscription:
+                subscription.cancel_subscription()
             
-            current_app.logger.info(f"Subscription cancelled for user {user['_id']}")
+            current_app.logger.info(f"Subscription cancelled for user {user.id}")
         
     except Exception as e:
         current_app.logger.error(f"Handle subscription cancelled error: {str(e)}")

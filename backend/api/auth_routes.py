@@ -67,11 +67,11 @@ def login():
     data = request.get_json()
     
     # Validate required fields
-    if 'username' not in data or 'password' not in data:
-        return jsonify({'error': 'Username and password are required'}), 400
+    if 'email' not in data or 'password' not in data:
+        return jsonify({'error': 'Email and password are required'}), 400
     
     # Authenticate user
-    user = User.authenticate(data['username'], data['password'])
+    user = User.authenticate(data['email'], data['password'])
     
     if not user:
         return jsonify({'error': 'Invalid credentials'}), 401

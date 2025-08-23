@@ -8,7 +8,7 @@ import {
   CheckIcon,
   XMarkIcon,
   ArrowUpIcon,
-  ExternalLinkIcon
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import classNames from 'classnames';
@@ -153,72 +153,6 @@ const Billing = () => {
           </p>
         </div>
 
-        {/* Current Subscription */}
-        {subscription && (
-          <div className="bg-white rounded-lg shadow mb-8">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Current Subscription
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <div className="flex items-center mb-2">
-                    <CreditCardIcon className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-600">Plan:</span>
-                    <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded capitalize">
-                      {subscription.plan}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center mb-2">
-                    <span className="text-sm text-gray-600">Status:</span>
-                    <span className={classNames(
-                      'ml-2 px-2 py-1 text-sm font-medium rounded capitalize',
-                      subscription.status === 'active' ? 'bg-green-100 text-green-800' :
-                      subscription.status === 'past_due' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    )}>
-                      {subscription.status}
-                    </span>
-                  </div>
-                  
-                  {subscription.next_billing_date && subscription.plan !== 'free' && (
-                    <div className="flex items-center">
-                      <span className="text-sm text-gray-600">Next billing:</span>
-                      <span className="ml-2 text-sm font-medium text-gray-900">
-                        {format(new Date(subscription.next_billing_date), 'MMMM dd, yyyy')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex flex-col space-y-2">
-                  {subscription.plan !== 'free' && (
-                    <button
-                      onClick={handleManageBilling}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      <ExternalLinkIcon className="h-4 w-4 mr-2" />
-                      Manage Billing
-                    </button>
-                  )}
-                  
-                  {subscription.plan !== 'free' && subscription.status === 'active' && (
-                    <button
-                      onClick={handleCancelSubscription}
-                      className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
-                    >
-                      <XMarkIcon className="h-4 w-4 mr-2" />
-                      Cancel Subscription
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Subscription Plans */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -319,6 +253,72 @@ const Billing = () => {
             })}
           </div>
         </div>
+
+        {/* Current Subscription */}
+        {subscription && (
+          <div className="bg-white rounded-lg shadow mb-8">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Current Subscription
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="flex items-center mb-2">
+                    <CreditCardIcon className="h-5 w-5 text-gray-400 mr-2" />
+                    <span className="text-sm text-gray-600">Plan:</span>
+                    <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded capitalize">
+                      {subscription.plan}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center mb-2">
+                    <span className="text-sm text-gray-600">Status:</span>
+                    <span className={classNames(
+                      'ml-2 px-2 py-1 text-sm font-medium rounded capitalize',
+                      subscription.status === 'active' ? 'bg-green-100 text-green-800' :
+                      subscription.status === 'past_due' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    )}>
+                      {subscription.status}
+                    </span>
+                  </div>
+                  
+                  {subscription.next_billing_date && subscription.plan !== 'free' && (
+                    <div className="flex items-center">
+                      <span className="text-sm text-gray-600">Next billing:</span>
+                      <span className="ml-2 text-sm font-medium text-gray-900">
+                        {format(new Date(subscription.next_billing_date), 'MMMM dd, yyyy')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-col space-y-2">
+                  {subscription.plan !== 'free' && (
+                    <button
+                      onClick={handleManageBilling}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      <ArrowTopRightOnSquareIcon className="h-4 w-4 mr-2" />
+                      Manage Billing
+                    </button>
+                  )}
+                  
+                  {subscription.plan !== 'free' && subscription.status === 'active' && (
+                    <button
+                      onClick={handleCancelSubscription}
+                      className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
+                    >
+                      <XMarkIcon className="h-4 w-4 mr-2" />
+                      Cancel Subscription
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* FAQ Section */}
         <div className="bg-white rounded-lg shadow">

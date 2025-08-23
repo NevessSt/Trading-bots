@@ -257,6 +257,11 @@ class Bot(db.Model):
         }
     
     @classmethod
+    def find_by_id(cls, bot_id):
+        """Find bot by ID"""
+        return cls.query.get(bot_id)
+    
+    @classmethod
     def find_by_user_id(cls, user_id, active_only=False):
         """Find bots by user ID"""
         query = cls.query.filter_by(user_id=user_id)

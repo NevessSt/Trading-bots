@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLicense } from '../contexts/LicenseContext';
+import { useRiskDisclaimer } from '../contexts/RiskDisclaimerContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import {
@@ -23,6 +24,7 @@ import SubscriptionCard from './SubscriptionCard';
 const Dashboard = () => {
   const { user, subscription, isVerified } = useAuth();
   const { hasValidLicense, getLicenseType, requiresLicense } = useLicense();
+  const { requireRiskAcceptance } = useRiskDisclaimer();
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateBot, setShowCreateBot] = useState(false);
@@ -65,6 +67,11 @@ const Dashboard = () => {
   };
 
   const handleStartBot = async (botId) => {
+    // Check risk acceptance before starting bot
+    if (!requireRiskAcceptance()) {
+      return;
+    }
+    
     try {
       await axios.post(`/api/bots/${botId}/start`);
       toast.success('Bot started successfully');
@@ -110,6 +117,14 @@ const Dashboard = () => {
     if (!subscription) return false;
     const maxBots = subscription.features?.max_bots || 1;
     return bots.length < maxBots;
+  };
+
+  const handleCreateBotClick = () => {
+    // Check risk acceptance before creating bot
+    if (!requireRiskAcceptance()) {
+      return;
+    }
+    setShowCreateBot(true);
   };
 
   if (!isVerified) {
@@ -262,7 +277,7 @@ const Dashboard = () => {
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-8">
           <button
-            onClick={() => setShowCreateBot(true)}
+            onClick={handleCreateBotClick}
             disabled={!canCreateBot()}
             className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
               canCreateBot()
@@ -326,7 +341,7 @@ const Dashboard = () => {
               </p>
               {canCreateBot() && (
                 <button
-                  onClick={() => setShowCreateBot(true)}
+                  onClick={handleCreateBotClick}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />

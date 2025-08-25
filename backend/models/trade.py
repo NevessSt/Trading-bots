@@ -100,6 +100,11 @@ class Trade(db.Model):
             return float(self.quantity) * float(self.price)
         return 0
     
+    @property
+    def profit_loss(self):
+        """Get profit/loss for the trade"""
+        return self.calculate_pnl()
+    
     def calculate_percentage_return(self, current_price=None):
         """Calculate percentage return for the trade"""
         if not self.average_price or float(self.average_price) == 0:

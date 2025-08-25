@@ -292,28 +292,30 @@ class TestBotEndpoints:
         # Add some trades to the bot
         trades = [
             Trade(
+                user_id=test_bot.user_id,
                 bot_id=test_bot.id,
                 symbol='BTCUSDT',
                 side='buy',
+                trade_type='market',
                 quantity=Decimal('0.001'),
                 price=Decimal('50000'),
-                profit_loss=Decimal('10'),
                 status='filled'
             ),
             Trade(
+                user_id=test_bot.user_id,
                 bot_id=test_bot.id,
                 symbol='BTCUSDT',
                 side='sell',
+                trade_type='market',
                 quantity=Decimal('0.001'),
                 price=Decimal('51000'),
-                profit_loss=Decimal('-5'),
                 status='filled'
             )
         ]
         session.add_all(trades)
         session.commit()
         
-        response = client.get(f'/api/bots/{test_bot.id}/performance', 
+        response = client.get(f'/api/trading/bots/{test_bot.id}/performance', 
                             headers=auth_headers)
         
         assert response.status_code == 200
@@ -323,9 +325,12 @@ class TestBotEndpoints:
         
         performance = data['performance']
         assert 'total_trades' in performance
-        assert 'total_profit' in performance
+        assert 'total_profit_loss' in performance
+        assert 'winning_trades' in performance
+        assert 'losing_trades' in performance
         assert 'win_rate' in performance
-        assert 'max_drawdown' in performance
+        assert 'average_profit' in performance
+        assert 'average_loss' in performance
     
     def test_get_bot_trades(self, client, session, test_bot, auth_headers):
         """Test getting bot trades."""

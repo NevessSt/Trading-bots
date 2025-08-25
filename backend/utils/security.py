@@ -1,6 +1,7 @@
 import os
 import hashlib
 import secrets
+import shutil
 from datetime import datetime, timedelta
 from cryptography.fernet import Fernet
 from functools import wraps
@@ -357,3 +358,213 @@ def decrypt_sensitive_data(encrypted_data):
     
     cipher_suite = Fernet(key)
     return cipher_suite.decrypt(encrypted_data).decode()
+
+
+def rotate_encryption_key():
+    """Rotate the encryption key and re-encrypt all sensitive data"""
+    from models.user import User
+    from models.api_key import APIKey
+    
+    # Generate new key
+    new_key = Fernet.generate_key()
+    key_file = os.path.join(os.path.dirname(__file__), '..', 'config', 'encryption.key')
+    backup_key_file = key_file + '.backup'
+    
+    # Backup old key
+    if os.path.exists(key_file):
+        shutil.copy2(key_file, backup_key_file)
+        
+        # Get old key
+        with open(key_file, 'rb') as f:
+            old_key = f.read()
+        old_cipher = Fernet(old_key)
+        
+        # Re-encrypt all API keys
+        try:
+            api_keys = APIKey.find_all()
+            new_cipher = Fernet(new_key)
+            
+            for api_key in api_keys:
+                if api_key.get('encrypted_secret'):
+                    # Decrypt with old key
+                    decrypted_secret = old_cipher.decrypt(api_key['encrypted_secret'].encode())
+                    # Encrypt with new key
+                    new_encrypted_secret = new_cipher.encrypt(decrypted_secret).decode()
+                    # Update in database
+                    APIKey.update_by_id(api_key['_id'], {'encrypted_secret': new_encrypted_secret})
+            
+            # Save new key
+            with open(key_file, 'wb') as f:
+                f.write(new_key)
+                
+            logger.info("Encryption key rotated successfully")
+            return True
+            
+        except Exception as e:
+            # Restore backup on failure
+            if os.path.exists(backup_key_file):
+                shutil.copy2(backup_key_file, key_file)
+            logger.error(f"Key rotation failed: {str(e)}")
+            raise
+    else:
+        # First time setup
+        os.makedirs(os.path.dirname(key_file), exist_ok=True)
+        with open(key_file, 'wb') as f:
+            f.write(new_key)
+        return True
+
+
+def audit_log(user_id, action, details=None, ip_address=None, user_agent=None):
+    """Enhanced audit logging for security events"""
+    from models.audit_log import AuditLog
+    from datetime import datetime
+    
+    log_entry = {
+        'user_id': user_id,
+        'action': action,
+        'details': details or {},
+        'ip_address': ip_address,
+        'user_agent': user_agent,
+        'timestamp': datetime.utcnow(),
+        'severity': get_action_severity(action)
+    }
+    
+    try:
+        AuditLog.create(log_entry)
+        
+        # Log critical actions to file as well
+        if log_entry['severity'] in ['high', 'critical']:
+            logger.warning(f"Security Event - User: {user_id}, Action: {action}, IP: {ip_address}")
+            
+    except Exception as e:
+        logger.error(f"Failed to create audit log: {str(e)}")
+
+
+def get_action_severity(action):
+    """Determine severity level for audit actions"""
+    critical_actions = ['login_failed_multiple', 'api_key_compromised', 'unauthorized_access']
+    high_actions = ['login_success', 'api_key_created', 'api_key_deleted', 'password_changed']
+    medium_actions = ['bot_created', 'bot_started', 'bot_stopped', 'trade_executed']
+    
+    if action in critical_actions:
+        return 'critical'
+    elif action in high_actions:
+        return 'high'
+    elif action in medium_actions:
+        return 'medium'
+    else:
+        return 'low'
+
+
+def check_ip_whitelist(ip_address, user_id):
+    """Check if IP address is whitelisted for user"""
+    from models.user import User
+    
+    try:
+        user = User.find_by_id(user_id)
+        if not user:
+            return False
+            
+        # Get user's IP whitelist
+        whitelist = user.get('security_settings', {}).get('ip_whitelist', [])
+        
+        # If no whitelist configured, allow all IPs
+        if not whitelist:
+            return True
+            
+        # Check if IP is in whitelist (supports CIDR notation)
+        import ipaddress
+        user_ip = ipaddress.ip_address(ip_address)
+        
+        for allowed_ip in whitelist:
+            try:
+                if '/' in allowed_ip:
+                    # CIDR notation
+                    if user_ip in ipaddress.ip_network(allowed_ip, strict=False):
+                        return True
+                else:
+                    # Single IP
+                    if user_ip == ipaddress.ip_address(allowed_ip):
+                        return True
+            except ValueError:
+                continue
+                
+        return False
+        
+    except Exception as e:
+        logger.error(f"IP whitelist check failed: {str(e)}")
+        return True  # Allow on error to prevent lockout
+
+
+def generate_secure_token(length=32):
+    """Generate a cryptographically secure random token"""
+    return secrets.token_urlsafe(length)
+
+
+def validate_password_strength(password):
+    """Validate password strength and return requirements"""
+    requirements = {
+        'length': len(password) >= 8,
+        'uppercase': any(c.isupper() for c in password),
+        'lowercase': any(c.islower() for c in password),
+        'digit': any(c.isdigit() for c in password),
+        'special': any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in password)
+    }
+    
+    is_strong = all(requirements.values())
+    
+    return {
+        'is_strong': is_strong,
+        'requirements': requirements,
+        'missing': [req for req, met in requirements.items() if not met]
+    }
+
+
+def detect_suspicious_activity(user_id, action, ip_address=None):
+    """Detect suspicious user activity patterns"""
+    from models.audit_log import AuditLog
+    from datetime import datetime, timedelta
+    
+    suspicious_indicators = []
+    
+    try:
+        # Check for multiple failed logins
+        if action == 'login_failed':
+            recent_failures = AuditLog.count({
+                'user_id': user_id,
+                'action': 'login_failed',
+                'timestamp': {'$gte': datetime.utcnow() - timedelta(minutes=15)}
+            })
+            
+            if recent_failures >= 3:
+                suspicious_indicators.append('multiple_failed_logins')
+        
+        # Check for logins from new IPs
+        if action == 'login_success' and ip_address:
+            recent_ips = AuditLog.find({
+                'user_id': user_id,
+                'action': 'login_success',
+                'timestamp': {'$gte': datetime.utcnow() - timedelta(days=30)}
+            }, {'ip_address': 1})
+            
+            known_ips = {log.get('ip_address') for log in recent_ips if log.get('ip_address')}
+            
+            if ip_address not in known_ips:
+                suspicious_indicators.append('new_ip_login')
+        
+        # Check for rapid API key creation/deletion
+        if action in ['api_key_created', 'api_key_deleted']:
+            recent_api_actions = AuditLog.count({
+                'user_id': user_id,
+                'action': {'$in': ['api_key_created', 'api_key_deleted']},
+                'timestamp': {'$gte': datetime.utcnow() - timedelta(hours=1)}
+            })
+            
+            if recent_api_actions >= 5:
+                suspicious_indicators.append('rapid_api_key_changes')
+        
+        return suspicious_indicators
+        
+    except Exception as e:
+        logger.error(f"Suspicious activity detection failed: {str(e)}")
+        return []

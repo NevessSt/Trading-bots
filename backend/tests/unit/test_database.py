@@ -28,6 +28,53 @@ from models.api_key import APIKey
 from database import DatabaseManager
 
 
+@pytest.fixture
+def app():
+    """Create application for testing."""
+    app = create_app()
+    app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    return app
+
+
+@pytest.fixture
+def app_context(app):
+    """Create application context for testing."""
+    with app.app_context():
+        db.create_all()
+        yield
+        db.session.remove()
+        db.drop_all()
+
+
+@pytest.fixture
+def sample_user(app_context):
+    """Create a sample user for testing."""
+    user = User(
+        username='testuser',
+        email='test@example.com',
+        password_hash='hashed_password'
+    )
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
+def sample_bot(app_context, sample_user):
+    """Create a sample bot for testing."""
+    bot = Bot(
+        name='Test Bot',
+        user_id=sample_user.id,
+        strategy='grid',
+        trading_pair='BTCUSDT',
+        config={}
+    )
+    db.session.add(bot)
+    db.session.commit()
+    return bot
+
+
 class TestUserModel:
     """Test User model functionality."""
     

@@ -222,8 +222,11 @@ def get_trades():
     trades = Trade.find(filters, limit=limit, skip=skip)
     total = Trade.count(filters)
     
+    # Convert trades to dictionaries for JSON serialization
+    trades_data = [trade.to_dict() for trade in trades]
+    
     return jsonify({
-        'trades': trades,
+        'trades': trades_data,
         'pagination': {
             'total': total,
             'page': page,
@@ -669,8 +672,11 @@ def get_bot_trades(bot_id):
     trades = Trade.find(filters, limit=limit, skip=skip)
     total = Trade.count(filters)
     
+    # Convert trades to dictionaries for JSON serialization
+    trades_data = [trade.to_dict() for trade in trades]
+    
     return jsonify({
-        'trades': trades,
+        'trades': trades_data,
         'pagination': {
             'total': total,
             'page': page,
@@ -678,3 +684,29 @@ def get_bot_trades(bot_id):
             'pages': (total + limit - 1) // limit
         }
     }), 200
+
+@trading_bp.route('/bots/<bot_id>/performance', methods=['GET'])
+@jwt_required()
+def get_bot_performance(bot_id):
+    """Get performance metrics for a specific bot"""
+    user_id = get_jwt_identity()
+    
+    try:
+        from services.trading_service import TradingService
+        performance = TradingService.get_bot_performance(bot_id, user_id)
+        
+        return jsonify({
+            'success': True,
+            'performance': performance
+        }), 200
+        
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 404
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

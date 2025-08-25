@@ -16,12 +16,14 @@ import {
   ShieldCheckIcon,
   KeyIcon,
   ChatBubbleLeftRightIcon,
+  WifiIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
   ChartBarIcon as ChartBarIconSolid,
   CogIcon as CogIconSolid,
   UserIcon as UserIconSolid,
+  WifiIcon as WifiIconSolid,
 } from '@heroicons/react/24/solid';
 
 const Navbar = () => {
@@ -85,6 +87,13 @@ const Navbar = () => {
       icon: CogIcon,
       iconSolid: CogIconSolid,
       current: location.pathname === '/settings',
+    },
+    {
+      name: 'API Test',
+      href: '/api-test',
+      icon: WifiIcon,
+      iconSolid: WifiIconSolid,
+      current: location.pathname === '/api-test',
     },
   ];
 

@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LicenseProvider } from './contexts/LicenseContext';
+import { RiskDisclaimerProvider, useRiskDisclaimer } from './contexts/RiskDisclaimerContext';
+import RiskDisclaimer from './components/RiskDisclaimer';
 
 import { ThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
@@ -22,6 +24,7 @@ import AdminPanel from './components/AdminPanel';
 import LoadingSpinner from './components/LoadingSpinner';
 import ProDashboard from './components/ProDashboard/ProDashboard';
 import ProSettings from './components/Settings/ProSettings';
+import APIConnectionTest from './components/APIConnectionTest';
 
 const queryClient = new QueryClient();
 
@@ -63,11 +66,18 @@ const PublicRoute = ({ children }) => {
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
+  const { showRiskDisclaimer, acceptRiskDisclaimer, declineRiskDisclaimer } = useRiskDisclaimer();
 
   // MetaMask blocking is handled in index.html before React loads
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+      {/* Risk Disclaimer Modal */}
+      <RiskDisclaimer
+        isOpen={showRiskDisclaimer}
+        onAccept={acceptRiskDisclaimer}
+        onDecline={declineRiskDisclaimer}
+      />
       <Toaster 
         position="top-right" 
         toastOptions={{
@@ -201,6 +211,14 @@ function AppContent() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/api-test" 
+          element={
+            <ProtectedRoute>
+              <APIConnectionTest />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Admin Routes */}
         <Route 
@@ -234,7 +252,9 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <LicenseProvider>
-            <AppContent />
+            <RiskDisclaimerProvider>
+              <AppContent />
+            </RiskDisclaimerProvider>
           </LicenseProvider>
         </AuthProvider>
       </ThemeProvider>

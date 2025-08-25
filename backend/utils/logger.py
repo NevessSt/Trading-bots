@@ -131,3 +131,9 @@ class TradingLogger:
 
 # Global logger instance
 logger = TradingLogger()
+
+def get_logger(name=None):
+    """Get a logger instance."""
+    if name:
+        return TradingLogger(name)
+    return logger

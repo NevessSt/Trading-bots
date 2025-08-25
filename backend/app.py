@@ -109,6 +109,7 @@ def register_routes(app):
         from api.dashboard_routes import dashboard_bp
         from api.pro_dashboard_routes import pro_dashboard_bp
         from api.license_routes import license_bp
+        from api.connection_test_routes import connection_test_bp
         
         # Register blueprints
         app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -125,6 +126,7 @@ def register_routes(app):
         app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
         app.register_blueprint(pro_dashboard_bp, url_prefix='/')
         app.register_blueprint(license_bp, url_prefix='/api/license')
+        app.register_blueprint(connection_test_bp, url_prefix='/api/connection')
     except ImportError as e:
         print(f"Warning: Could not import some routes: {e}")
         print("Starting with basic routes only...")

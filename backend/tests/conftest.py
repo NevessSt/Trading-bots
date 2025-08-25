@@ -159,7 +159,7 @@ def runner(app):
 def auth_headers(client, test_user):
     """Get authentication headers for test user."""
     response = client.post('/api/auth/login', json={
-        'username': test_user.username,
+        'email': test_user.email,
         'password': 'password123'
     })
     
@@ -173,7 +173,7 @@ def auth_headers(client, test_user):
 def admin_headers(client, admin_user):
     """Get authentication headers for admin user."""
     response = client.post('/api/auth/login', json={
-        'username': admin_user.username,
+        'email': admin_user.email,
         'password': 'admin123'
     })
     

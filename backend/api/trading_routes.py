@@ -13,6 +13,9 @@ from models.user import User  # Direct import instead of commented out
 # Import trading engine
 from bot_engine.trading_engine import TradingEngine
 
+# Import rate limiting
+from auth.decorators import rate_limit_required
+
 # Create blueprint
 trading_bp = Blueprint('trading', __name__)
 
@@ -74,6 +77,7 @@ def get_trading_status():
 
 @trading_bp.route('/start', methods=['POST'])
 @jwt_required()
+@rate_limit_required(max_requests=10, window=3600)  # 10 trading starts per hour
 def start_trading():
     """Start trading for the user"""
     user_id = get_jwt_identity()
@@ -130,6 +134,7 @@ def start_trading():
 
 @trading_bp.route('/stop', methods=['POST'])
 @jwt_required()
+@rate_limit_required(max_requests=20, window=3600)  # 20 trading stops per hour
 def stop_trading():
     """Stop trading for the user"""
     user_id = get_jwt_identity()
@@ -477,6 +482,7 @@ def debug_bot_import():
 
 @trading_bp.route('/bots', methods=['POST'])
 @jwt_required()
+@rate_limit_required(max_requests=5, window=3600)  # 5 bot creations per hour
 def create_bot():
     """Create a new trading bot"""
     user_id = get_jwt_identity()
@@ -540,6 +546,7 @@ def get_bot_details(bot_id):
 
 @trading_bp.route('/bots/<bot_id>', methods=['PUT'])
 @jwt_required()
+@rate_limit_required(max_requests=20, window=3600)  # 20 bot updates per hour
 def update_bot(bot_id):
     """Update a trading bot"""
     user_id = get_jwt_identity()
@@ -561,6 +568,7 @@ def update_bot(bot_id):
 
 @trading_bp.route('/bots/<bot_id>', methods=['DELETE'])
 @jwt_required()
+@rate_limit_required(max_requests=10, window=3600)  # 10 bot deletions per hour
 def delete_bot(bot_id):
     """Delete a trading bot"""
     user_id = get_jwt_identity()
@@ -578,6 +586,7 @@ def delete_bot(bot_id):
 
 @trading_bp.route('/bots/<bot_id>/start', methods=['POST'])
 @jwt_required()
+@rate_limit_required(max_requests=15, window=3600)  # 15 individual bot starts per hour
 def start_bot(bot_id):
     """Start a specific trading bot"""
     user_id = get_jwt_identity()
@@ -595,6 +604,7 @@ def start_bot(bot_id):
 
 @trading_bp.route('/bots/<bot_id>/stop', methods=['POST'])
 @jwt_required()
+@rate_limit_required(max_requests=30, window=3600)  # 30 individual bot stops per hour
 def stop_bot(bot_id):
     """Stop a specific trading bot"""
     user_id = get_jwt_identity()

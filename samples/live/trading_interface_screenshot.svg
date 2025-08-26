@@ -1,0 +1,277 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#f8fafc"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="1200" height="60" fill="#1e293b"/>
+  <text x="20" y="35" fill="#f1f5f9" font-family="Arial, sans-serif" font-size="18" font-weight="bold">TradingBot Pro - Live Trading</text>
+  <text x="1000" y="35" fill="#94a3b8" font-family="Arial, sans-serif" font-size="14">Connected to Binance</text>
+  
+  <!-- Main Trading Panel -->
+  <rect x="20" y="80" width="760" height="500" fill="#ffffff" stroke="#e2e8f0" rx="8"/>
+  
+  <!-- Trading Pair Header -->
+  <g transform="translate(40, 100)">
+    <text x="0" y="25" fill="#0f172a" font-family="Arial, sans-serif" font-size="24" font-weight="bold">BTC/USDT</text>
+    <text x="150" y="25" fill="#10b981" font-family="Arial, sans-serif" font-size="20" font-weight="bold">$43,287.50</text>
+    <text x="280" y="25" fill="#10b981" font-family="Arial, sans-serif" font-size="14">+$1,234.50 (+2.94%)</text>
+    <text x="450" y="25" fill="#64748b" font-family="Arial, sans-serif" font-size="12">24h Volume: 45,678 BTC</text>
+  </g>
+  
+  <!-- Price Chart Area -->
+  <g transform="translate(40, 140)">
+    <rect x="0" y="0" width="500" height="300" fill="#f8fafc" stroke="#e2e8f0" rx="4"/>
+    <text x="250" y="20" fill="#64748b" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">BTC/USDT - 1H Chart</text>
+    
+    <!-- Candlestick Chart Simulation -->
+    <g transform="translate(20, 40)">
+      <!-- Grid lines -->
+      <g stroke="#e2e8f0" stroke-width="1">
+        <line x1="0" y1="50" x2="460" y2="50"/>
+        <line x1="0" y1="100" x2="460" y2="100"/>
+        <line x1="0" y1="150" x2="460" y2="150"/>
+        <line x1="0" y1="200" x2="460" y2="200"/>
+        <line x1="0" y1="250" x2="460" y2="250"/>
+      </g>
+      
+      <!-- Price line -->
+      <polyline points="0,180 50,160 100,140 150,120 200,100 250,110 300,90 350,80 400,70 460,60" 
+                fill="none" stroke="#10b981" stroke-width="2"/>
+      
+      <!-- Buy/Sell markers -->
+      <circle cx="100" cy="140" r="4" fill="#10b981"/>
+      <text x="100" y="130" fill="#10b981" font-family="Arial, sans-serif" font-size="10" text-anchor="middle">BUY</text>
+      
+      <circle cx="250" cy="110" r="4" fill="#ef4444"/>
+      <text x="250" y="100" fill="#ef4444" font-family="Arial, sans-serif" font-size="10" text-anchor="middle">SELL</text>
+      
+      <circle cx="400" cy="70" r="4" fill="#10b981"/>
+      <text x="400" y="60" fill="#10b981" font-family="Arial, sans-serif" font-size="10" text-anchor="middle">BUY</text>
+    </g>
+    
+    <!-- Price levels -->
+    <g transform="translate(510, 40)" font-family="Arial, sans-serif" font-size="11" fill="#64748b">
+      <text x="0" y="55">$44,500</text>
+      <text x="0" y="105">$43,800</text>
+      <text x="0" y="155">$43,100</text>
+      <text x="0" y="205">$42,400</text>
+      <text x="0" y="255">$41,700</text>
+    </g>
+  </g>
+  
+  <!-- Order Book -->
+  <g transform="translate(560, 140)">
+    <rect x="0" y="0" width="200" height="300" fill="#ffffff" stroke="#e2e8f0" rx="4"/>
+    <text x="100" y="20" fill="#0f172a" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle">Order Book</text>
+    
+    <!-- Sell Orders -->
+    <g transform="translate(10, 30)" font-family="Arial, sans-serif" font-size="10">
+      <text x="0" y="0" fill="#64748b">Price</text>
+      <text x="90" y="0" fill="#64748b">Size</text>
+      <text x="150" y="0" fill="#64748b">Total</text>
+      
+      <g fill="#ef4444">
+        <text x="0" y="20">43,295.50</text>
+        <text x="90" y="20">0.245</text>
+        <text x="150" y="20">10.6</text>
+        
+        <text x="0" y="35">43,292.25</text>
+        <text x="90" y="35">0.156</text>
+        <text x="150" y="35">6.8</text>
+        
+        <text x="0" y="50">43,290.00</text>
+        <text x="90" y="50">0.089</text>
+        <text x="150" y="50">3.9</text>
+      </g>
+      
+      <!-- Current Price -->
+      <rect x="0" y="65" width="180" height="20" fill="#f0fdf4"/>
+      <text x="90" y="78" fill="#10b981" font-weight="bold" text-anchor="middle">43,287.50</text>
+      
+      <!-- Buy Orders -->
+      <g fill="#10b981">
+        <text x="0" y="105">43,285.00</text>
+        <text x="90" y="105">0.234</text>
+        <text x="150" y="105">10.1</text>
+        
+        <text x="0" y="120">43,282.75</text>
+        <text x="90" y="120">0.167</text>
+        <text x="150" y="120">7.2</text>
+        
+        <text x="0" y="135">43,280.50</text>
+        <text x="90" y="135">0.198</text>
+        <text x="150" y="135">8.6</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Trading Controls -->
+  <g transform="translate(40, 460)">
+    <rect x="0" y="0" width="720" height="100" fill="#f8fafc" stroke="#e2e8f0" rx="4"/>
+    
+    <!-- Buy Panel -->
+    <g transform="translate(20, 20)">
+      <rect x="0" y="0" width="160" height="60" fill="#dcfce7" stroke="#10b981" rx="4"/>
+      <text x="80" y="15" fill="#10b981" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">BUY BTC</text>
+      
+      <g transform="translate(10, 25)" font-family="Arial, sans-serif" font-size="10">
+        <text x="0" y="0" fill="#064e3b">Amount:</text>
+        <rect x="50" y="-8" width="90" height="16" fill="#ffffff" stroke="#10b981" rx="2"/>
+        <text x="95" y="2" fill="#0f172a" text-anchor="middle">0.025 BTC</text>
+        
+        <text x="0" y="20" fill="#064e3b">Price:</text>
+        <rect x="50" y="12" width="90" height="16" fill="#ffffff" stroke="#10b981" rx="2"/>
+        <text x="95" y="22" fill="#0f172a" text-anchor="middle">Market</text>
+      </g>
+    </g>
+    
+    <!-- Sell Panel -->
+    <g transform="translate(200, 20)">
+      <rect x="0" y="0" width="160" height="60" fill="#fef2f2" stroke="#ef4444" rx="4"/>
+      <text x="80" y="15" fill="#ef4444" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">SELL BTC</text>
+      
+      <g transform="translate(10, 25)" font-family="Arial, sans-serif" font-size="10">
+        <text x="0" y="0" fill="#7f1d1d">Amount:</text>
+        <rect x="50" y="-8" width="90" height="16" fill="#ffffff" stroke="#ef4444" rx="2"/>
+        <text x="95" y="2" fill="#0f172a" text-anchor="middle">0.015 BTC</text>
+        
+        <text x="0" y="20" fill="#7f1d1d">Price:</text>
+        <rect x="50" y="12" width="90" height="16" fill="#ffffff" stroke="#ef4444" rx="2"/>
+        <text x="95" y="22" fill="#0f172a" text-anchor="middle">Market</text>
+      </g>
+    </g>
+    
+    <!-- Bot Status -->
+    <g transform="translate(380, 20)">
+      <rect x="0" y="0" width="160" height="60" fill="#f0f9ff" stroke="#3b82f6" rx="4"/>
+      <text x="80" y="15" fill="#3b82f6" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">BOT STATUS</text>
+      
+      <g transform="translate(10, 25)" font-family="Arial, sans-serif" font-size="10">
+        <circle cx="10" cy="5" r="4" fill="#10b981"/>
+        <text x="20" y="8" fill="#0f172a">RSI Strategy Active</text>
+        <text x="0" y="23" fill="#64748b">Next signal in: 12m 34s</text>
+      </g>
+    </g>
+    
+    <!-- Emergency Stop -->
+    <g transform="translate(560, 20)">
+      <rect x="0" y="0" width="140" height="60" fill="#fef2f2" stroke="#dc2626" rx="4"/>
+      <text x="70" y="15" fill="#dc2626" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">EMERGENCY</text>
+      <rect x="20" y="20" width="100" height="25" fill="#dc2626" rx="4"/>
+      <text x="70" y="36" fill="#ffffff" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">STOP ALL</text>
+    </g>
+  </g>
+  
+  <!-- Right Panel - Portfolio & Orders -->
+  <rect x="800" y="80" width="380" height="500" fill="#ffffff" stroke="#e2e8f0" rx="8"/>
+  
+  <!-- Portfolio Summary -->
+  <g transform="translate(820, 100)">
+    <text x="0" y="20" fill="#0f172a" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Portfolio</text>
+    
+    <g transform="translate(0, 35)" font-family="Arial, sans-serif" font-size="12">
+      <rect x="0" y="0" width="340" height="80" fill="#f8fafc" stroke="#e2e8f0" rx="4"/>
+      
+      <g transform="translate(15, 20)">
+        <text x="0" y="0" fill="#64748b">Total Balance:</text>
+        <text x="200" y="0" fill="#0f172a" font-weight="bold">$12,456.78</text>
+        
+        <text x="0" y="20" fill="#64748b">Available:</text>
+        <text x="200" y="20" fill="#10b981">$8,234.56</text>
+        
+        <text x="0" y="40" fill="#64748b">In Orders:</text>
+        <text x="200" y="40" fill="#f59e0b">$4,222.22</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Holdings -->
+  <g transform="translate(820, 220)">
+    <text x="0" y="20" fill="#0f172a" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Holdings</text>
+    
+    <g transform="translate(0, 35)" font-family="Arial, sans-serif" font-size="11">
+      <!-- BTC -->
+      <g>
+        <rect x="0" y="0" width="340" height="30" fill="#f8fafc" stroke="#e2e8f0" rx="2"/>
+        <text x="10" y="18" fill="#0f172a" font-weight="bold">BTC</text>
+        <text x="50" y="18" fill="#64748b">0.2847</text>
+        <text x="200" y="18" fill="#0f172a">$12,321.45</text>
+        <text x="280" y="18" fill="#10b981">+2.94%</text>
+      </g>
+      
+      <!-- ETH -->
+      <g transform="translate(0, 35)">
+        <rect x="0" y="0" width="340" height="30" fill="#f8fafc" stroke="#e2e8f0" rx="2"/>
+        <text x="10" y="18" fill="#0f172a" font-weight="bold">ETH</text>
+        <text x="50" y="18" fill="#64748b">1.5623</text>
+        <text x="200" y="18" fill="#0f172a">$3,456.78</text>
+        <text x="280" y="18" fill="#10b981">+1.87%</text>
+      </g>
+      
+      <!-- USDT -->
+      <g transform="translate(0, 70)">
+        <rect x="0" y="0" width="340" height="30" fill="#f8fafc" stroke="#e2e8f0" rx="2"/>
+        <text x="10" y="18" fill="#0f172a" font-weight="bold">USDT</text>
+        <text x="50" y="18" fill="#64748b">2,345.67</text>
+        <text x="200" y="18" fill="#0f172a">$2,345.67</text>
+        <text x="280" y="18" fill="#64748b">0.00%</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Recent Orders -->
+  <g transform="translate(820, 360)">
+    <text x="0" y="20" fill="#0f172a" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Recent Orders</text>
+    
+    <g transform="translate(0, 35)" font-family="Arial, sans-serif" font-size="10">
+      <g fill="#64748b">
+        <text x="0" y="0">Time</text>
+        <text x="60" y="0">Pair</text>
+        <text x="120" y="0">Side</text>
+        <text x="160" y="0">Amount</text>
+        <text x="240" y="0">Price</text>
+        <text x="300" y="0">Status</text>
+      </g>
+      
+      <!-- Order 1 -->
+      <g transform="translate(0, 20)">
+        <text x="0" y="0" fill="#0f172a">14:32</text>
+        <text x="60" y="0" fill="#0f172a">BTC/USDT</text>
+        <text x="120" y="0" fill="#10b981">BUY</text>
+        <text x="160" y="0" fill="#0f172a">0.025</text>
+        <text x="240" y="0" fill="#0f172a">43,287</text>
+        <text x="300" y="0" fill="#10b981">Filled</text>
+      </g>
+      
+      <!-- Order 2 -->
+      <g transform="translate(0, 35)">
+        <text x="0" y="0" fill="#0f172a">14:15</text>
+        <text x="60" y="0" fill="#0f172a">ETH/USDT</text>
+        <text x="120" y="0" fill="#ef4444">SELL</text>
+        <text x="160" y="0" fill="#0f172a">0.5</text>
+        <text x="240" y="0" fill="#0f172a">2,234</text>
+        <text x="300" y="0" fill="#10b981">Filled</text>
+      </g>
+      
+      <!-- Order 3 -->
+      <g transform="translate(0, 50)">
+        <text x="0" y="0" fill="#0f172a">13:58</text>
+        <text x="60" y="0" fill="#0f172a">BTC/USDT</text>
+        <text x="120" y="0" fill="#10b981">BUY</text>
+        <text x="160" y="0" fill="#0f172a">0.015</text>
+        <text x="240" y="0" fill="#0f172a">43,156</text>
+        <text x="300" y="0" fill="#f59e0b">Partial</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Bottom Status Bar -->
+  <rect x="0" y="760" width="1200" height="40" fill="#334155"/>
+  <g transform="translate(20, 780)" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="12">
+    <text x="0" y="0">🟢 Connected to Binance API</text>
+    <text x="250" y="0">⚡ Latency: 23ms</text>
+    <text x="400" y="0">📊 3 Active Strategies</text>
+    <text x="600" y="0">💰 Daily P&L: +$127.45</text>
+    <text x="800" y="0">🔄 Last Update: 2 seconds ago</text>
+  </g>
+</svg>

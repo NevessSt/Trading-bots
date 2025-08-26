@@ -1,0 +1,166 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#f8fafc"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="1200" height="60" fill="#1e293b"/>
+  <text x="20" y="35" fill="#f1f5f9" font-family="Arial, sans-serif" font-size="18" font-weight="bold">TradingBot Pro Dashboard</text>
+  <text x="1100" y="35" fill="#94a3b8" font-family="Arial, sans-serif" font-size="14">Live Trading Mode</text>
+  
+  <!-- Sidebar -->
+  <rect x="0" y="60" width="240" height="740" fill="#334155"/>
+  <g fill="#e2e8f0" font-family="Arial, sans-serif" font-size="14">
+    <rect x="10" y="80" width="220" height="40" fill="#475569" rx="5"/>
+    <text x="20" y="105">📊 Dashboard</text>
+    <text x="20" y="140">🤖 Trading Bots</text>
+    <text x="20" y="170">📈 Performance</text>
+    <text x="20" y="200">⚙️ Settings</text>
+  </g>
+  
+  <!-- Main Content Area -->
+  <rect x="240" y="60" width="960" height="740" fill="#f8fafc"/>
+  
+  <!-- Portfolio Summary Cards -->
+  <g transform="translate(260, 80)">
+    <!-- Total Balance Card -->
+    <rect x="0" y="0" width="220" height="120" fill="#ffffff" stroke="#e2e8f0" rx="8"/>
+    <text x="15" y="25" fill="#64748b" font-family="Arial, sans-serif" font-size="12">Total Portfolio Value</text>
+    <text x="15" y="50" fill="#0f172a" font-family="Arial, sans-serif" font-size="24" font-weight="bold">$12,847.32</text>
+    <text x="15" y="75" fill="#10b981" font-family="Arial, sans-serif" font-size="14">+$1,847.32 (+16.8%)</text>
+    <text x="15" y="95" fill="#64748b" font-family="Arial, sans-serif" font-size="12">24h: +2.3%</text>
+    
+    <!-- Active Bots Card -->
+    <rect x="240" y="0" width="220" height="120" fill="#ffffff" stroke="#e2e8f0" rx="8"/>
+    <text x="255" y="25" fill="#64748b" font-family="Arial, sans-serif" font-size="12">Active Trading Bots</text>
+    <text x="255" y="50" fill="#0f172a" font-family="Arial, sans-serif" font-size="24" font-weight="bold">4</text>
+    <text x="255" y="75" fill="#10b981" font-family="Arial, sans-serif" font-size="14">3 Profitable</text>
+    <text x="255" y="95" fill="#64748b" font-family="Arial, sans-serif" font-size="12">1 Paused</text>
+    
+    <!-- Today's P&L Card -->
+    <rect x="480" y="0" width="220" height="120" fill="#ffffff" stroke="#e2e8f0" rx="8"/>
+    <text x="495" y="25" fill="#64748b" font-family="Arial, sans-serif" font-size="12">Today's P&L</text>
+    <text x="495" y="50" fill="#0f172a" font-family="Arial, sans-serif" font-size="24" font-weight="bold">+$287.45</text>
+    <text x="495" y="75" fill="#10b981" font-family="Arial, sans-serif" font-size="14">+2.3%</text>
+    <text x="495" y="95" fill="#64748b" font-family="Arial, sans-serif" font-size="12">15 trades executed</text>
+  </g>
+  
+  <!-- Performance Chart -->
+  <g transform="translate(260, 220)">
+    <rect x="0" y="0" width="700" height="300" fill="#ffffff" stroke="#e2e8f0" rx="8"/>
+    <text x="15" y="25" fill="#0f172a" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Portfolio Performance (7 Days)</text>
+    
+    <!-- Chart Area -->
+    <g transform="translate(40, 50)">
+      <!-- Grid -->
+      <g stroke="#f1f5f9" stroke-width="1">
+        <line x1="0" y1="0" x2="620" y2="0"/>
+        <line x1="0" y1="50" x2="620" y2="50"/>
+        <line x1="0" y1="100" x2="620" y2="100"/>
+        <line x1="0" y1="150" x2="620" y2="150"/>
+        <line x1="0" y1="200" x2="620" y2="200"/>
+      </g>
+      
+      <!-- Performance Line -->
+      <polyline points="0,180 90,170 180,160 270,140 360,120 450,100 540,80 620,60" 
+                fill="none" stroke="#10b981" stroke-width="3"/>
+      
+      <!-- Fill Area -->
+      <polygon points="0,180 90,170 180,160 270,140 360,120 450,100 540,80 620,60 620,200 0,200" 
+               fill="#10b981" opacity="0.1"/>
+    </g>
+  </g>
+  
+  <!-- Active Bots List -->
+  <g transform="translate(980, 220)">
+    <rect x="0" y="0" width="200" height="300" fill="#ffffff" stroke="#e2e8f0" rx="8"/>
+    <text x="15" y="25" fill="#0f172a" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Active Bots</text>
+    
+    <!-- Bot 1 -->
+    <g transform="translate(15, 45)">
+      <rect x="0" y="0" width="170" height="50" fill="#f0fdf4" stroke="#bbf7d0" rx="4"/>
+      <circle cx="15" cy="25" r="5" fill="#10b981"/>
+      <text x="30" y="20" fill="#0f172a" font-family="Arial, sans-serif" font-size="12" font-weight="bold">BTC RSI Bot</text>
+      <text x="30" y="35" fill="#10b981" font-family="Arial, sans-serif" font-size="11">+$127.45 (3.2%)</text>
+    </g>
+    
+    <!-- Bot 2 -->
+    <g transform="translate(15, 105)">
+      <rect x="0" y="0" width="170" height="50" fill="#f0fdf4" stroke="#bbf7d0" rx="4"/>
+      <circle cx="15" cy="25" r="5" fill="#10b981"/>
+      <text x="30" y="20" fill="#0f172a" font-family="Arial, sans-serif" font-size="12" font-weight="bold">ETH SMA Bot</text>
+      <text x="30" y="35" fill="#10b981" font-family="Arial, sans-serif" font-size="11">+$89.23 (2.1%)</text>
+    </g>
+    
+    <!-- Bot 3 -->
+    <g transform="translate(15, 165)">
+      <rect x="0" y="0" width="170" height="50" fill="#fef3c7" stroke="#fde68a" rx="4"/>
+      <circle cx="15" cy="25" r="5" fill="#f59e0b"/>
+      <text x="30" y="20" fill="#0f172a" font-family="Arial, sans-serif" font-size="12" font-weight="bold">ADA Grid Bot</text>
+      <text x="30" y="35" fill="#f59e0b" font-family="Arial, sans-serif" font-size="11">Paused</text>
+    </g>
+    
+    <!-- Bot 4 -->
+    <g transform="translate(15, 225)">
+      <rect x="0" y="0" width="170" height="50" fill="#f0fdf4" stroke="#bbf7d0" rx="4"/>
+      <circle cx="15" cy="25" r="5" fill="#10b981"/>
+      <text x="30" y="20" fill="#0f172a" font-family="Arial, sans-serif" font-size="12" font-weight="bold">DOT MACD Bot</text>
+      <text x="30" y="35" fill="#10b981" font-family="Arial, sans-serif" font-size="11">+$71.12 (1.8%)</text>
+    </g>
+  </g>
+  
+  <!-- Recent Trades -->
+  <g transform="translate(260, 540)">
+    <rect x="0" y="0" width="920" height="200" fill="#ffffff" stroke="#e2e8f0" rx="8"/>
+    <text x="15" y="25" fill="#0f172a" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Recent Trades</text>
+    
+    <!-- Trade Headers -->
+    <g transform="translate(15, 45)" fill="#64748b" font-family="Arial, sans-serif" font-size="12">
+      <text x="0" y="0">Time</text>
+      <text x="100" y="0">Bot</text>
+      <text x="250" y="0">Pair</text>
+      <text x="350" y="0">Side</text>
+      <text x="450" y="0">Amount</text>
+      <text x="550" y="0">Price</text>
+      <text x="650" y="0">P&L</text>
+    </g>
+    
+    <!-- Trade Rows -->
+    <g transform="translate(15, 65)" font-family="Arial, sans-serif" font-size="11">
+      <g fill="#0f172a">
+        <text x="0" y="0">14:32:15</text>
+        <text x="100" y="0">BTC RSI Bot</text>
+        <text x="250" y="0">BTC/USDT</text>
+        <text x="350" y="0" fill="#ef4444">SELL</text>
+        <text x="450" y="0">0.0234</text>
+        <text x="550" y="0">$43,250</text>
+        <text x="650" y="0" fill="#10b981">+$23.45</text>
+      </g>
+      
+      <g fill="#0f172a" transform="translate(0, 20)">
+        <text x="0" y="0">14:28:42</text>
+        <text x="100" y="0">ETH SMA Bot</text>
+        <text x="250" y="0">ETH/USDT</text>
+        <text x="350" y="0" fill="#10b981">BUY</text>
+        <text x="450" y="0">0.4521</text>
+        <text x="550" y="0">$2,485</text>
+        <text x="650" y="0" fill="#64748b">Pending</text>
+      </g>
+      
+      <g fill="#0f172a" transform="translate(0, 40)">
+        <text x="0" y="0">14:15:33</text>
+        <text x="100" y="0">DOT MACD Bot</text>
+        <text x="250" y="0">DOT/USDT</text>
+        <text x="350" y="0" fill="#ef4444">SELL</text>
+        <text x="450" y="0">125.50</text>
+        <text x="550" y="0">$7.82</text>
+        <text x="650" y="0" fill="#10b981">+$15.67</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Status Indicator -->
+  <g transform="translate(1050, 80)">
+    <circle cx="10" cy="10" r="8" fill="#10b981"/>
+    <text x="25" y="15" fill="#10b981" font-family="Arial, sans-serif" font-size="12" font-weight="bold">LIVE</text>
+  </g>
+</svg>

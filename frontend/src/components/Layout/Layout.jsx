@@ -216,7 +216,9 @@ const Layout = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
           width: { md: `calc(100% - ${drawerOpen ? drawerWidth : 0}px)` },
           marginLeft: { md: drawerOpen ? `${drawerWidth}px` : 0 },
           transition: theme.transitions.create(['width', 'margin'], {
@@ -226,7 +228,82 @@ const Layout = ({ children }) => {
         }}
       >
         <Toolbar /> {/* This is for spacing below the AppBar */}
-        {children}
+        <Box sx={{ flexGrow: 1, p: 3 }}>
+          {children}
+        </Box>
+        
+        {/* Footer */}
+        <Box
+          component="footer"
+          sx={{
+            mt: 'auto',
+            py: 2,
+            px: 3,
+            borderTop: 1,
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
+            textAlign: 'center'
+          }}
+        >
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            © 2024 TradingBot Pro. All rights reserved.
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Typography
+              variant="body2"
+              component="a"
+              href="/DISCLAIMER.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
+                '&:hover': {
+                  textDecoration: 'underline'
+                }
+              }}
+            >
+              Disclaimer
+            </Typography>
+            <Typography variant="body2" color="text.secondary">•</Typography>
+            <Typography
+              variant="body2"
+              component="a"
+              href="/EULA.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
+                '&:hover': {
+                  textDecoration: 'underline'
+                }
+              }}
+            >
+              Terms of Use (EULA)
+            </Typography>
+            <Typography variant="body2" color="text.secondary">•</Typography>
+            <Typography
+              variant="body2"
+              component="a"
+              href="/docs/API_SECURITY.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
+                '&:hover': {
+                  textDecoration: 'underline'
+                }
+              }}
+            >
+              Security Documentation
+            </Typography>
+          </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+            ⚠️ Trading involves substantial risk. Please read our disclaimer before using this software.
+          </Typography>
+        </Box>
       </Box>
       
       {/* Profile Menu */}

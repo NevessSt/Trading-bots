@@ -3,7 +3,7 @@
 .PHONY: help install install-dev test test-unit test-integration test-e2e test-security test-performance
 .PHONY: test-all test-fast test-slow coverage lint type-check security-scan format clean
 .PHONY: load-test stress-test smoke-test regression-test setup-db migrate-db seed-db
-.PHONY: start-services stop-services restart-services logs build deploy docs
+.PHONY: start-services stop-services restart-services logs build deploy docs prod
 
 # Default target
 help:
@@ -32,6 +32,7 @@ help:
 	@echo ""
 	@echo "Code Quality:"
 	@echo "  coverage         Generate test coverage report"
+	@echo "  ci               Fast CI testing with pytest --maxfail=1 -q"
 	@echo "  lint             Run code linting"
 	@echo "  type-check       Run type checking"
 	@echo "  security-scan    Run security scanning"
@@ -52,6 +53,7 @@ help:
 	@echo "  clean            Clean up temporary files and caches"
 	@echo "  build            Build the application"
 	@echo "  docs             Generate documentation"
+	@echo "  prod             Deploy to production with Docker Compose"
 	@echo ""
 
 # Installation targets
@@ -174,6 +176,14 @@ docs:
 	@echo "Generating documentation..."
 	@if exist docs (cd docs && make html) else (echo "No docs directory found")
 
+# Production deployment
+prod:
+	@echo "Deploying to production..."
+	@cd .. && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+	@echo "Production deployment complete!"
+	@echo "Access the application at: http://localhost:3000"
+	@echo "API health check: http://localhost:5000/health"
+
 # Development workflow targets
 dev-setup: install-dev setup-db
 	@echo "Development environment setup complete!"
@@ -184,6 +194,11 @@ dev-test: format lint type-check test-fast
 
 ci-test: test-all coverage security-scan
 	@echo "CI testing complete!"
+
+# CI-specific fast testing with maxfail and quiet output
+ci:
+	pytest --maxfail=1 -q --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=80
+	@echo "CI fast test complete!"
 
 full-test: clean dev-test test-slow load-test
 	@echo "Full testing suite complete!"

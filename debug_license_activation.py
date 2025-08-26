@@ -27,10 +27,11 @@ def test_backend_license_generation():
     with app.app_context():
         try:
             # Generate a test license
+            test_email = os.environ.get('TEST_EMAIL', 'test@example.com')
             license_key = LicenseManager.generate_license_key(
                 license_type="enterprise",
                 duration_days=365,
-                user_email="danielmanji38@gmail.com"
+                user_email=test_email
             )
             
             if license_key:
@@ -59,8 +60,9 @@ def test_api_endpoints(license_key):
     print("="*50)
     
     base_url = "http://localhost:5000/api"
-    email = "danielmanji38@gmail.com"
-    password = "newpassword123"
+    # Use environment variables for credentials in production
+    email = os.environ.get('TEST_EMAIL', 'test@example.com')
+    password = os.environ.get('TEST_PASSWORD', 'test_password')
     
     try:
         # Test login

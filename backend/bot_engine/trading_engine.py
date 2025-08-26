@@ -449,26 +449,35 @@ class TradingEngine:
         """Initialize connections to all configured exchanges"""
         try:
             # Initialize Binance (primary exchange)
-            if self.api_key and self.api_secret:
-                # Skip actual connection for demo keys
-                if self.api_key == 'demo_api_key' or self.api_secret == 'demo_api_secret':
-                    self.logger.info("Using demo API keys - skipping actual exchange connection")
-                    self.exchanges['binance'] = None  # Mock exchange for demo mode
-                    self.primary_exchange = 'binance'
-                    self.exchange = None  # No real exchange connection
-                else:
-                    self.exchanges['binance'] = ccxt.binance({
-                        'apiKey': self.api_key,
-                        'secret': self.api_secret,
-                        'sandbox': self.testnet,
-                        'enableRateLimit': True,
-                    })
-                    self.primary_exchange = 'binance'
-                    self.exchange = self.exchanges['binance']  # Backward compatibility
-                    
-                    # Test connection
-                    account_info = self.exchange.fetch_balance()
-                    self.logger.info(f"Binance connection established - Testnet: {self.testnet}")
+            if not self.api_key or not self.api_secret:
+                raise ValueError("API key and secret are required. Please configure valid exchange API credentials.")
+            
+            # Validate API key format (basic validation)
+            if len(self.api_key) < 10 or len(self.api_secret) < 10:
+                raise ValueError("Invalid API key format. Please provide valid exchange API credentials.")
+            
+            # Reject demo/test keys
+            demo_patterns = ['demo', 'test', 'fake', 'mock', 'sample', 'placeholder']
+            if any(pattern in self.api_key.lower() or pattern in self.api_secret.lower() for pattern in demo_patterns):
+                raise ValueError("Demo API keys are not allowed in production. Please configure real exchange API credentials.")
+            
+            self.exchanges['binance'] = ccxt.binance({
+                'apiKey': self.api_key,
+                'secret': self.api_secret,
+                'sandbox': self.testnet,
+                'enableRateLimit': True,
+            })
+            self.primary_exchange = 'binance'
+            self.exchange = self.exchanges['binance']  # Backward compatibility
+            
+            # Test connection with real API call
+            try:
+                account_info = self.exchange.fetch_balance()
+                self.logger.info(f"Binance connection established - Testnet: {self.testnet}")
+            except ccxt.AuthenticationError:
+                raise ValueError("Invalid API credentials. Please check your API key and secret.")
+            except ccxt.PermissionDenied:
+                raise ValueError("API key permissions insufficient. Please enable trading permissions.")
             
             # Add other exchanges here
             # self.exchanges['coinbase'] = ...
@@ -476,9 +485,7 @@ class TradingEngine:
             
         except Exception as e:
             self.logger.error(f"Failed to initialize exchanges: {e}")
-            # Don't raise exception for demo mode
-            if self.api_key != 'demo_api_key':
-                raise
+            raise
     
     def initialize_exchange(self):
         """Initialize the Binance exchange connection"""

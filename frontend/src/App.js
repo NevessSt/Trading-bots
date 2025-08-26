@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LicenseProvider } from './contexts/LicenseContext';
 import { RiskDisclaimerProvider, useRiskDisclaimer } from './contexts/RiskDisclaimerContext';
 import RiskDisclaimer from './components/RiskDisclaimer';
+import Footer from './components/Footer';
 
 import { ThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
@@ -242,6 +243,9 @@ function AppContent() {
           element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} 
         />
       </Routes>
+      
+      {/* Footer - shown on all pages */}
+      <Footer />
     </div>
   );
 }

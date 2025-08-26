@@ -161,17 +161,7 @@ class APIKey(db.Model):
         """Find API keys by exchange and user"""
         return cls.query.filter_by(exchange=exchange, user_id=user_id, is_active=True).all()
     
-    @staticmethod
-    def generate_test_key():
-        """Generate a test API key for development"""
-        alphabet = string.ascii_letters + string.digits
-        return ''.join(secrets.choice(alphabet) for _ in range(64))
-    
-    @staticmethod
-    def generate_test_secret():
-        """Generate a test API secret for development"""
-        alphabet = string.ascii_letters + string.digits
-        return ''.join(secrets.choice(alphabet) for _ in range(64))
+    # Test key generation methods removed for production security
     
     def __repr__(self):
         return f'<APIKey {self.key_name} ({self.exchange})>'

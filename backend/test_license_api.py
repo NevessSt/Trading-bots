@@ -6,13 +6,15 @@ Test script for license API functionality
 import requests
 import json
 import sys
+import os
 from datetime import datetime
 
 # Configuration
 BASE_URL = "http://localhost:5000"
-TEST_EMAIL = "danielmanji38@gmail.com"
-TEST_PASSWORD = "newpassword123"
-TEST_LICENSE_KEY = '{"type":"premium","created":"2025-08-22T14:00:00.679181","expires":"2026-08-22T14:00:00.679199","features":{"max_bots":10,"live_trading":true,"advanced_strategies":true,"api_access":true,"priority_support":true,"custom_indicators":true},"user_email":"danielmanji38@gmail.com"}|569736d77ad5b930'
+# Use environment variables for test credentials
+TEST_EMAIL = os.environ.get('TEST_EMAIL', 'test@example.com')
+TEST_PASSWORD = os.environ.get('TEST_PASSWORD', 'test_password')
+TEST_LICENSE_KEY = os.environ.get('TEST_LICENSE_KEY', 'test_license_key_here')
 
 def login():
     """Login and get access token"""

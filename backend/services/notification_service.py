@@ -1,568 +1,513 @@
 import smtplib
 import requests
 import logging
+import json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any, Tuple
 from flask import current_app
+from database import db
+from models.notification import NotificationPreference, NotificationLog, NotificationTemplate
+from models.user import User
 
 logger = logging.getLogger(__name__)
 
 class NotificationService:
-    def __init__(self):
-        self.smtp_server = None
-        self.smtp_port = None
-        self.smtp_username = None
-        self.smtp_password = None
-        self.from_email = None
+    def __init__(self, websocket_service=None):
+        self.websocket_service = websocket_service
+        self.email_config = {
+            'smtp_server': current_app.config.get('SMTP_SERVER', 'smtp.gmail.com') if current_app else 'smtp.gmail.com',
+            'smtp_port': current_app.config.get('SMTP_PORT', 587) if current_app else 587,
+            'smtp_username': current_app.config.get('SMTP_USERNAME') if current_app else None,
+            'smtp_password': current_app.config.get('SMTP_PASSWORD') if current_app else None,
+            'from_email': current_app.config.get('FROM_EMAIL') if current_app else None
+        }
         
-    def initialize_smtp(self, smtp_server: str, smtp_port: int, username: str, password: str, from_email: str):
-        """Initialize SMTP configuration"""
-        self.smtp_server = smtp_server
-        self.smtp_port = smtp_port
-        self.smtp_username = username
-        self.smtp_password = password
-        self.from_email = from_email
+        self.telegram_config = {
+            'bot_token': current_app.config.get('TELEGRAM_BOT_TOKEN') if current_app else None,
+            'api_url': 'https://api.telegram.org/bot{}/sendMessage'
+        }
         
-    def send_email(self, to_email: str, subject: str, body: str, html_body: str = None) -> bool:
+        self.push_config = {
+            'firebase_key': current_app.config.get('FIREBASE_SERVER_KEY') if current_app else None,
+            'fcm_url': 'https://fcm.googleapis.com/fcm/send'
+        }
+        
+    def send_notification(self, user_id: int, event_type: str, data: Dict[str, Any]) -> Dict[str, bool]:
+        """Send notifications based on user preferences"""
+        results = {'email': False, 'telegram': False, 'push': False}
+        
+        try:
+            user = User.query.get(user_id)
+            if not user:
+                logger.error(f"User {user_id} not found")
+                return results
+            
+            # Get user notification preferences
+            preferences = NotificationPreference.query.filter_by(
+                user_id=user_id,
+                event_type=event_type,
+                enabled=True
+            ).all()
+            
+            # If no preferences exist, create default ones
+            if not preferences:
+                self.create_default_preferences(user_id)
+                preferences = NotificationPreference.query.filter_by(
+                    user_id=user_id,
+                    event_type=event_type,
+                    enabled=True
+                ).all()
+            
+            for pref in preferences:
+                try:
+                    if pref.notification_type == 'email' and user.email:
+                        results['email'] = self._send_email(user, event_type, data, pref)
+                    elif pref.notification_type == 'telegram':
+                        results['telegram'] = self._send_telegram(user, event_type, data, pref)
+                    elif pref.notification_type == 'push':
+                        results['push'] = self._send_push(user, event_type, data, pref)
+                except Exception as e:
+                    self._log_notification(user_id, pref.notification_type, event_type, 
+                                         '', '', str(data), 'failed', str(e))
+            
+            # Send real-time notification via WebSocket if available
+            if any(results.values()) and self.websocket_service:
+                try:
+                    websocket_data = {
+                        'event_type': event_type,
+                        'data': data,
+                        'results': results,
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+                    self.websocket_service.send_notification_to_user(user_id, websocket_data)
+                except Exception as e:
+                    logger.error(f'Error sending WebSocket notification: {e}')
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Notification service error: {str(e)}")
+            return results
+        
+    def _send_email(self, user: User, event_type: str, data: Dict[str, Any], 
+                   preference: NotificationPreference) -> bool:
         """Send email notification"""
         try:
-            if not all([self.smtp_server, self.smtp_port, self.smtp_username, self.smtp_password]):
-                logger.error("SMTP configuration not initialized")
+            if not all([self.email_config['smtp_username'], 
+                       self.email_config['smtp_password'],
+                       self.email_config['from_email']]):
+                logger.error("SMTP configuration not complete")
                 return False
-                
+            
+            subject, body = self._generate_email_content(event_type, data, user)
+            
             msg = MIMEMultipart('alternative')
+            msg['From'] = self.email_config['from_email']
+            msg['To'] = user.email
             msg['Subject'] = subject
-            msg['From'] = self.from_email
-            msg['To'] = to_email
             
-            # Add plain text part
-            text_part = MIMEText(body, 'plain')
-            msg.attach(text_part)
-            
-            # Add HTML part if provided
-            if html_body:
-                html_part = MIMEText(html_body, 'html')
-                msg.attach(html_part)
+            # Add HTML content
+            html_part = MIMEText(body, 'html')
+            msg.attach(html_part)
             
             # Send email
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+            with smtplib.SMTP(self.email_config['smtp_server'], 
+                            self.email_config['smtp_port']) as server:
                 server.starttls()
-                server.login(self.smtp_username, self.smtp_password)
+                server.login(self.email_config['smtp_username'], 
+                           self.email_config['smtp_password'])
                 server.send_message(msg)
-                
-            logger.info(f"Email sent successfully to {to_email}")
+            
+            self._log_notification(user.id, 'email', event_type, user.email, 
+                                 subject, body, 'sent')
+            logger.info(f"Email sent successfully to {user.email}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to send email to {to_email}: {str(e)}")
+            self._log_notification(user.id, 'email', event_type, user.email, 
+                                 subject if 'subject' in locals() else '', 
+                                 body if 'body' in locals() else '', 'failed', str(e))
+            logger.error(f"Failed to send email to {user.email}: {str(e)}")
             return False
     
-    def send_telegram_message(self, bot_token: str, chat_id: str, message: str, parse_mode: str = 'HTML') -> bool:
+    def _send_telegram(self, user: User, event_type: str, data: Dict[str, Any], 
+                      preference: NotificationPreference) -> bool:
         """Send Telegram notification"""
         try:
-            url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            if not self.telegram_config['bot_token']:
+                logger.error("Telegram bot token not configured")
+                return False
+            
+            # Get user's Telegram chat ID from preference settings
+            settings = json.loads(preference.settings or '{}')
+            chat_id = settings.get('telegram_chat_id')
+            
+            if not chat_id:
+                logger.error(f"Telegram chat ID not configured for user {user.id}")
+                return False
+            
+            message = self._generate_telegram_content(event_type, data, user)
+            
+            url = self.telegram_config['api_url'].format(self.telegram_config['bot_token'])
             payload = {
                 'chat_id': chat_id,
                 'text': message,
-                'parse_mode': parse_mode
+                'parse_mode': 'HTML'
             }
             
             response = requests.post(url, json=payload, timeout=10)
-            response.raise_for_status()
             
-            logger.info(f"Telegram message sent successfully to chat {chat_id}")
-            return True
+            if response.status_code == 200:
+                self._log_notification(user.id, 'telegram', event_type, chat_id, 
+                                     '', message, 'sent')
+                logger.info(f"Telegram message sent successfully to chat {chat_id}")
+                return True
+            else:
+                self._log_notification(user.id, 'telegram', event_type, chat_id, 
+                                     '', message, 'failed', response.text)
+                logger.error(f"Failed to send Telegram message: {response.text}")
+                return False
+                
+        except Exception as e:
+            self._log_notification(user.id, 'telegram', event_type, 
+                                 chat_id if 'chat_id' in locals() else '', 
+                                 '', message if 'message' in locals() else '', 
+                                 'failed', str(e))
+            logger.error(f"Failed to send Telegram message: {str(e)}")
+            return False
+    
+    def _send_push(self, user: User, event_type: str, data: Dict[str, Any], 
+                  preference: NotificationPreference) -> bool:
+        """Send push notification via Firebase FCM"""
+        try:
+            if not self.push_config['firebase_key']:
+                logger.error("Firebase server key not configured")
+                return False
+            
+            # Get user's FCM token from preference settings
+            settings = json.loads(preference.settings or '{}')
+            fcm_token = settings.get('fcm_token')
+            
+            if not fcm_token:
+                logger.error(f"FCM token not configured for user {user.id}")
+                return False
+            
+            title, body = self._generate_push_content(event_type, data, user)
+            
+            headers = {
+                'Authorization': f'key={self.push_config["firebase_key"]}',
+                'Content-Type': 'application/json'
+            }
+            
+            payload = {
+                'to': fcm_token,
+                'notification': {
+                    'title': title,
+                    'body': body,
+                    'icon': 'trading_bot_icon',
+                    'click_action': 'FLUTTER_NOTIFICATION_CLICK'
+                },
+                'data': {
+                    'event_type': event_type,
+                    'timestamp': datetime.utcnow().isoformat(),
+                    **data
+                }
+            }
+            
+            response = requests.post(self.push_config['fcm_url'], 
+                                   headers=headers, json=payload, timeout=10)
+            
+            if response.status_code == 200:
+                self._log_notification(user.id, 'push', event_type, fcm_token, 
+                                     title, body, 'sent')
+                logger.info(f"Push notification sent successfully to {fcm_token[:10]}...")
+                return True
+            else:
+                self._log_notification(user.id, 'push', event_type, fcm_token, 
+                                     title, body, 'failed', response.text)
+                logger.error(f"Failed to send push notification: {response.text}")
+                return False
+                
+        except Exception as e:
+            self._log_notification(user.id, 'push', event_type, 
+                                 fcm_token if 'fcm_token' in locals() else '', 
+                                 title if 'title' in locals() else '', 
+                                 body if 'body' in locals() else '', 
+                                 'failed', str(e))
+            logger.error(f"Failed to send push notification: {str(e)}")
+            return False
+    
+    def _generate_email_content(self, event_type: str, data: Dict[str, Any], user: User) -> Tuple[str, str]:
+        """Generate email subject and body content"""
+        try:
+            template = NotificationTemplate.query.filter_by(
+                event_type=event_type, 
+                notification_type='email'
+            ).first()
+            
+            if template:
+                subject = template.subject_template.format(**data, user=user)
+                body = template.body_template.format(**data, user=user)
+            else:
+                # Default templates
+                if event_type == 'trade_executed':
+                    subject = f"Trade Executed - {data.get('symbol', 'Unknown')}"
+                    body = f"""Dear {user.username},
+                    
+Your trade has been executed:
+                    Symbol: {data.get('symbol', 'N/A')}
+                    Side: {data.get('side', 'N/A')}
+                    Quantity: {data.get('quantity', 'N/A')}
+                    Price: {data.get('price', 'N/A')}
+                    
+                    Best regards,
+                    Trading Bot System"""
+                elif event_type == 'trade_failed':
+                    subject = f"Trade Failed - {data.get('symbol', 'Unknown')}"
+                    body = f"""Dear {user.username},
+                    
+                    Your trade failed to execute:
+                    Symbol: {data.get('symbol', 'N/A')}
+                    Error: {data.get('error', 'Unknown error')}
+                    
+                    Please check your bot configuration.
+                    
+                    Best regards,
+                    Trading Bot System"""
+                else:
+                    subject = f"Trading Bot Notification - {event_type}"
+                    body = f"Dear {user.username},\n\nEvent: {event_type}\nData: {data}\n\nBest regards,\nTrading Bot System"
+            
+            return subject, body
             
         except Exception as e:
-            logger.error(f"Failed to send Telegram message to {chat_id}: {str(e)}")
-            return False
+            logger.error(f"Failed to generate email content: {str(e)}")
+            return f"Trading Bot Notification - {event_type}", f"Event: {event_type}\nData: {data}"
+    
+    def _generate_telegram_content(self, event_type: str, data: Dict[str, Any], user: User) -> str:
+        """Generate Telegram message content"""
+        try:
+            template = NotificationTemplate.query.filter_by(
+                event_type=event_type, 
+                notification_type='telegram'
+            ).first()
+            
+            if template:
+                message = template.body_template.format(**data, user=user)
+            else:
+                # Default templates
+                if event_type == 'trade_executed':
+                    message = f"""🎯 <b>Trade Executed</b>
+                    
+📊 Symbol: {data.get('symbol', 'N/A')}
+📈 Side: {data.get('side', 'N/A')}
+💰 Quantity: {data.get('quantity', 'N/A')}
+💵 Price: {data.get('price', 'N/A')}
+⏰ Time: {data.get('timestamp', 'N/A')}"""
+                elif event_type == 'trade_failed':
+                    message = f"""❌ <b>Trade Failed</b>
+                    
+📊 Symbol: {data.get('symbol', 'N/A')}
+❗ Error: {data.get('error', 'Unknown error')}
+⏰ Time: {data.get('timestamp', 'N/A')}"""
+                elif event_type == 'bot_started':
+                    message = f"""🚀 <b>Bot Started</b>
+                    
+🤖 Bot: {data.get('bot_name', 'N/A')}
+📊 Strategy: {data.get('strategy', 'N/A')}
+⏰ Time: {data.get('timestamp', 'N/A')}"""
+                else:
+                    message = f"<b>{event_type.replace('_', ' ').title()}</b>\n\n{data}"
+            
+            return message
+            
+        except Exception as e:
+            logger.error(f"Failed to generate Telegram content: {str(e)}")
+            return f"Event: {event_type}\nData: {data}"
+    
+    def _generate_push_content(self, event_type: str, data: Dict[str, Any], user: User) -> Tuple[str, str]:
+        """Generate push notification title and body"""
+        try:
+            template = NotificationTemplate.query.filter_by(
+                event_type=event_type, 
+                notification_type='push'
+            ).first()
+            
+            if template:
+                title = template.subject_template.format(**data, user=user)
+                body = template.body_template.format(**data, user=user)
+            else:
+                # Default templates
+                if event_type == 'trade_executed':
+                    title = "Trade Executed"
+                    body = f"{data.get('side', 'N/A')} {data.get('quantity', 'N/A')} {data.get('symbol', 'N/A')} at {data.get('price', 'N/A')}"
+                elif event_type == 'trade_failed':
+                    title = "Trade Failed"
+                    body = f"Failed to execute {data.get('symbol', 'N/A')} trade: {data.get('error', 'Unknown error')}"
+                elif event_type == 'bot_started':
+                    title = "Bot Started"
+                    body = f"{data.get('bot_name', 'N/A')} is now running"
+                else:
+                    title = event_type.replace('_', ' ').title()
+                    body = str(data)
+            
+            return title, body
+            
+        except Exception as e:
+            logger.error(f"Failed to generate push content: {str(e)}")
+            return event_type.replace('_', ' ').title(), str(data)
+    
+    def _log_notification(self, user_id: int, notification_type: str, event_type: str, 
+                         recipient: str, subject: str, content: str, status: str, 
+                         error_message: str = None) -> None:
+        """Log notification to database"""
+        try:
+            log_entry = NotificationLog(
+                user_id=user_id,
+                notification_type=notification_type,
+                event_type=event_type,
+                recipient=recipient,
+                subject=subject,
+                content=content,
+                status=status,
+                error_message=error_message,
+                sent_at=datetime.utcnow()
+            )
+            
+            db.session.add(log_entry)
+            db.session.commit()
+            
+        except Exception as e:
+            logger.error(f"Failed to log notification: {str(e)}")
+            db.session.rollback()
     
     def send_trade_notification(self, user_id: int, trade_data: Dict) -> None:
         """Send trade execution notification"""
         try:
-            # Lazy import to avoid circular imports
-            from models.user import User
-            
-            # Get user from database
-            user = User.query.get(user_id)
-            if not user:
-                logger.error(f"User {user_id} not found")
-                return
-                
-            # Get user notification settings
-            settings = getattr(user, 'notification_settings', None)
-            if settings and isinstance(settings, str):
-                import json
-                settings = json.loads(settings)
-            else:
-                settings = {}
-            
-            if not settings.get('trade_notifications', True):
-                return
-            
-            # Prepare notification content
-            symbol = trade_data.get('symbol', 'Unknown')
-            side = trade_data.get('side', 'Unknown')
-            quantity = trade_data.get('quantity', 0)
-            price = trade_data.get('price', 0)
-            pnl = trade_data.get('pnl', 0)
-            
-            subject = f"Trade Executed: {symbol}"
-            
-            # Plain text message
-            message = f"""
-Trade Notification
-
-Symbol: {symbol}
-Side: {side.upper()}
-Quantity: {quantity}
-Price: ${price:.4f}
-P&L: ${pnl:.2f}
-Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-This is an automated notification from your trading bot.
-"""
-            
-            # HTML message
-            html_message = f"""
-<html>
-<body>
-    <h2>🚀 Trade Notification</h2>
-    <table style="border-collapse: collapse; width: 100%;">
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Symbol:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{symbol}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Side:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{side.upper()}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Quantity:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{quantity}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Price:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">${price:.4f}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">P&L:</td>
-            <td style="border: 1px solid #ddd; padding: 8px; color: {'green' if pnl >= 0 else 'red'};">{'$' + str(pnl) if pnl >= 0 else '-$' + str(abs(pnl))}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Time:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</td>
-        </tr>
-    </table>
-    <p><em>This is an automated notification from your trading bot.</em></p>
-</body>
-</html>
-"""
-            
-            # Send email notification
-            if settings.get('email_notifications', True) and user.email:
-                self.send_email(user.email, subject, message, html_message)
-            
-            # Send Telegram notification
-            if settings.get('telegram_notifications', False):
-                bot_token = settings.get('telegram_bot_token')
-                chat_id = settings.get('telegram_chat_id')
-                
-                if bot_token and chat_id:
-                    telegram_message = f"""
-🚀 <b>Trade Executed</b>
-
-📊 <b>Symbol:</b> {symbol}
-📈 <b>Side:</b> {side.upper()}
-💰 <b>Quantity:</b> {quantity}
-💵 <b>Price:</b> ${price:.4f}
-📊 <b>P&L:</b> {'$' + str(pnl) if pnl >= 0 else '-$' + str(abs(pnl))}
-🕐 <b>Time:</b> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-<em>Automated notification from your trading bot</em>
-"""
-                    self.send_telegram_message(bot_token, chat_id, telegram_message)
-                    
+            self.send_notification(user_id, 'trade_executed', trade_data)
         except Exception as e:
             logger.error(f"Failed to send trade notification: {str(e)}")
     
     def send_profit_loss_alert(self, user_id: int, pnl: float, threshold: float, alert_type: str) -> None:
         """Send profit/loss threshold alert"""
         try:
-            # Lazy import to avoid circular imports
-            from models.user import User
-            
-            # Get user from database
-            user = User.query.get(user_id)
-            if not user:
-                logger.error(f"User {user_id} not found")
-                return
-                
-            # Get user notification settings
-            settings = getattr(user, 'notification_settings', None)
-            if settings and isinstance(settings, str):
-                import json
-                settings = json.loads(settings)
-            else:
-                settings = {}
-            
-            if not settings.get('profit_loss_alerts', True):
-                return
-            
-            emoji = "🎉" if alert_type == "profit" else "⚠️"
-            color = "green" if alert_type == "profit" else "red"
-            
-            subject = f"{emoji} {alert_type.title()} Alert: ${abs(pnl):.2f}"
-            
-            message = f"""
-{alert_type.title()} Alert
-
-Your trading bot has {'reached a profit' if alert_type == 'profit' else 'exceeded the loss'} threshold.
-
-Current P&L: ${pnl:.2f}
-Threshold: ${threshold:.2f}
-Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-Please review your trading strategy and consider taking action if necessary.
-"""
-            
-            html_message = f"""
-<html>
-<body>
-    <h2 style="color: {color};">{emoji} {alert_type.title()} Alert</h2>
-    <p>Your trading bot has {'<strong>reached a profit</strong>' if alert_type == 'profit' else '<strong>exceeded the loss</strong>'} threshold.</p>
-    
-    <table style="border-collapse: collapse; margin: 20px 0;">
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Current P&L:</td>
-            <td style="border: 1px solid #ddd; padding: 8px; color: {color};">${pnl:.2f}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Threshold:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">${threshold:.2f}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Time:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</td>
-        </tr>
-    </table>
-    
-    <p><em>Please review your trading strategy and consider taking action if necessary.</em></p>
-</body>
-</html>
-"""
-            
-            # Send email notification
-            if settings.get('email_notifications', True) and user.email:
-                self.send_email(user.email, subject, message, html_message)
-            
-            # Send Telegram notification
-            if settings.get('telegram_notifications', False):
-                bot_token = settings.get('telegram_bot_token')
-                chat_id = settings.get('telegram_chat_id')
-                
-                if bot_token and chat_id:
-                    telegram_message = f"""
-{emoji} <b>{alert_type.title()} Alert</b>
-
-Your trading bot has {'<b>reached a profit</b>' if alert_type == 'profit' else '<b>exceeded the loss</b>'} threshold.
-
-💰 <b>Current P&L:</b> ${pnl:.2f}
-🎯 <b>Threshold:</b> ${threshold:.2f}
-🕐 <b>Time:</b> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-<em>Please review your trading strategy and consider taking action if necessary.</em>
-"""
-                    self.send_telegram_message(bot_token, chat_id, telegram_message)
-                    
+            pnl_data = {
+                'pnl': pnl,
+                'threshold': threshold,
+                'type': alert_type,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            event_type = 'profit_alert' if alert_type == 'profit' else 'loss_alert'
+            self.send_notification(user_id, event_type, pnl_data)
         except Exception as e:
-            logger.error(f"Failed to send profit/loss alert: {str(e)}")
+            logger.error(f"Failed to send P&L alert: {str(e)}")
     
     def send_bot_status_alert(self, user_id: int, bot_name: str, status: str, message: str = None) -> None:
         """Send bot status change alert"""
         try:
-            # Lazy import to avoid circular imports
-            from models.user import User
-            
-            # Get user from database
-            user = User.query.get(user_id)
-            if not user:
-                logger.error(f"User {user_id} not found")
-                return
-                
-            # Get user notification settings
-            settings = getattr(user, 'notification_settings', None)
-            if settings and isinstance(settings, str):
-                import json
-                settings = json.loads(settings)
-            else:
-                settings = {}
-            
-            if not settings.get('system_alerts', True):
-                return
-            
-            status_emoji = {
-                'started': '🟢',
-                'stopped': '🔴',
-                'error': '❌',
-                'warning': '⚠️',
-                'paused': '⏸️'
-            }.get(status.lower(), '🔵')
-            
-            subject = f"{status_emoji} Bot Status: {bot_name} - {status.title()}"
-            
-            email_message = f"""
-Bot Status Alert
-
-Bot Name: {bot_name}
-Status: {status.title()}
-Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-{message or 'No additional details provided.'}
-
-This is an automated notification from your trading system.
-"""
-            
-            html_message = f"""
-<html>
-<body>
-    <h2>{status_emoji} Bot Status Alert</h2>
-    <table style="border-collapse: collapse; margin: 20px 0;">
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Bot Name:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{bot_name}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Status:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{status.title()}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Time:</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</td>
-        </tr>
-    </table>
-    
-    {f'<p><strong>Details:</strong> {message}</p>' if message else ''}
-    
-    <p><em>This is an automated notification from your trading system.</em></p>
-</body>
-</html>
-"""
-            
-            # Send email notification
-            if settings.get('email_notifications', True) and user.email:
-                self.send_email(user.email, subject, email_message, html_message)
-            
-            # Send Telegram notification
-            if settings.get('telegram_notifications', False):
-                bot_token = settings.get('telegram_bot_token')
-                chat_id = settings.get('telegram_chat_id')
-                
-                if bot_token and chat_id:
-                    telegram_message = f"""
-{status_emoji} <b>Bot Status Alert</b>
-
-🤖 <b>Bot Name:</b> {bot_name}
-📊 <b>Status:</b> {status.title()}
-🕐 <b>Time:</b> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-{f'<b>Details:</b> {message}' if message else ''}
-
-<em>Automated notification from your trading system</em>
-"""
-                    self.send_telegram_message(bot_token, chat_id, telegram_message)
-                    
+            bot_data = {
+                'bot_name': bot_name,
+                'status': status,
+                'message': message,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            event_type = f"bot_{status}"
+            self.send_notification(user_id, event_type, bot_data)
         except Exception as e:
             logger.error(f"Failed to send bot status alert: {str(e)}")
     
     def send_daily_summary(self, user_id: int, summary_data: Dict) -> None:
         """Send daily trading summary"""
         try:
-            # Lazy import to avoid circular imports
-            from models.user import User
-            
-            # Get user from database
-            user = User.query.get(user_id)
-            if not user:
-                logger.error(f"User {user_id} not found")
-                return
-                
-            # Get user notification settings
-            settings = getattr(user, 'notification_settings', None)
-            if settings and isinstance(settings, str):
-                import json
-                settings = json.loads(settings)
-            else:
-                settings = {}
-            
-            if not settings.get('daily_summary', True):
-                return
-            
-            total_pnl = summary_data.get('total_pnl', 0)
-            total_trades = summary_data.get('total_trades', 0)
-            winning_trades = summary_data.get('winning_trades', 0)
-            losing_trades = summary_data.get('losing_trades', 0)
-            win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
-            
-            subject = f"📊 Daily Trading Summary - {datetime.now().strftime('%Y-%m-%d')}"
-            
-            message = f"""
-Daily Trading Summary - {datetime.now().strftime('%Y-%m-%d')}
-
-Total P&L: ${total_pnl:.2f}
-Total Trades: {total_trades}
-Winning Trades: {winning_trades}
-Losing Trades: {losing_trades}
-Win Rate: {win_rate:.1f}%
-
-Thank you for using our trading platform!
-"""
-            
-            html_message = f"""
-<html>
-<body>
-    <h2>📊 Daily Trading Summary</h2>
-    <h3>{datetime.now().strftime('%Y-%m-%d')}</h3>
-    
-    <table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; background-color: #f2f2f2;">Total P&L:</td>
-            <td style="border: 1px solid #ddd; padding: 12px; color: {'green' if total_pnl >= 0 else 'red'}; font-weight: bold;">${total_pnl:.2f}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; background-color: #f2f2f2;">Total Trades:</td>
-            <td style="border: 1px solid #ddd; padding: 12px;">{total_trades}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; background-color: #f2f2f2;">Winning Trades:</td>
-            <td style="border: 1px solid #ddd; padding: 12px; color: green;">{winning_trades}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; background-color: #f2f2f2;">Losing Trades:</td>
-            <td style="border: 1px solid #ddd; padding: 12px; color: red;">{losing_trades}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; background-color: #f2f2f2;">Win Rate:</td>
-            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold;">{win_rate:.1f}%</td>
-        </tr>
-    </table>
-    
-    <p><em>Thank you for using our trading platform!</em></p>
-</body>
-</html>
-"""
-            
-            # Send email notification
-            if settings.get('email_notifications', True) and user.email:
-                self.send_email(user.email, subject, message, html_message)
-            
-            # Send Telegram notification
-            if settings.get('telegram_notifications', False):
-                bot_token = settings.get('telegram_bot_token')
-                chat_id = settings.get('telegram_chat_id')
-                
-                if bot_token and chat_id:
-                    telegram_message = f"""
-📊 <b>Daily Trading Summary</b>
-📅 <b>{datetime.now().strftime('%Y-%m-%d')}</b>
-
-💰 <b>Total P&L:</b> ${total_pnl:.2f}
-📈 <b>Total Trades:</b> {total_trades}
-✅ <b>Winning Trades:</b> {winning_trades}
-❌ <b>Losing Trades:</b> {losing_trades}
-🎯 <b>Win Rate:</b> {win_rate:.1f}%
-
-<em>Thank you for using our trading platform!</em>
-"""
-                    self.send_telegram_message(bot_token, chat_id, telegram_message)
-                    
+            summary_data['timestamp'] = datetime.utcnow().isoformat()
+            self.send_notification(user_id, 'daily_summary', summary_data)
         except Exception as e:
             logger.error(f"Failed to send daily summary: {str(e)}")
     
     def send_market_alert(self, user_ids: List[int], alert_data: Dict) -> None:
         """Send market alert to multiple users"""
         try:
-            # Lazy import to avoid circular imports
-            from models.user import User
-            
-            alert_type = alert_data.get('type', 'general')
-            message = alert_data.get('message', 'Market alert')
-            symbol = alert_data.get('symbol', '')
-            
-            subject = f"🚨 Market Alert: {symbol}" if symbol else "🚨 Market Alert"
-            
-            email_message = f"""
-Market Alert
-
-{message}
-
-Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-This is an automated market alert from your trading system.
-"""
-            
-            html_message = f"""
-<html>
-<body>
-    <h2>🚨 Market Alert</h2>
-    {f'<h3>{symbol}</h3>' if symbol else ''}
-    
-    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <p style="margin: 0; font-size: 16px;">{message}</p>
-    </div>
-    
-    <p><strong>Time:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-    
-    <p><em>This is an automated market alert from your trading system.</em></p>
-</body>
-</html>
-"""
-            
+            alert_data['timestamp'] = datetime.utcnow().isoformat()
             for user_id in user_ids:
                 try:
-                    # Get user from database
-                    user = User.query.get(user_id)
-                    if not user:
-                        logger.error(f"User {user_id} not found")
-                        continue
-                        
-                    # Get user notification settings
-                    settings = getattr(user, 'notification_settings', None)
-                    if settings and isinstance(settings, str):
-                        import json
-                        settings = json.loads(settings)
-                    else:
-                        settings = {}
-                    
-                    # Send email notification
-                    if settings.get('email_notifications', True) and user.email:
-                        self.send_email(user.email, subject, email_message, html_message)
-                    
-                    # Send Telegram notification
-                    if settings.get('telegram_notifications', False):
-                        bot_token = settings.get('telegram_bot_token')
-                        chat_id = settings.get('telegram_chat_id')
-                        
-                        if bot_token and chat_id:
-                            telegram_message = f"""
-🚨 <b>Market Alert</b>
-{f'📊 <b>{symbol}</b>' if symbol else ''}
-
-{message}
-
-🕐 <b>Time:</b> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-<em>Automated market alert from your trading system</em>
-"""
-                            self.send_telegram_message(bot_token, chat_id, telegram_message)
-                            
+                    self.send_notification(user_id, 'market_alert', alert_data)
                 except Exception as e:
                     logger.error(f"Failed to send market alert to user {user_id}: {str(e)}")
-                    
         except Exception as e:
             logger.error(f"Failed to send market alerts: {str(e)}")
+
+    def create_default_preferences(self, user_id: int) -> None:
+        """Create default notification preferences for a user"""
+        try:
+            default_events = [
+                'trade_executed', 'trade_failed', 'bot_started', 'bot_stopped', 
+                'bot_error', 'profit_alert', 'loss_alert', 'daily_summary', 
+                'market_alert', 'system_alert'
+            ]
+            
+            default_types = ['email', 'telegram', 'push']
+            
+            for event_type in default_events:
+                for notification_type in default_types:
+                    # Check if preference already exists
+                    existing = NotificationPreference.query.filter_by(
+                        user_id=user_id,
+                        event_type=event_type,
+                        notification_type=notification_type
+                    ).first()
+                    
+                    if not existing:
+                        preference = NotificationPreference(
+                            user_id=user_id,
+                            event_type=event_type,
+                            notification_type=notification_type,
+                            enabled=True if notification_type == 'email' else False,
+                            settings='{}'
+                        )
+                        db.session.add(preference)
+            
+            db.session.commit()
+            
+        except Exception as e:
+            logger.error(f"Failed to create default preferences: {str(e)}")
+            db.session.rollback()
+    
+    def send_test_notification(self, user_id: int, notification_type: str) -> bool:
+        """Send test notification for configuration testing"""
+        try:
+            test_data = {
+                'message': 'This is a test notification',
+                'timestamp': datetime.utcnow().isoformat(),
+                'test': True
+            }
+            
+            user = User.query.get(user_id)
+            if not user:
+                return False
+            
+            # Get or create preference for the user
+            preference = NotificationPreference.query.filter_by(
+                user_id=user_id, 
+                notification_type=notification_type
+            ).first()
+            
+            if not preference:
+                return False
+            
+            if notification_type == 'email':
+                return self._send_email(user, 'test_notification', test_data, preference)
+            elif notification_type == 'telegram':
+                return self._send_telegram(user, 'test_notification', test_data, preference)
+            elif notification_type == 'push':
+                return self._send_push(user, 'test_notification', test_data, preference)
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Failed to send test notification: {str(e)}")
+            return False
 
 # Global notification service instance
 notification_service = NotificationService()

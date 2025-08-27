@@ -264,44 +264,43 @@ class Trade(db.Model):
         return query.order_by(cls.created_at.desc()).all()
     
     @classmethod
-    def get_trade_stats(cls, user_id=None, days=30):
-        """Get trading statistics"""
-        from sqlalchemy import func
+    def get_trade_stats(cls, user_id=None, bot_id=None, symbol=None, days=30):
+        """Get trading statistics (optimized with caching)"""
+        from services.database_optimizer import optimized_queries
         
+        if user_id and not bot_id and not symbol:
+            # Use optimized cached query for user stats
+            return optimized_queries.get_user_trading_stats(user_id, days)
+        
+        # Fallback to original query for complex filters
         query = cls.query
-        if user_id:
-            query = query.filter_by(user_id=user_id)
         
-        # Filter by date range
+        if user_id:
+            query = query.filter(cls.user_id == user_id)
+        if bot_id:
+            query = query.filter(cls.bot_id == bot_id)
+        if symbol:
+            query = query.filter(cls.symbol == symbol)
+        
         if days:
             start_date = datetime.utcnow() - timedelta(days=days)
             query = query.filter(cls.created_at >= start_date)
         
-        # Get basic counts
-        total_trades = query.count()
-        filled_trades = query.filter_by(status='filled').count()
+        trades = query.all()
         
-        # Get profit/loss data for filled trades
-        filled_query = query.filter_by(status='filled')
+        total_trades = len(trades)
+        filled_trades = [t for t in trades if t.status == 'filled']
+        total_volume = sum(t.total_value for t in filled_trades if t.total_value)
+        total_fees = sum(t.fee for t in filled_trades if t.fee)
         
-        stats = {
+        return {
             'total_trades': total_trades,
-            'filled_trades': filled_trades,
-            'pending_trades': query.filter(cls.status.in_(['pending', 'partial'])).count(),
-            'canceled_trades': query.filter_by(status='canceled').count(),
-            'success_rate': (filled_trades / total_trades * 100) if total_trades > 0 else 0
+            'filled_trades': len(filled_trades),
+            'success_rate': (len(filled_trades) / total_trades * 100) if total_trades > 0 else 0,
+            'total_volume': total_volume,
+            'total_fees': total_fees,
+            'avg_trade_size': total_volume / len(filled_trades) if filled_trades else 0
         }
-        
-        # Calculate total volume and fees
-        volume_result = filled_query.with_entities(
-            func.sum(cls.total_value).label('total_volume'),
-            func.sum(cls.fee).label('total_fees')
-        ).first()
-        
-        stats['total_volume'] = float(volume_result.total_volume or 0)
-        stats['total_fees'] = float(volume_result.total_fees or 0)
-        
-        return stats
     
     @classmethod
     def get_portfolio_performance(cls, user_id, symbol=None):

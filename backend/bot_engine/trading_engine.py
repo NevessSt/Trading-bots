@@ -32,6 +32,7 @@ from .advanced_risk_manager import AdvancedRiskManager
 from .portfolio_manager import PortfolioManager
 from .market_data_manager import MarketDataManager
 from .backtesting_engine import BacktestingEngine
+from .exchange_manager import ExchangeManager, ExchangeConfig
 
 # Import models
 from models.trade import Trade
@@ -40,6 +41,13 @@ from models.bot import Bot
 
 # Import utilities
 from utils.notification import NotificationManager
+from utils.error_handler import (
+    error_handler, 
+    RetryConfig, 
+    CircuitBreakerConfig, 
+    OrderCancellationHandler,
+    ErrorSeverity
+)
 
 # Create notification manager instance
 notification_manager = NotificationManager()
@@ -97,8 +105,9 @@ class TradingEngine:
         if not self._validate_license():
             raise Exception("License validation failed. Please activate your license.")
         
-        # Initialize exchange connections
-        self.exchanges = {}
+        # Initialize exchange manager
+        self.exchange_manager = ExchangeManager()
+        self.exchanges = {}  # Keep for backward compatibility
         self.primary_exchange = None
         self.exchange = None  # Keep for backward compatibility
         self._initialize_exchanges()
@@ -130,8 +139,12 @@ class TradingEngine:
             slippage_rate=0.0005
         )
         
-        # Strategy factory for creating strategies
-        self.strategy_factory = StrategyFactory()
+        # Strategy factory for creating strategies with dynamic loading
+        self.strategy_factory = StrategyFactory(enable_dynamic_loading=True)
+        
+        # Initialize error handling components
+        self.order_cancellation_handler = OrderCancellationHandler()
+        self._setup_error_handling()
         
         # Bot management
         self.active_bots: Dict[str, TradingBotConfig] = {}
@@ -179,6 +192,94 @@ class TradingEngine:
                 raise
         
         self.logger.info(f"Advanced Trading Engine initialized successfully with {len(self.exchanges)} exchanges")
+    
+    def _setup_error_handling(self):
+        """Setup error handling components and circuit breakers"""
+        try:
+            # Configure retry settings for different operation types
+            self.retry_configs = {
+                'trade_execution': RetryConfig(max_attempts=5, base_delay=2.0, max_delay=30.0),
+                'market_data': RetryConfig(max_attempts=3, base_delay=1.0, max_delay=10.0),
+                'portfolio_operations': RetryConfig(max_attempts=3, base_delay=1.5, max_delay=15.0)
+            }
+            
+            # Configure circuit breakers for critical operations
+            circuit_config = CircuitBreakerConfig(
+                failure_threshold=10,
+                recovery_timeout=120.0,
+                half_open_max_calls=5
+            )
+            
+            # Register circuit breakers
+            error_handler.register_circuit_breaker('trade_execution', circuit_config)
+            error_handler.register_circuit_breaker('market_data_feed', circuit_config)
+            error_handler.register_circuit_breaker('portfolio_sync', circuit_config)
+            
+            self.logger.info("Error handling components initialized successfully")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to setup error handling: {e}")
+            raise
+    
+    def get_exchange_status(self) -> Dict[str, Dict[str, Any]]:
+        """Get status of all configured exchanges"""
+        return self.exchange_manager.get_exchange_status()
+    
+    def get_available_exchanges(self) -> List[str]:
+        """Get list of available exchange names"""
+        return self.exchange_manager.get_available_exchanges()
+    
+    def switch_primary_exchange(self, exchange_name: str) -> bool:
+        """Switch to a different primary exchange"""
+        try:
+            if exchange_name not in self.exchange_manager.get_available_exchanges():
+                self.logger.error(f"Exchange {exchange_name} not available")
+                return False
+            
+            # Update exchange manager's primary exchange
+            old_primary = self.exchange_manager.primary_exchange
+            self.exchange_manager.primary_exchange = exchange_name
+            
+            # Update backward compatibility attributes
+            self.primary_exchange = exchange_name
+            self.exchange = self.exchange_manager.get_exchange(exchange_name)
+            
+            self.logger.info(f"Switched primary exchange from {old_primary} to {exchange_name}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to switch primary exchange: {e}")
+            return False
+    
+    def execute_with_failover(self, operation: str, *args, **kwargs) -> Dict[str, Any]:
+        """Execute operation with automatic failover to backup exchanges"""
+        return self.exchange_manager.execute_with_failover(operation, *args, **kwargs)
+    
+    def get_best_price(self, symbol: str, side: str) -> Dict[str, Any]:
+        """Get best price across all exchanges"""
+        return self.exchange_manager.get_best_price(symbol, side)
+    
+    def add_exchange_runtime(self, config: ExchangeConfig) -> bool:
+        """Add a new exchange at runtime"""
+        success = self.exchange_manager.add_exchange(config)
+        if success:
+            # Update backward compatibility attributes
+            self.exchanges[config.name] = self.exchange_manager.get_exchange(config.name)
+            if not self.primary_exchange:
+                self.primary_exchange = config.name
+                self.exchange = self.exchange_manager.get_exchange(config.name)
+        return success
+    
+    def remove_exchange_runtime(self, exchange_name: str) -> bool:
+        """Remove an exchange at runtime"""
+        success = self.exchange_manager.remove_exchange(exchange_name)
+        if success and exchange_name in self.exchanges:
+            del self.exchanges[exchange_name]
+            # Update primary exchange if needed
+            if self.primary_exchange == exchange_name:
+                self.primary_exchange = self.exchange_manager.primary_exchange
+                self.exchange = self.exchange_manager.get_exchange() if self.primary_exchange else None
+        return success
     
     def _get_default_strategy_parameters(self, strategy_name: str) -> Dict[str, Any]:
         """Get default parameters for a strategy"""
@@ -291,20 +392,37 @@ class TradingEngine:
     
     def _execute_advanced_trade(self, bot_config: TradingBotConfig, signal, current_price) -> Dict[str, Any]:
         """Execute an advanced trade with comprehensive error handling"""
+        order_id = None
         try:
             side = 'BUY' if signal['signal'] > 0 else 'SELL'
             portfolio_value = self.portfolio_manager.get_total_value()
             trade_amount = portfolio_value * bot_config.position_size
             quantity = trade_amount / current_price
             
-            # Execute the trade
-            order_result = self.exchange.create_market_order(
-                symbol=bot_config.symbol,
-                side=side.lower(),
-                amount=quantity
+            # Execute the trade with enhanced error handling
+            order_result = self.error_handler.execute_with_retry(
+                operation=lambda: self.exchange.create_market_order(
+                    symbol=bot_config.symbol,
+                    side=side.lower(),
+                    amount=quantity
+                ),
+                operation_type='trade_execution',
+                context={'bot_id': bot_config.bot_id, 'symbol': bot_config.symbol}
             )
             
             if order_result:
+                order_id = order_result.get('orderId') or order_result.get('id')
+                
+                # Track order for cancellation if needed
+                if order_id:
+                    self.order_cancellation_handler.track_order(
+                        order_id=order_id,
+                        symbol=bot_config.symbol,
+                        side=side.lower(),
+                        quantity=quantity,
+                        exchange_name=getattr(self.exchange, 'name', 'unknown')
+                    )
+                
                 # Record trade in portfolio manager
                 self.portfolio_manager.add_position(
                     symbol=bot_config.symbol,
@@ -316,7 +434,7 @@ class TradingEngine:
                 
                 return {
                     'success': True,
-                    'order_id': order_result.get('orderId'),
+                    'order_id': order_id,
                     'side': side,
                     'quantity': quantity,
                     'price': current_price
@@ -325,7 +443,27 @@ class TradingEngine:
             return {'success': False, 'error': 'Order execution failed'}
             
         except Exception as e:
-            self.logger.error(f"Error executing trade for bot {bot_config.bot_id}: {str(e)}")
+            error_msg = f"Error executing trade for bot {bot_config.bot_id}: {str(e)}"
+            self.logger.error(error_msg)
+            
+            # Record error for monitoring
+            self.error_handler.record_error(
+                operation_type='trade_execution',
+                error=e,
+                context={'bot_id': bot_config.bot_id, 'symbol': bot_config.symbol}
+            )
+            
+            # Cancel order if it was created but failed later
+            if order_id:
+                try:
+                    self.order_cancellation_handler.cancel_order(
+                        order_id=order_id,
+                        symbol=bot_config.symbol,
+                        exchange_name=getattr(self.exchange, 'name', 'unknown')
+                    )
+                except Exception as cancel_error:
+                    self.logger.error(f"Failed to cancel order {order_id}: {cancel_error}")
+            
             return {'success': False, 'error': str(e)}
     
     def _monitor_bot_positions(self, bot_config: TradingBotConfig):
@@ -426,62 +564,155 @@ class TradingEngine:
             self.logger.warning(f"License validation error: {e} - Running in demo mode")
             return True  # Allow demo mode
     
+    def _load_exchange_configs(self) -> List[ExchangeConfig]:
+        """Load exchange configurations from environment variables and config"""
+        configs = []
+        
+        # Binance configuration (primary)
+        if self.api_key and self.api_secret:
+            binance_config = ExchangeConfig(
+                name='binance',
+                api_key=self.api_key,
+                api_secret=self.api_secret,
+                testnet=self.testnet,
+                rate_limit=1200,
+                enabled=True,
+                priority=1  # Highest priority
+            )
+            configs.append(binance_config)
+        
+        # Coinbase Pro configuration
+        coinbase_api_key = os.getenv('COINBASE_API_KEY')
+        coinbase_api_secret = os.getenv('COINBASE_API_SECRET')
+        coinbase_passphrase = os.getenv('COINBASE_PASSPHRASE')
+        if coinbase_api_key and coinbase_api_secret and coinbase_passphrase:
+            coinbase_config = ExchangeConfig(
+                name='coinbase',
+                api_key=coinbase_api_key,
+                api_secret=coinbase_api_secret,
+                passphrase=coinbase_passphrase,
+                testnet=os.getenv('COINBASE_TESTNET', 'true').lower() == 'true',
+                rate_limit=600,
+                enabled=os.getenv('COINBASE_ENABLED', 'true').lower() == 'true',
+                priority=2
+            )
+            configs.append(coinbase_config)
+        
+        # Kraken configuration
+        kraken_api_key = os.getenv('KRAKEN_API_KEY')
+        kraken_api_secret = os.getenv('KRAKEN_API_SECRET')
+        if kraken_api_key and kraken_api_secret:
+            kraken_config = ExchangeConfig(
+                name='kraken',
+                api_key=kraken_api_key,
+                api_secret=kraken_api_secret,
+                testnet=False,  # Kraken doesn't have a testnet
+                rate_limit=300,
+                enabled=os.getenv('KRAKEN_ENABLED', 'true').lower() == 'true',
+                priority=3
+            )
+            configs.append(kraken_config)
+        
+        # Bybit configuration
+        bybit_api_key = os.getenv('BYBIT_API_KEY')
+        bybit_api_secret = os.getenv('BYBIT_API_SECRET')
+        if bybit_api_key and bybit_api_secret:
+            bybit_config = ExchangeConfig(
+                name='bybit',
+                api_key=bybit_api_key,
+                api_secret=bybit_api_secret,
+                testnet=os.getenv('BYBIT_TESTNET', 'true').lower() == 'true',
+                rate_limit=600,
+                enabled=os.getenv('BYBIT_ENABLED', 'true').lower() == 'true',
+                priority=4
+            )
+            configs.append(bybit_config)
+        
+        # OKX configuration
+        okx_api_key = os.getenv('OKX_API_KEY')
+        okx_api_secret = os.getenv('OKX_API_SECRET')
+        okx_passphrase = os.getenv('OKX_PASSPHRASE')
+        if okx_api_key and okx_api_secret and okx_passphrase:
+            okx_config = ExchangeConfig(
+                name='okx',
+                api_key=okx_api_key,
+                api_secret=okx_api_secret,
+                passphrase=okx_passphrase,
+                testnet=os.getenv('OKX_TESTNET', 'true').lower() == 'true',
+                rate_limit=600,
+                enabled=os.getenv('OKX_ENABLED', 'true').lower() == 'true',
+                priority=5
+            )
+            configs.append(okx_config)
+        
+        # KuCoin configuration
+        kucoin_api_key = os.getenv('KUCOIN_API_KEY')
+        kucoin_api_secret = os.getenv('KUCOIN_API_SECRET')
+        kucoin_passphrase = os.getenv('KUCOIN_PASSPHRASE')
+        if kucoin_api_key and kucoin_api_secret and kucoin_passphrase:
+            kucoin_config = ExchangeConfig(
+                name='kucoin',
+                api_key=kucoin_api_key,
+                api_secret=kucoin_api_secret,
+                passphrase=kucoin_passphrase,
+                testnet=os.getenv('KUCOIN_TESTNET', 'true').lower() == 'true',
+                rate_limit=600,
+                enabled=os.getenv('KUCOIN_ENABLED', 'true').lower() == 'true',
+                priority=6
+            )
+            configs.append(kucoin_config)
+        
+        return configs
+    
     def _get_exchanges_config(self) -> Dict[str, Dict]:
-        """Get configuration for all supported exchanges"""
+        """Get configuration for all supported exchanges (legacy method)"""
         config = {}
         
-        # Binance configuration
-        if self.api_key and self.api_secret:
-            config['binance'] = {
-                'api_key': self.api_key,
-                'api_secret': self.api_secret,
-                'testnet': self.testnet,
-                'rate_limit': 1200  # requests per minute
+        # Convert new config format to legacy format for backward compatibility
+        for exchange_config in self._load_exchange_configs():
+            config[exchange_config.name] = {
+                'api_key': exchange_config.api_key,
+                'api_secret': exchange_config.api_secret,
+                'testnet': exchange_config.testnet,
+                'rate_limit': exchange_config.rate_limit
             }
-        
-        # Add other exchanges as needed
-        # config['coinbase'] = {...}
-        # config['kraken'] = {...}
+            if exchange_config.passphrase:
+                config[exchange_config.name]['passphrase'] = exchange_config.passphrase
         
         return config
     
     def _initialize_exchanges(self):
-        """Initialize connections to all configured exchanges"""
+        """Initialize connections to all configured exchanges using the exchange manager"""
         try:
-            # Initialize Binance (primary exchange)
-            if not self.api_key or not self.api_secret:
-                raise ValueError("API key and secret are required. Please configure valid exchange API credentials.")
+            # Load exchange configurations from environment or config
+            exchange_configs = self._load_exchange_configs()
             
-            # Validate API key format (basic validation)
-            if len(self.api_key) < 10 or len(self.api_secret) < 10:
-                raise ValueError("Invalid API key format. Please provide valid exchange API credentials.")
+            if not exchange_configs:
+                raise ValueError("No exchange configurations found. Please configure at least one exchange.")
             
-            # Reject demo/test keys
-            demo_patterns = ['demo', 'test', 'fake', 'mock', 'sample', 'placeholder']
-            if any(pattern in self.api_key.lower() or pattern in self.api_secret.lower() for pattern in demo_patterns):
-                raise ValueError("Demo API keys are not allowed in production. Please configure real exchange API credentials.")
+            # Add exchanges to the manager
+            successful_exchanges = 0
+            for config in exchange_configs:
+                if self.exchange_manager.add_exchange(config):
+                    successful_exchanges += 1
+                    self.logger.info(f"Successfully added {config.name} exchange")
+                else:
+                    self.logger.warning(f"Failed to add {config.name} exchange")
             
-            self.exchanges['binance'] = ccxt.binance({
-                'apiKey': self.api_key,
-                'secret': self.api_secret,
-                'sandbox': self.testnet,
-                'enableRateLimit': True,
-            })
-            self.primary_exchange = 'binance'
-            self.exchange = self.exchanges['binance']  # Backward compatibility
+            if successful_exchanges == 0:
+                raise ValueError("Failed to initialize any exchanges. Please check your API credentials.")
             
-            # Test connection with real API call
-            try:
-                account_info = self.exchange.fetch_balance()
-                self.logger.info(f"Binance connection established - Testnet: {self.testnet}")
-            except ccxt.AuthenticationError:
-                raise ValueError("Invalid API credentials. Please check your API key and secret.")
-            except ccxt.PermissionDenied:
-                raise ValueError("API key permissions insufficient. Please enable trading permissions.")
+            # Set up backward compatibility
+            self.primary_exchange = self.exchange_manager.primary_exchange
+            if self.primary_exchange:
+                primary_exchange_obj = self.exchange_manager.get_exchange()
+                self.exchange = primary_exchange_obj  # Backward compatibility
+                
+                # Populate legacy exchanges dict
+                for exchange_name in self.exchange_manager.get_available_exchanges():
+                    self.exchanges[exchange_name] = self.exchange_manager.get_exchange(exchange_name)
             
-            # Add other exchanges here
-            # self.exchanges['coinbase'] = ...
-            # self.exchanges['kraken'] = ...
+            self.logger.info(f"Exchange manager initialized with {successful_exchanges} exchanges")
             
         except Exception as e:
             self.logger.error(f"Failed to initialize exchanges: {e}")
@@ -655,10 +886,12 @@ class TradingEngine:
             
             # Create strategy instance using factory
             try:
-                strategy_instance = self.strategy_factory.create_strategy(
+                strategy_instance = self.strategy_factory.get_strategy(
                     strategy_name, 
                     parameters
                 )
+                if strategy_instance is None:
+                    return {'success': False, 'error': f'Strategy not found: {strategy_name}'}
             except Exception as e:
                 return {'success': False, 'error': f'Failed to create strategy: {str(e)}'}
             
@@ -1202,14 +1435,31 @@ class TradingEngine:
             logger.error(f"Error monitoring positions for user {user_id}: {str(e)}")
     
     def _execute_market_order(self, symbol, side, quantity):
-        """Execute a market order for closing positions"""
+        """Execute a market order for closing positions with enhanced error handling"""
+        order_id = None
         try:
-            order = self.exchange.create_market_order(symbol, side, quantity)
+            # Execute market order with enhanced error handling
+            order = self.error_handler.execute_with_retry(
+                operation=lambda: self.exchange.create_market_order(symbol, side, quantity),
+                operation_type='trade_execution',
+                context={'symbol': symbol, 'side': side, 'quantity': quantity, 'order_type': 'market_close'}
+            )
+            
+            order_id = order['id']
+            
+            # Track order for cancellation if needed
+            self.order_cancellation_handler.track_order(
+                order_id=order_id,
+                symbol=symbol,
+                side=side,
+                quantity=quantity,
+                exchange_name=getattr(self.exchange, 'name', 'primary')
+            )
             
             logger.info(f"Market order executed: {side} {quantity} {symbol}")
             
             return {
-                'order_id': order['id'],
+                'order_id': order_id,
                 'symbol': symbol,
                 'side': side,
                 'quantity': quantity,
@@ -1217,29 +1467,166 @@ class TradingEngine:
                 'status': order['status']
             }
             
-        except InsufficientFunds:
+        except InsufficientFunds as e:
             error_msg = "Insufficient funds for market order"
             logger.error(error_msg)
+            self.error_handler.record_error(
+                operation_type='trade_execution',
+                error=e,
+                context={'symbol': symbol, 'side': side, 'error_type': 'insufficient_funds'}
+            )
             return {'error': error_msg}
         except InvalidOrder as e:
             error_msg = f"Invalid market order: {str(e)}"
             logger.error(error_msg)
+            self.error_handler.record_error(
+                operation_type='trade_execution',
+                error=e,
+                context={'symbol': symbol, 'side': side, 'error_type': 'invalid_order'}
+            )
             return {'error': error_msg}
         except NetworkError as e:
             error_msg = f"Network error during market order: {str(e)}"
             logger.error(error_msg)
+            self.error_handler.record_error(
+                operation_type='trade_execution',
+                error=e,
+                context={'symbol': symbol, 'side': side, 'error_type': 'network_error'}
+            )
             return {'error': error_msg}
         except ExchangeError as e:
             error_msg = f"Exchange error during market order: {str(e)}"
             logger.error(error_msg)
+            self.error_handler.record_error(
+                operation_type='trade_execution',
+                error=e,
+                context={'symbol': symbol, 'side': side, 'error_type': 'exchange_error'}
+            )
             return {'error': error_msg}
         except Exception as e:
             error_msg = f"Unexpected error during market order: {str(e)}"
             logger.error(error_msg)
+            self.error_handler.record_error(
+                operation_type='trade_execution',
+                error=e,
+                context={'symbol': symbol, 'side': side, 'error_type': 'unexpected_error'}
+            )
+            
+            # Cancel order if it was created but failed later
+            if order_id:
+                try:
+                    self.order_cancellation_handler.cancel_order(
+                        order_id=order_id,
+                        symbol=symbol,
+                        exchange_name=getattr(self.exchange, 'name', 'primary')
+                    )
+                except Exception as cancel_error:
+                    logger.error(f"Failed to cancel order {order_id}: {cancel_error}")
+            
             return {'error': error_msg}
     
+    def execute_trade_async(self, user_id, bot_id, symbol, amount, side, take_profit=None, stop_loss=None, priority=5):
+        """Execute a trade asynchronously using Celery tasks
+        
+        Args:
+            user_id (str): User ID
+            bot_id (str): Bot ID
+            symbol (str): Trading symbol
+            amount (float): Amount to trade
+            side (str): Trade side ('buy' or 'sell')
+            take_profit (float): Take profit percentage (optional)
+            stop_loss (float): Stop loss percentage (optional)
+            priority (int): Task priority (1-10, higher is more important)
+            
+        Returns:
+            str: Task ID for tracking the async execution
+        """
+        try:
+            from services.task_service import task_service
+            
+            trade_data = {
+                'user_id': user_id,
+                'bot_id': bot_id,
+                'symbol': symbol,
+                'side': side,
+                'quantity': amount,
+                'order_type': 'market',
+                'take_profit': take_profit,
+                'stop_loss': stop_loss,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            
+            task_id = task_service.execute_trade_async(trade_data, priority)
+            
+            self.logger.info(f"Trade execution queued async: {task_id} for {side} {amount} {symbol}")
+            return task_id
+            
+        except Exception as e:
+            self.logger.error(f"Failed to queue async trade execution: {e}")
+            raise
+    
+    def update_market_data_async(self, symbols=None):
+        """Update market data asynchronously using Celery tasks
+        
+        Args:
+            symbols (list): List of symbols to update (None for all)
+            
+        Returns:
+            str: Task ID for tracking the async execution
+        """
+        try:
+            from services.task_service import task_service
+            
+            task_id = task_service.update_market_data_async(symbols)
+            
+            self.logger.info(f"Market data update queued async: {task_id}")
+            return task_id
+            
+        except Exception as e:
+            self.logger.error(f"Failed to queue async market data update: {e}")
+            raise
+    
+    def sync_portfolios_async(self, user_ids=None):
+        """Sync user portfolios asynchronously using Celery tasks
+        
+        Args:
+            user_ids (list): List of user IDs to sync (None for all)
+            
+        Returns:
+            str: Task ID for tracking the async execution
+        """
+        try:
+            from services.task_service import task_service
+            
+            task_id = task_service.sync_portfolios_async(user_ids)
+            
+            self.logger.info(f"Portfolio sync queued async: {task_id}")
+            return task_id
+            
+        except Exception as e:
+            self.logger.error(f"Failed to queue async portfolio sync: {e}")
+            raise
+    
+    def get_task_status(self, task_id):
+        """Get the status of an async task
+        
+        Args:
+            task_id (str): Task ID
+            
+        Returns:
+            dict: Task status information
+        """
+        try:
+            from services.task_service import task_service
+            
+            return task_service.get_task_status(task_id)
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get task status for {task_id}: {e}")
+            return {'error': str(e)}
+    
     def _execute_trade(self, user_id, symbol, amount, side, take_profit, stop_loss):
-        """Execute a trade
+        """Execute a trade synchronously (legacy method)
         
         Args:
             user_id (str): User ID
@@ -1257,9 +1644,13 @@ class TradingEngine:
         sl_order_id = None
         
         try:
-            # Get current market price
-            ticker = self.exchange.fetch_ticker(symbol)
-            price = ticker['last']
+            # Get current market price with failover
+            try:
+                ticker = self.execute_with_failover('fetch_ticker', symbol)
+                price = ticker['last']
+            except Exception as e:
+                self.logger.error(f"Failed to fetch ticker for {symbol}: {e}")
+                raise
             
             # Calculate quantity based on amount
             quantity = amount / price
@@ -1270,8 +1661,12 @@ class TradingEngine:
             if quantity < min_amount:
                 raise ValueError(f"Order quantity {quantity} below minimum {min_amount}")
             
-            # Check account balance
-            balance = self.exchange.fetch_balance()
+            # Check account balance with failover
+            try:
+                balance = self.execute_with_failover('fetch_balance')
+            except Exception as e:
+                self.logger.error(f"Failed to fetch balance: {e}")
+                raise
             if side == 'buy':
                 base_currency = symbol.split('/')[1]  # e.g., USDT from BTC/USDT
                 available_balance = balance['free'].get(base_currency, 0)
@@ -1283,19 +1678,91 @@ class TradingEngine:
                 if quantity > available_balance:
                     raise InsufficientFunds(f"Insufficient {quote_currency} balance: {available_balance} < {quantity}")
             
-            # Execute market order
+            # Execute market order with enhanced error handling
             logger.info(f"Executing {side} order: {quantity} {symbol} at ~{price}")
-            order = self.exchange.create_order(
-                symbol=symbol,
-                type='market',
-                side=side,
-                amount=quantity
-            )
-            order_id = order['id']
+            try:
+                order = self.error_handler.execute_with_retry(
+                    operation=lambda: self.execute_with_failover('create_market_order', symbol, side, quantity),
+                    operation_type='trade_execution',
+                    context={'user_id': user_id, 'symbol': symbol, 'side': side}
+                )
+                order_id = order['id']
+                
+                # Track order for potential cancellation
+                self.order_cancellation_handler.track_order(
+                    order_id=order_id,
+                    symbol=symbol,
+                    side=side,
+                    quantity=quantity,
+                    exchange_name=getattr(self.exchange, 'name', 'primary')
+                )
+                
+            except Exception as e:
+                self.logger.error(f"Failed to create market order: {e}")
+                
+                # Record error for monitoring
+                self.error_handler.record_error(
+                    operation_type='trade_execution',
+                    error=e,
+                    context={'user_id': user_id, 'symbol': symbol, 'side': side}
+                )
+                
+                # Try with primary exchange as fallback
+                if self.exchange:
+                    try:
+                        order = self.error_handler.execute_with_retry(
+                            operation=lambda: self.exchange.create_order(
+                                symbol=symbol,
+                                type='market',
+                                side=side,
+                                amount=quantity
+                            ),
+                            operation_type='trade_execution',
+                            context={'user_id': user_id, 'symbol': symbol, 'side': side, 'fallback': True}
+                        )
+                        order_id = order['id']
+                        
+                        # Track fallback order too
+                        self.order_cancellation_handler.track_order(
+                            order_id=order_id,
+                            symbol=symbol,
+                            side=side,
+                            quantity=quantity,
+                            exchange_name=getattr(self.exchange, 'name', 'primary')
+                        )
+                    except Exception as fallback_error:
+                        self.error_handler.record_error(
+                            operation_type='trade_execution',
+                            error=fallback_error,
+                            context={'user_id': user_id, 'symbol': symbol, 'side': side, 'fallback': True}
+                        )
+                        raise fallback_error
+                else:
+                    raise
             
             # Wait for order to fill
             time.sleep(2)
-            filled_order = self.exchange.fetch_order(order_id, symbol)
+            try:
+                filled_order = self.error_handler.execute_with_retry(
+                    operation=lambda: self.execute_with_failover('fetch_order', order_id, symbol),
+                    operation_type='account_operations',
+                    context={'user_id': user_id, 'order_id': order_id, 'symbol': symbol}
+                )
+            except Exception as e:
+                self.logger.warning(f"Failed to fetch order status with failover, using primary exchange: {e}")
+                try:
+                    filled_order = self.error_handler.execute_with_retry(
+                        operation=lambda: self.exchange.fetch_order(order_id, symbol),
+                        operation_type='account_operations',
+                        context={'user_id': user_id, 'order_id': order_id, 'symbol': symbol, 'fallback': True}
+                    )
+                except Exception as fallback_error:
+                    self.error_handler.record_error(
+                        operation_type='account_operations',
+                        error=fallback_error,
+                        context={'user_id': user_id, 'order_id': order_id, 'symbol': symbol}
+                    )
+                    raise fallback_error
             actual_price = filled_order.get('average', price)
             actual_quantity = filled_order.get('filled', quantity)
             fee = filled_order.get('fee', {}).get('cost', amount * 0.001)
@@ -1314,27 +1781,127 @@ class TradingEngine:
                     sl_price = actual_price * (1 + stop_loss / 100)
                     opposite_side = 'buy'
                 
-                # Create take profit order
-                tp_order = self.exchange.create_order(
-                    symbol=symbol,
-                    type='limit',
-                    side=opposite_side,
-                    amount=actual_quantity,
-                    price=tp_price
-                )
-                tp_order_id = tp_order['id']
-                logger.info(f"Take profit order created: {tp_order_id} at {tp_price}")
+                # Create take profit order with enhanced error handling
+                try:
+                    tp_order = self.error_handler.execute_with_retry(
+                        operation=lambda: self.execute_with_failover('create_limit_order', symbol, opposite_side, actual_quantity, tp_price),
+                        operation_type='order_operations',
+                        context={'user_id': user_id, 'symbol': symbol, 'order_type': 'take_profit'}
+                    )
+                    tp_order_id = tp_order['id']
+                    
+                    # Track TP order for cancellation if needed
+                    self.order_cancellation_handler.track_order(
+                        order_id=tp_order_id,
+                        symbol=symbol,
+                        side=opposite_side,
+                        quantity=actual_quantity,
+                        exchange_name=getattr(self.exchange, 'name', 'primary')
+                    )
+                    
+                    logger.info(f"Take profit order created: {tp_order_id} at {tp_price}")
+                except Exception as e:
+                    logger.warning(f"Failed to create TP order with failover, using primary exchange: {e}")
+                    
+                    # Record error for monitoring
+                    self.error_handler.record_error(
+                        operation_type='order_operations',
+                        error=e,
+                        context={'user_id': user_id, 'symbol': symbol, 'order_type': 'take_profit'}
+                    )
+                    
+                    try:
+                        tp_order = self.error_handler.execute_with_retry(
+                            operation=lambda: self.exchange.create_order(
+                                symbol=symbol,
+                                type='limit',
+                                side=opposite_side,
+                                amount=actual_quantity,
+                                price=tp_price
+                            ),
+                            operation_type='order_operations',
+                            context={'user_id': user_id, 'symbol': symbol, 'order_type': 'take_profit', 'fallback': True}
+                        )
+                        tp_order_id = tp_order['id']
+                        
+                        # Track fallback TP order too
+                        self.order_cancellation_handler.track_order(
+                            order_id=tp_order_id,
+                            symbol=symbol,
+                            side=opposite_side,
+                            quantity=actual_quantity,
+                            exchange_name=getattr(self.exchange, 'name', 'primary')
+                        )
+                        
+                        logger.info(f"Take profit order created: {tp_order_id} at {tp_price}")
+                    except Exception as fallback_error:
+                        self.error_handler.record_error(
+                            operation_type='order_operations',
+                            error=fallback_error,
+                            context={'user_id': user_id, 'symbol': symbol, 'order_type': 'take_profit', 'fallback': True}
+                        )
+                        logger.error(f"Failed to create take profit order: {fallback_error}")
                 
-                # Create stop loss order
-                sl_order = self.exchange.create_order(
-                    symbol=symbol,
-                    type='stop_market',
-                    side=opposite_side,
-                    amount=actual_quantity,
-                    params={'stopPrice': sl_price}
-                )
-                sl_order_id = sl_order['id']
-                logger.info(f"Stop loss order created: {sl_order_id} at {sl_price}")
+                # Create stop loss order with enhanced error handling
+                try:
+                    sl_order = self.error_handler.execute_with_retry(
+                        operation=lambda: self.execute_with_failover('create_stop_market_order', symbol, opposite_side, actual_quantity, sl_price),
+                        operation_type='order_operations',
+                        context={'user_id': user_id, 'symbol': symbol, 'order_type': 'stop_loss'}
+                    )
+                    sl_order_id = sl_order['id']
+                    
+                    # Track SL order for cancellation if needed
+                    self.order_cancellation_handler.track_order(
+                        order_id=sl_order_id,
+                        symbol=symbol,
+                        side=opposite_side,
+                        quantity=actual_quantity,
+                        exchange_name=getattr(self.exchange, 'name', 'primary')
+                    )
+                    
+                    logger.info(f"Stop loss order created: {sl_order_id} at {sl_price}")
+                except Exception as e:
+                    logger.warning(f"Failed to create SL order with failover, using primary exchange: {e}")
+                    
+                    # Record error for monitoring
+                    self.error_handler.record_error(
+                        operation_type='order_operations',
+                        error=e,
+                        context={'user_id': user_id, 'symbol': symbol, 'order_type': 'stop_loss'}
+                    )
+                    
+                    try:
+                         sl_order = self.error_handler.execute_with_retry(
+                             operation=lambda: self.exchange.create_order(
+                                 symbol=symbol,
+                                 type='stop_market',
+                                 side=opposite_side,
+                                 amount=actual_quantity,
+                                 params={'stopPrice': sl_price}
+                             ),
+                             operation_type='order_operations',
+                             context={'user_id': user_id, 'symbol': symbol, 'order_type': 'stop_loss', 'fallback': True}
+                         )
+                         sl_order_id = sl_order['id']
+                         
+                         # Track fallback SL order too
+                         self.order_cancellation_handler.track_order(
+                             order_id=sl_order_id,
+                             symbol=symbol,
+                             side=opposite_side,
+                             quantity=actual_quantity,
+                             exchange_name=getattr(self.exchange, 'name', 'primary')
+                         )
+                         
+                         logger.info(f"Stop loss order created: {sl_order_id} at {sl_price}")
+                    except Exception as fallback_error:
+                        self.error_handler.record_error(
+                            operation_type='order_operations',
+                            error=fallback_error,
+                            context={'user_id': user_id, 'symbol': symbol, 'order_type': 'stop_loss', 'fallback': True}
+                        )
+                        logger.error(f"Failed to create stop loss order: {fallback_error}")
                 
             except Exception as e:
                 logger.warning(f"Failed to create TP/SL orders: {str(e)}")
@@ -1389,8 +1956,12 @@ class TradingEngine:
             dict: Account balance
         """
         try:
-            # Fetch balance from exchange
-            balance = self.exchange.fetch_balance()
+            # Fetch balance from exchange with failover
+            try:
+                balance = self.execute_with_failover('fetch_balance')
+            except Exception as e:
+                self.logger.warning(f"Failed to fetch balance with failover, using primary exchange: {e}")
+                balance = self.exchange.fetch_balance()
             
             # Extract relevant information
             result = {
@@ -1412,6 +1983,65 @@ class TradingEngine:
             print(f"Error fetching account balance: {str(e)}")
             return {}
     
+    def cleanup_stale_orders(self):
+        """Clean up stale orders and perform maintenance tasks"""
+        try:
+            # Cancel stale orders
+            cancelled_orders = self.order_cancellation_handler.cancel_stale_orders()
+            if cancelled_orders:
+                self.logger.info(f"Cancelled {len(cancelled_orders)} stale orders")
+            
+            # Check circuit breaker health
+            unhealthy_operations = []
+            for operation_type in ['trade_execution', 'market_data_feed', 'portfolio_sync']:
+                if self.error_handler.circuit_breakers[operation_type].state != 'CLOSED':
+                    unhealthy_operations.append(operation_type)
+            
+            if unhealthy_operations:
+                self.logger.warning(f"Circuit breakers open for: {', '.join(unhealthy_operations)}")
+            
+            # Log error statistics
+            error_stats = self.error_handler.get_error_statistics()
+            if error_stats:
+                self.logger.info(f"Error statistics: {error_stats}")
+                
+        except Exception as e:
+            self.logger.error(f"Error during cleanup: {e}")
+    
+    def get_system_health(self) -> Dict[str, Any]:
+        """Get comprehensive system health status"""
+        try:
+            health_status = {
+                'timestamp': datetime.now().isoformat(),
+                'circuit_breakers': {},
+                'error_statistics': self.error_handler.get_error_statistics(),
+                'tracked_orders': len(self.order_cancellation_handler.tracked_orders),
+                'exchange_status': {}
+            }
+            
+            # Circuit breaker status
+            for operation_type, cb in self.error_handler.circuit_breakers.items():
+                health_status['circuit_breakers'][operation_type] = {
+                    'state': cb.state.value,
+                    'failure_count': cb.failure_count,
+                    'last_failure_time': cb.last_failure_time.isoformat() if cb.last_failure_time else None
+                }
+            
+            # Exchange connectivity status
+            for exchange_name, adapter in self.exchange_manager.exchanges.items():
+                try:
+                    # Quick connectivity test
+                    adapter.fetch_ticker('BTC/USDT')
+                    health_status['exchange_status'][exchange_name] = 'healthy'
+                except Exception as e:
+                    health_status['exchange_status'][exchange_name] = f'unhealthy: {str(e)[:100]}'
+            
+            return health_status
+            
+        except Exception as e:
+            self.logger.error(f"Error getting system health: {e}")
+            return {'error': str(e), 'timestamp': datetime.now().isoformat()}
+    
     def get_available_symbols(self):
         """Get available trading symbols
         
@@ -1419,11 +2049,17 @@ class TradingEngine:
             list: List of available symbols
         """
         try:
-            markets = self.exchange.fetch_markets()
+            # Fetch markets with failover
+            try:
+                markets = self.execute_with_failover('fetch_markets')
+            except Exception as e:
+                self.logger.warning(f"Failed to fetch markets with failover, using primary exchange: {e}")
+                markets = self.exchange.fetch_markets()
+            
             symbols = [market['symbol'] for market in markets if market['active']]
             return symbols
         except Exception as e:
-            print(f"Error fetching available symbols: {str(e)}")
+            self.logger.error(f"Error fetching available symbols: {str(e)}")
             return []
     
     def calculate_performance(self, user_id, period='30d'):

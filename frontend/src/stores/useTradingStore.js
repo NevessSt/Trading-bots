@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import websocketService from '../services/websocketService';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -16,6 +17,12 @@ const useTradingStore = create((set, get) => ({
   accountBalance: null,
   isLoading: false,
   error: null,
+  
+  // WebSocket state
+  wsConnected: false,
+  wsSubscriptions: new Set(),
+  portfolioData: null,
+  liveAlerts: [],
   
   // Pagination for trades
   tradePagination: {
@@ -339,24 +346,164 @@ const useTradingStore = create((set, get) => ({
     }
   },
   
+  // WebSocket methods
+  initializeWebSocket: async (token = null) => {
+    try {
+      await websocketService.connect(token);
+      set({ wsConnected: true });
+      
+      // Set up event handlers
+      const store = get();
+      store.setupWebSocketHandlers();
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize WebSocket:', error);
+      set({ wsConnected: false });
+      return false;
+    }
+  },
+
+  disconnectWebSocket: () => {
+    websocketService.disconnect();
+    set({ 
+      wsConnected: false, 
+      wsSubscriptions: new Set(),
+      portfolioData: null 
+    });
+  },
+
+  setupWebSocketHandlers: () => {
+    // Price updates
+    websocketService.on('price_update', (data) => {
+      const currentData = get().realTimeData;
+      set({
+        realTimeData: {
+          ...currentData,
+          [data.symbol]: {
+            ...currentData[data.symbol],
+            ...data,
+            timestamp: Date.now()
+          }
+        }
+      });
+    });
+
+    // Portfolio updates
+    websocketService.on('portfolio_update', (data) => {
+      set({ portfolioData: data });
+    });
+
+    // Bot status updates
+    websocketService.on('bot_status_update', (data) => {
+      const currentBots = get().bots;
+      const updatedBots = currentBots.map(bot => 
+        bot.id === data.bot_id ? { ...bot, status: data.status, updated_at: data.timestamp } : bot
+      );
+      set({ bots: updatedBots });
+    });
+
+    // Trade notifications
+    websocketService.on('trade_notification', (data) => {
+      const currentTrades = get().trades;
+      set({ trades: [data, ...currentTrades.slice(0, 99)] }); // Keep last 100 trades
+    });
+
+    // Market alerts
+    websocketService.on('market_alert', (data) => {
+      const currentAlerts = get().liveAlerts;
+      set({ liveAlerts: [data, ...currentAlerts.slice(0, 49)] }); // Keep last 50 alerts
+    });
+
+    // Dashboard updates
+    websocketService.on('dashboard_update', (data) => {
+      set({
+        bots: data.bots || get().bots,
+        trades: data.recent_trades || get().trades,
+        portfolioData: data.portfolio || get().portfolioData
+      });
+    });
+
+    // Connection status
+    websocketService.on('connect', () => {
+      set({ wsConnected: true });
+    });
+
+    websocketService.on('disconnect', () => {
+      set({ wsConnected: false });
+    });
+
+    // Error handling
+    websocketService.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      set({ error: error.message || 'WebSocket connection error' });
+    });
+  },
+
+  subscribeToSymbol: (symbol) => {
+    const success = websocketService.subscribeToSymbol(symbol);
+    if (success) {
+      const currentSubscriptions = get().wsSubscriptions;
+      currentSubscriptions.add(symbol);
+      set({ wsSubscriptions: new Set(currentSubscriptions) });
+    }
+    return success;
+  },
+
+  unsubscribeFromSymbol: (symbol) => {
+    const success = websocketService.unsubscribeFromSymbol(symbol);
+    if (success) {
+      const currentSubscriptions = get().wsSubscriptions;
+      currentSubscriptions.delete(symbol);
+      set({ wsSubscriptions: new Set(currentSubscriptions) });
+    }
+    return success;
+  },
+
+  requestPortfolioUpdate: () => {
+    return websocketService.requestPortfolioUpdate();
+  },
+
+  requestPriceHistory: (symbol, timeframe = '1h', limit = 100) => {
+    return websocketService.requestPriceHistory(symbol, timeframe, limit);
+  },
+
+  getWebSocketStatus: () => {
+    return websocketService.getConnectionStatus();
+  },
+
   startWebSocketStream: async (symbol) => {
     try {
-      await axios.post(`${API_URL}/trading/websocket/start/${symbol}`);
-      return true;
+      // Subscribe via WebSocket service
+      const subscribed = get().subscribeToSymbol(symbol);
+      if (subscribed) {
+        // Also notify backend API
+        await axios.post(`${API_URL}/websocket/subscribe`, { symbol });
+      }
+      return subscribed;
     } catch (error) {
       console.error(`Failed to start WebSocket stream for ${symbol}:`, error);
       return false;
     }
   },
-  
+
   stopWebSocketStream: async (symbol) => {
     try {
-      await axios.post(`${API_URL}/trading/websocket/stop/${symbol}`);
-      return true;
+      // Unsubscribe via WebSocket service
+      const unsubscribed = get().unsubscribeFromSymbol(symbol);
+      if (unsubscribed) {
+        // Also notify backend API
+        await axios.post(`${API_URL}/websocket/unsubscribe`, { symbol });
+      }
+      return unsubscribed;
     } catch (error) {
       console.error(`Failed to stop WebSocket stream for ${symbol}:`, error);
       return false;
     }
+  },
+
+  clearLiveAlerts: () => {
+    set({ liveAlerts: [] });
   }
 }));
 

@@ -190,40 +190,22 @@ class Bot(db.Model):
         return self.total_profit_loss
     
     def get_performance_summary(self, days=30):
-        """Get performance summary for specified days"""
-        from sqlalchemy import func
+        """Get bot performance summary (optimized with caching)"""
+        from services.database_optimizer import optimized_queries
         
-        start_date = datetime.utcnow() - timedelta(days=days)
+        # Use optimized cached query
+        performance_data = optimized_queries.get_bot_performance_optimized(self.id, days)
         
-        trades_query = self.trades.filter(Trade.created_at >= start_date)
+        # Add bot-specific metrics
+        performance_data.update({
+            'win_rate': self.win_rate,
+            'avg_profit': self.avg_profit,
+            'total_profit': self.total_profit,
+            'max_drawdown': self.max_drawdown,
+            'sharpe_ratio': self.sharpe_ratio
+        })
         
-        total_trades = trades_query.count()
-        filled_trades = trades_query.filter_by(status='filled').count()
-        
-        if filled_trades == 0:
-            return {
-                'total_trades': total_trades,
-                'filled_trades': 0,
-                'win_rate': 0,
-                'total_pnl': 0,
-                'average_pnl': 0,
-                'best_trade': 0,
-                'worst_trade': 0
-            }
-        
-        filled_trades_list = trades_query.filter_by(status='filled').all()
-        pnls = [trade.calculate_pnl() for trade in filled_trades_list]
-        winning_trades = len([pnl for pnl in pnls if pnl > 0])
-        
-        return {
-            'total_trades': total_trades,
-            'filled_trades': filled_trades,
-            'win_rate': (winning_trades / filled_trades) * 100 if filled_trades > 0 else 0,
-            'total_pnl': sum(pnls) if pnls else 0,
-            'average_pnl': sum(pnls) / len(pnls) if pnls else 0,
-            'best_trade': max(pnls) if pnls else 0,
-            'worst_trade': min(pnls) if pnls else 0
-        }
+        return performance_data
     
     def to_dict(self):
         """Convert bot to dictionary"""

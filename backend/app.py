@@ -8,9 +8,20 @@ from flask_socketio import SocketIO
 from dotenv import load_dotenv
 from db import db
 from services.notification_service import NotificationService
+from utils.logging_config import setup_logging
+from utils.monitoring import MetricsCollector
+from celery_app import celery_app
 
 # Load environment variables
 load_dotenv()
+
+# Initialize logging and monitoring
+logger, monitoring_handler = setup_logging(enable_monitoring=True)
+metrics_collector = MetricsCollector()
+
+# Connect monitoring handler to metrics collector
+if monitoring_handler:
+    monitoring_handler.set_metrics_collector(metrics_collector)
 
 # Initialize extensions
 migrate = Migrate()
@@ -47,6 +58,19 @@ def create_app(config_name=None):
         app.config['SMTP_USERNAME'] = os.environ.get('SMTP_USERNAME')
         app.config['SMTP_PASSWORD'] = os.environ.get('SMTP_PASSWORD')
         app.config['FRONTEND_URL'] = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+        
+        # Notification Configuration
+        app.config['NOTIFICATION_EMAIL_ENABLED'] = os.environ.get('NOTIFICATION_EMAIL_ENABLED', 'True').lower() == 'true'
+        app.config['NOTIFICATION_TELEGRAM_ENABLED'] = os.environ.get('NOTIFICATION_TELEGRAM_ENABLED', 'False').lower() == 'true'
+        app.config['NOTIFICATION_PUSH_ENABLED'] = os.environ.get('NOTIFICATION_PUSH_ENABLED', 'False').lower() == 'true'
+        
+        # Telegram Configuration
+        app.config['TELEGRAM_BOT_TOKEN'] = os.environ.get('TELEGRAM_BOT_TOKEN')
+        app.config['TELEGRAM_API_URL'] = 'https://api.telegram.org/bot{}/sendMessage'
+        
+        # Firebase Push Notification Configuration
+        app.config['FIREBASE_SERVER_KEY'] = os.environ.get('FIREBASE_SERVER_KEY')
+        app.config['FCM_URL'] = 'https://fcm.googleapis.com/fcm/send'
     
     # Enable CORS
     CORS(app, origins=['http://localhost:3000'], supports_credentials=True)
@@ -56,6 +80,13 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
     jwt.init_app(app)
     
+    # Initialize monitoring middleware
+    from middleware.monitoring_middleware import MonitoringMiddleware
+    monitoring_middleware = MonitoringMiddleware(app)
+    
+    # Store metrics collector in app context
+    app.metrics_collector = metrics_collector
+    
     # Initialize SocketIO
     socketio = SocketIO(app, cors_allowed_origins=['http://localhost:3000'], async_mode='threading')
     
@@ -63,24 +94,29 @@ def create_app(config_name=None):
     from services.websocket_service import WebSocketService
     websocket_service = WebSocketService(socketio)
     
-    # Initialize Notification service
-    notification_service = NotificationService()
-    # Initialize SMTP settings from app config
-    notification_service.initialize_smtp(
-        smtp_server=app.config.get('SMTP_SERVER'),
-        smtp_port=app.config.get('SMTP_PORT'),
-        username=app.config.get('SMTP_USERNAME'),
-        password=app.config.get('SMTP_PASSWORD'),
-        from_email=app.config.get('SMTP_USERNAME')
-    )
+    # Initialize Real-time Data service
+    from services.realtime_data_service import RealTimeDataService
+    realtime_service = RealTimeDataService(websocket_service)
+    
+    # Connect services
+    websocket_service.set_realtime_service(realtime_service)
+    
+    # Initialize Notification service with WebSocket integration
+    notification_service = NotificationService(websocket_service)
+    
+    # Initialize Celery with Flask app context
+    init_celery(app, celery_app)
     
     # Store services in app context for access in other modules
     app.socketio = socketio
     app.websocket_service = websocket_service
+    app.realtime_service = realtime_service
     app.notification_service = notification_service
+    app.celery = celery_app
     
     # Import models after db initialization
     from models import User, Subscription, Trade, Bot, APIKey
+    from models.notification import NotificationPreference, NotificationLog, NotificationTemplate
     
     # Register routes
     register_routes(app)
@@ -110,6 +146,10 @@ def register_routes(app):
         from api.pro_dashboard_routes import pro_dashboard_bp
         from api.license_routes import license_bp
         from api.connection_test_routes import connection_test_bp
+        from api.strategy_management_routes import strategy_management_bp
+        from routes.monitoring import monitoring_bp
+        from routes.async_tasks import async_tasks_bp
+        from routes.websocket_routes import websocket_bp
         
         # Register blueprints
         app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -127,6 +167,14 @@ def register_routes(app):
         app.register_blueprint(pro_dashboard_bp, url_prefix='/')
         app.register_blueprint(license_bp, url_prefix='/api/license')
         app.register_blueprint(connection_test_bp, url_prefix='/api/connection')
+        app.register_blueprint(strategy_management_bp)
+        app.register_blueprint(monitoring_bp)
+        app.register_blueprint(async_tasks_bp)
+        app.register_blueprint(websocket_bp, url_prefix='/api/websocket')
+        
+        # Import and register optimization blueprint
+        from routes.optimization import optimization_bp
+        app.register_blueprint(optimization_bp)
     except ImportError as e:
         print(f"Warning: Could not import some routes: {e}")
         print("Starting with basic routes only...")
@@ -176,6 +224,17 @@ def register_error_handlers(app):
         print(f"JWT Error: {error}")
         return jsonify({'error': str(error)}), 401
 
+def init_celery(app, celery):
+    """Initialize Celery with Flask app context."""
+    class ContextTask(celery.Task):
+        """Make celery tasks work with Flask app context."""
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+    
+    celery.Task = ContextTask
+    return celery
+
 # Create app instance for development
 app = create_app()
 
@@ -187,6 +246,13 @@ if __name__ == '__main__':
             print("Database tables created successfully")
         except Exception as e:
             print(f"Error creating database tables: {e}")
+        
+        # Start real-time data service
+        try:
+            app.realtime_service.start()
+            print("Real-time data service started successfully")
+        except Exception as e:
+            print(f"Error starting real-time data service: {e}")
 
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV', 'development') == 'development'

@@ -10,6 +10,10 @@ class TradingLogger:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.INFO)
         
+        # Initialize error_logger to prevent AttributeError
+        self.error_logger = None
+        self.trade_logger = None
+        
         # Prevent duplicate handlers
         if not self.logger.handlers:
             self._setup_handlers()
@@ -81,7 +85,8 @@ class TradingLogger:
     def error(self, message, extra=None):
         """Log error message"""
         self.logger.error(message, extra=extra)
-        self.error_logger.error(message, extra=extra)
+        if self.error_logger:
+            self.error_logger.error(message, extra=extra)
     
     def debug(self, message, extra=None):
         """Log debug message"""

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import ThemeToggle from './ui/ThemeToggle';
+import NotificationBell from './NotificationBell';
 import {
   HomeIcon,
   ChartBarIcon,
@@ -95,6 +96,13 @@ const Navbar = () => {
       iconSolid: WifiIconSolid,
       current: location.pathname === '/api-test',
     },
+    {
+      name: 'Notifications',
+      href: '/notifications',
+      icon: BellIcon,
+      iconSolid: BellIcon,
+      current: location.pathname === '/notifications',
+    },
   ];
 
   const profileMenuItems = [
@@ -184,9 +192,7 @@ const Navbar = () => {
           {/* Right side items */}
           <div className="flex items-center space-x-3">
             {/* Notifications */}
-            <button className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors duration-200">
-              <BellIcon className="w-5 h-5" />
-            </button>
+            <NotificationBell />
 
             {/* Theme toggle */}
             <ThemeToggle />

@@ -8,6 +8,7 @@ import RecentTradesList from './RecentTradesList';
 import PerformanceChart from './PerformanceChart';
 import AccountSummary from './AccountSummary';
 import RealTimeTicker from './RealTimeTicker';
+import LivePriceTracker from './LivePriceTracker';
 import AccountBalance from './AccountBalance';
 import MarketDataChart from './MarketDataChart';
 // Enhanced Chart Components
@@ -18,13 +19,15 @@ import MarketOverview from '../Charts/MarketOverview';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const { 
     activeBots, 
     trades, 
     performance, 
     isLoading, 
     error,
+    wsConnected,
+    initializeWebSocket,
     fetchActiveBots, 
     fetchTrades, 
     fetchPerformance 
@@ -66,6 +69,11 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    // Initialize WebSocket connection first
+    if (token && !wsConnected) {
+      initializeWebSocket(token);
+    }
+    
     // Fetch initial data
     fetchActiveBots();
     fetchTrades(1, 50); // Fetch more trades for live trades chart
@@ -94,7 +102,7 @@ const Dashboard = () => {
       clearInterval(tradesInterval);
       clearInterval(marketInterval);
     };
-  }, [fetchActiveBots, fetchTrades, fetchPerformance, timeframe]);
+  }, [fetchActiveBots, fetchTrades, fetchPerformance, timeframe, token, wsConnected, initializeWebSocket]);
   
   const handleTimeframeChange = (newTimeframe) => {
     setTimeframe(newTimeframe);
@@ -147,8 +155,18 @@ const Dashboard = () => {
         </Button>
       </Box>
       
-      {/* Real-time Market Data */}
+      {/* Live Price Tracker with WebSocket */}
       <div className="animate-stagger-1">
+        <LivePriceTracker 
+          symbols={['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'SOLUSDT', 'XRPUSDT']}
+          autoConnect={true}
+          showPortfolio={true}
+          showAlerts={true}
+        />
+      </div>
+      
+      {/* Legacy Real-time Market Data */}
+      <div className="animate-stagger-1" style={{ marginTop: '1rem' }}>
         <RealTimeTicker />
       </div>
       

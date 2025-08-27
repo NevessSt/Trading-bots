@@ -9,7 +9,10 @@ import {
   XCircleIcon,
   EyeIcon,
   TrashIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  ComputerDesktopIcon,
+  ClockIcon,
+  ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -29,6 +32,14 @@ const AdminPanel = () => {
     totalRevenue: 0,
     monthlyRevenue: 0
   });
+  const [monitoringData, setMonitoringData] = useState({
+    system_health: {},
+    api_metrics: {},
+    recent_trades: [],
+    recent_errors: [],
+    counters: {},
+    gauges: {}
+  });
 
   useEffect(() => {
     if (activeTab === 'users') {
@@ -39,6 +50,8 @@ const AdminPanel = () => {
       fetchSubscriptions();
     } else if (activeTab === 'dashboard') {
       fetchSystemStats();
+    } else if (activeTab === 'monitoring') {
+      fetchMonitoringData();
     }
   }, [activeTab]);
 
@@ -94,6 +107,19 @@ const AdminPanel = () => {
     }
   };
 
+  const fetchMonitoringData = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('/monitoring/dashboard');
+      setMonitoringData(response.data.data || monitoringData);
+    } catch (error) {
+      toast.error('Failed to fetch monitoring data');
+      console.error('Error fetching monitoring data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
       await axios.patch(`/api/admin/users/${userId}/toggle-status`);
@@ -135,7 +161,8 @@ const AdminPanel = () => {
     { id: 'dashboard', name: 'Dashboard', icon: ChartBarIcon },
     { id: 'users', name: 'Users', icon: UsersIcon },
     { id: 'bots', name: 'Trading Bots', icon: CogIcon },
-    { id: 'billing', name: 'Billing', icon: BanknotesIcon }
+    { id: 'billing', name: 'Billing', icon: BanknotesIcon },
+    { id: 'monitoring', name: 'Monitoring', icon: ComputerDesktopIcon }
   ];
 
   // Check if user is admin
@@ -464,6 +491,196 @@ const AdminPanel = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Monitoring Tab */}
+        {activeTab === 'monitoring' && (
+          <div className="space-y-6">
+            {/* System Health Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <ComputerDesktopIcon className="h-8 w-8 text-blue-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">CPU Usage</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {monitoringData.system_health?.cpu_percent?.toFixed(1) || '0.0'}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <ChartBarIcon className="h-8 w-8 text-green-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Memory Usage</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {monitoringData.system_health?.memory_percent?.toFixed(1) || '0.0'}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <ClockIcon className="h-8 w-8 text-purple-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Avg Response Time</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {monitoringData.api_metrics?.avg_response_time?.toFixed(0) || '0'}ms
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <ExclamationCircleIcon className="h-8 w-8 text-red-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Error Rate</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {monitoringData.api_metrics?.error_rate?.toFixed(1) || '0.0'}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* API Metrics */}
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900">API Performance</h2>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-600">
+                      {monitoringData.api_metrics?.total_requests || 0}
+                    </p>
+                    <p className="text-sm text-gray-600">Total Requests</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-green-600">
+                      {monitoringData.api_metrics?.active_requests || 0}
+                    </p>
+                    <p className="text-sm text-gray-600">Active Requests</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-purple-600">
+                      {Object.keys(monitoringData.counters || {}).length}
+                    </p>
+                    <p className="text-sm text-gray-600">Tracked Metrics</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Trades */}
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900">Recent Trades</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Timestamp
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Symbol
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Side
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {(monitoringData.recent_trades || []).map((trade, index) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(trade.timestamp).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {trade.symbol}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            trade.side === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {trade.side}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {trade.amount}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            trade.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            trade.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {trade.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Recent Errors */}
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900">Recent Errors</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Timestamp
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Message
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Source
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {(monitoringData.recent_errors || []).map((error, index) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(error.timestamp).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {error.error_type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                          {error.message}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {error.source}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

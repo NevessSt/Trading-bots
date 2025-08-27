@@ -74,6 +74,11 @@ license_key.bin
 *.pem
 *.crt
 
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
 # Misc
 .directory
 *.bak

@@ -11,12 +11,14 @@ import {
   Bars3Icon,
   XMarkIcon,
   BellIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  CodeBracketIcon
 } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Trading Bots', href: '/bots', icon: CubeIcon },
+  { name: 'Strategy Manager', href: '/strategies', icon: CodeBracketIcon },
   { name: 'Trade History', href: '/history', icon: ClockIcon },
   { name: 'Performance', href: '/performance', icon: ChartBarIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },

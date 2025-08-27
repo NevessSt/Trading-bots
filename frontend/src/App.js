@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LicenseProvider } from './contexts/LicenseContext';
 import { RiskDisclaimerProvider, useRiskDisclaimer } from './contexts/RiskDisclaimerContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import RiskDisclaimer from './components/RiskDisclaimer';
 import Footer from './components/Footer';
 
@@ -26,6 +27,8 @@ import LoadingSpinner from './components/LoadingSpinner';
 import ProDashboard from './components/ProDashboard/ProDashboard';
 import ProSettings from './components/Settings/ProSettings';
 import APIConnectionTest from './components/APIConnectionTest';
+import StrategyManager from './components/StrategyManager';
+import NotificationDashboard from './components/NotificationDashboard';
 
 const queryClient = new QueryClient();
 
@@ -146,6 +149,14 @@ function AppContent() {
           } 
         />
         <Route 
+          path="/strategies" 
+          element={
+            <ProtectedRoute>
+              <StrategyManager />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/performance" 
           element={
             <ProtectedRoute>
@@ -220,6 +231,14 @@ function AppContent() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/notifications" 
+          element={
+            <ProtectedRoute>
+              <NotificationDashboard />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Admin Routes */}
         <Route 
@@ -255,11 +274,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <LicenseProvider>
-            <RiskDisclaimerProvider>
-              <AppContent />
-            </RiskDisclaimerProvider>
-          </LicenseProvider>
+          <NotificationProvider>
+            <LicenseProvider>
+              <RiskDisclaimerProvider>
+                <AppContent />
+              </RiskDisclaimerProvider>
+            </LicenseProvider>
+          </NotificationProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

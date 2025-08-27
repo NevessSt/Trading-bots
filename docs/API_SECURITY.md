@@ -28,6 +28,35 @@ All API secrets and passphrases are encrypted using **AES-256 encryption** befor
 - **Key Names**: User-friendly names for API key sets
 - **Metadata**: Non-sensitive configuration data
 
+### Encryption at Rest Implementation
+
+The platform implements comprehensive encryption at rest for all sensitive data:
+
+```python
+# Encryption process in backend/utils/security.py
+class EncryptionManager:
+    def encrypt_api_key(self, api_key):
+        """Encrypt API key using AES-256 with unique salt and IV"""
+        if not api_key:
+            return None
+        return self.cipher_suite.encrypt(api_key.encode()).decode()
+    
+    def decrypt_api_key(self, encrypted_key):
+        """Decrypt API key for trading operations"""
+        if not encrypted_key:
+            return None
+        try:
+            return self.cipher_suite.decrypt(encrypted_key.encode()).decode()
+        except Exception:
+            return None  # Fail securely
+```
+
+**Database Storage**:
+- API secrets are stored as `api_secret_encrypted` field
+- Encryption keys are derived from environment variables
+- Each encrypted value uses unique salt and initialization vector
+- Database backups maintain encryption integrity
+
 ## Database Schema Security
 
 ```sql
@@ -82,25 +111,42 @@ class EncryptionManager:
 API keys are masked in the user interface to prevent shoulder surfing and accidental exposure:
 
 ```javascript
+// Primary masking function for API keys
 const maskKey = (key) => {
   if (!key) return '';
   return key.substring(0, 8) + '...' + key.substring(key.length - 8);
 };
+
+// Enhanced masking for different key lengths
+const maskApiKey = (key) => {
+  if (!key) return '';
+  if (key.length <= 8) return '*'.repeat(key.length);
+  return key.substring(0, 4) + '*'.repeat(key.length - 8) + key.substring(key.length - 4);
+};
 ```
 
-**Example**: `BinanceKey123...890XYZ`
+**Examples**:
+- Long key: `BinanceKey123...890XYZ` (standard masking)
+- Short key: `abcd****5678` (enhanced masking)
+- Very short: `****` (full masking)
 
 ### Visibility Controls
 
 - **Toggle Visibility**: Users can temporarily reveal full keys when needed
-- **Auto-hide**: Keys automatically hide after a timeout period
+- **Auto-hide**: Keys automatically hide after a 30-second timeout period
 - **Session-based**: Visibility state doesn't persist across browser sessions
+- **Click-to-reveal**: Requires explicit user action to show sensitive data
+- **Hover Protection**: Keys remain masked during mouse hover events
+- **Copy Protection**: Clipboard operations use masked values by default
 
 ### Security Indicators
 
-- **Encryption Status**: Visual indicators showing encryption status
-- **Usage Tracking**: Display of last used timestamp and usage count
-- **Testnet Badges**: Clear identification of testnet vs production keys
+- **Encryption Status**: Visual shield icons indicating AES-256 encryption
+- **Usage Tracking**: Display of last used timestamp and total usage count
+- **Testnet Badges**: Clear orange badges for testnet vs green for production keys
+- **Permission Levels**: Visual indicators for read-only vs trading permissions
+- **Expiry Warnings**: Alerts for keys approaching rotation deadlines
+- **Security Score**: Color-coded security rating based on key age and permissions
 
 ## Access Controls
 

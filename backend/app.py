@@ -10,6 +10,7 @@ from db import db
 from services.notification_service import NotificationService
 from utils.logging_config import setup_logging
 from utils.monitoring import MetricsCollector
+from utils.sentry_config import init_sentry
 from celery_app import celery_app
 
 # Load environment variables
@@ -75,6 +76,9 @@ def create_app(config_name=None):
     # Enable CORS
     CORS(app, origins=['http://localhost:3000'], supports_credentials=True)
     
+    # Initialize Sentry for error tracking
+    init_sentry(app)
+    
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
@@ -82,7 +86,9 @@ def create_app(config_name=None):
     
     # Initialize monitoring middleware
     from middleware.monitoring_middleware import MonitoringMiddleware
+    from middleware.sentry_middleware import SentryMiddleware
     monitoring_middleware = MonitoringMiddleware(app)
+    sentry_middleware = SentryMiddleware(app)
     
     # Store metrics collector in app context
     app.metrics_collector = metrics_collector

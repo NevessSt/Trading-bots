@@ -30,11 +30,11 @@ def get_trading_engine():
         api_key = current_app.config.get('BINANCE_API_KEY') or os.environ.get('BINANCE_API_KEY')
         api_secret = current_app.config.get('BINANCE_API_SECRET') or os.environ.get('BINANCE_API_SECRET')
         
-        # Use demo/testnet keys if real keys are not provided
-        if not api_key or api_key == 'your-binance-api-key':
-            api_key = 'demo_api_key'
-        if not api_secret or api_secret == 'your-binance-api-secret':
-            api_secret = 'demo_api_secret'
+        # Enforce real API keys - no demo fallbacks allowed
+        if not api_key or api_key in ['your-binance-api-key', 'demo_api_key', '']:
+            raise ValueError('Valid Binance API key is required. Please configure BINANCE_API_KEY in your environment or app config.')
+        if not api_secret or api_secret in ['your-binance-api-secret', 'demo_api_secret', '']:
+            raise ValueError('Valid Binance API secret is required. Please configure BINANCE_API_SECRET in your environment or app config.')
             
         trading_engine = TradingEngine(
             api_key=api_key,
@@ -52,22 +52,29 @@ def get_trading_status():
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    # Get user's active bots
-    engine = get_trading_engine()
-    active_bots = engine.get_active_bots(user_id)
-    
-    # Get user's recent trades
-    recent_trades = Trade.get_recent_trades(user_id, limit=10)
-    
-    # Get account balance
-    balance = engine.get_account_balance(user_id)
-    
-    return jsonify({
-        'active_bots': active_bots,
-        'recent_trades': recent_trades,
-        'balance': balance,
-        'is_trading_enabled': user.get('settings', {}).get('is_trading_enabled', False)
-    })
+    try:
+        # Get user's active bots
+        engine = get_trading_engine()
+        active_bots = engine.get_active_bots(user_id)
+        
+        # Get user's recent trades
+        recent_trades = Trade.get_recent_trades(user_id, limit=10)
+        
+        # Get account balance
+        balance = engine.get_account_balance(user_id)
+        
+        return jsonify({
+            'active_bots': active_bots,
+            'recent_trades': recent_trades,
+            'balance': balance,
+            'is_trading_enabled': user.get('settings', {}).get('is_trading_enabled', False)
+        })
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
 
 
 
@@ -129,6 +136,12 @@ def start_trading():
                 'stop_loss': stop_loss
             }
         }), 200
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -185,6 +198,12 @@ def stop_trading():
                 return jsonify({'error': f'Failed to stop bot {bot_id}'}), 500
         else:
             return jsonify({'error': 'Either bot_id or stop_all parameter is required'}), 400
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -260,6 +279,12 @@ def get_realtime_data(symbol):
             }), 200
         else:
             return jsonify({'error': 'No real-time data available for this symbol'}), 404
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -285,6 +310,12 @@ def get_all_realtime_data():
             }
         
         return jsonify({'data': formatted_data}), 200
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -322,6 +353,12 @@ def get_market_data(symbol):
             'interval': interval,
             'data': data
         }), 200
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -333,6 +370,12 @@ def get_account_balance():
         engine = get_trading_engine()
         balance = engine.get_account_balance()
         return jsonify(balance), 200
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -349,6 +392,12 @@ def start_websocket_stream(symbol):
         loop.run_until_complete(engine.start_websocket_stream(symbol.upper()))
         
         return jsonify({'message': f'WebSocket stream started for {symbol.upper()}'}), 200
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -360,6 +409,12 @@ def stop_websocket_stream(symbol):
         engine = get_trading_engine()
         engine.stop_websocket_stream(symbol.upper())
         return jsonify({'message': f'WebSocket stream stopped for {symbol.upper()}'}), 200
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -377,6 +432,12 @@ def get_performance():
         engine = get_trading_engine()
         performance = engine.calculate_performance(user_id, period)
         return jsonify(performance), 200
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -388,6 +449,12 @@ def get_available_symbols():
         engine = get_trading_engine()
         symbols = engine.get_available_symbols()
         return jsonify({'symbols': symbols}), 200
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -541,6 +608,12 @@ def get_bot_details(bot_id):
             return jsonify({'error': 'Bot not found'}), 404
         
         return jsonify(bot), 200
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -563,6 +636,12 @@ def update_bot(bot_id):
             return jsonify({'message': 'Bot updated successfully'}), 200
         else:
             return jsonify({'error': 'Bot not found or update failed'}), 404
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -581,6 +660,12 @@ def delete_bot(bot_id):
             return jsonify({'message': 'Bot deleted successfully'}), 200
         else:
             return jsonify({'error': 'Bot not found or deletion failed'}), 404
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -599,6 +684,12 @@ def start_bot(bot_id):
             return jsonify({'message': 'Bot started successfully'}), 200
         else:
             return jsonify({'error': 'Bot not found or failed to start'}), 404
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -617,6 +708,12 @@ def stop_bot(bot_id):
             return jsonify({'message': 'Bot stopped successfully'}), 200
         else:
             return jsonify({'error': 'Bot not found or failed to stop'}), 404
+    except ValueError as e:
+        return jsonify({
+            'error': 'API configuration required',
+            'message': str(e),
+            'code': 'MISSING_API_KEYS'
+        }), 422
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

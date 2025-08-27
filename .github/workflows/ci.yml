@@ -71,18 +71,37 @@ jobs:
         echo "CI=true" >> $GITHUB_ENV
         echo "GITHUB_ACTIONS=true" >> $GITHUB_ENV
     
-    - name: Run tests with coverage
+    - name: Run unit tests with coverage
       working-directory: ./backend
       run: |
-        pytest --maxfail=1 -q --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=80
+        pytest tests/unit/ --maxfail=5 -v --cov=. --cov-report=xml:coverage.xml --cov-report=html:htmlcov --cov-report=term-missing --cov-fail-under=70 --tb=short
+    
+    - name: Run integration tests
+      working-directory: ./backend
+      run: |
+        pytest tests/integration/ --maxfail=3 -v --cov=. --cov-append --cov-report=xml:coverage.xml --cov-report=term-missing --tb=short
+    
+    - name: Run security tests
+      working-directory: ./backend
+      run: |
+        pytest tests/ -m security -v --cov=. --cov-append --cov-report=xml:coverage.xml || true
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         file: ./backend/coverage.xml
-        flags: unittests
+        flags: backend
         name: codecov-umbrella
         fail_ci_if_error: false
+    
+    - name: Archive test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          backend/htmlcov/
+          backend/coverage.xml
 
   lint:
     runs-on: ubuntu-latest

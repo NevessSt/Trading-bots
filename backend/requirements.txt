@@ -57,3 +57,4 @@ tqdm==4.65.0  # Progress bars
 retrying==1.3.4  # Retry mechanisms
 ratelimit==2.2.1  # Rate limiting
 faker==18.4.0  # For testing data generation
+sentry-sdk[flask]==1.38.0  # Error tracking and monitoring

@@ -1397,13 +1397,36 @@ trading-bot/
 
 4. The application will be available at `http://localhost:3000`
 
+## 📚 Documentation
+
+### Core Documentation
+- **[BUYER_GUIDE.md](BUYER_GUIDE.md)** - Complete buyer's guide with setup instructions
+- **[TRADING_STRATEGIES.md](TRADING_STRATEGIES.md)** - Detailed strategy documentation
+- **[BUILD_DEPLOYMENT_GUIDE.md](BUILD_DEPLOYMENT_GUIDE.md)** - Build system and deployment options
+- **[SAAS_INTEGRATION_GUIDE.md](SAAS_INTEGRATION_GUIDE.md)** - Multi-tenant SaaS implementation guide
+- **[LICENSE_REVOCATION.md](LICENSE_REVOCATION.md)** - License management and revocation system
+
+### Support & Legal
+- **[SUPPORT.md](SUPPORT.md)** - Support options and contact information (includes 7-day free support)
+- **[DISCLAIMER.md](DISCLAIMER.md)** - Risk warnings, liability limitations, and legal disclaimers
+- **[EULA.md](EULA.md)** - End User License Agreement and terms of use
+- **[REFUND_POLICY.md](REFUND_POLICY.md)** - Refund terms and conditions
+
+### Technical Documentation
+- **API Documentation**: Available at `/docs` endpoint when running
+- **Architecture Diagrams**: Located in `/docs/architecture/`
+- **Database Schema**: Located in `/docs/database/`
+- **Deployment Scripts**: Located in `/scripts/`
+
 ## 📄 Legal Information
 
 ### Important Documents
+By using this software, you acknowledge that you have read, understood, and agree to be bound by the terms outlined in our legal documents:
+
 - **[DISCLAIMER](DISCLAIMER.md)** - Risk warnings, liability limitations, and legal disclaimers
 - **[End User License Agreement (EULA)](EULA.md)** - Terms of use and licensing conditions
-
-By using this software, you acknowledge that you have read, understood, and agree to be bound by the terms outlined in both documents.
+- **[REFUND_POLICY](REFUND_POLICY.md)** - Refund terms and conditions
+- **[REFUND_POLICY](REFUND_POLICY.md)** - Refund terms and conditions
 
 ### Risk Warning
 Cryptocurrency trading involves substantial risk of loss and is not suitable for all investors. Past performance does not guarantee future results. Please ensure you understand the risks involved and seek independent financial advice if necessary.
@@ -1412,12 +1435,32 @@ Cryptocurrency trading involves substantial risk of loss and is not suitable for
 This project is proprietary and confidential. See [EULA.md](EULA.md) for complete licensing terms.
 
 ## 📞 Contact & Support
-For any inquiries, please contact the project maintainers.
 
-**Email for help**: danielmanji38@gmail.com
+### 🎯 7-Day Free Support Included
+Every purchase includes **7 days of free priority support** to help you get started successfully.
 
-### Support Resources
-- 📧 Email Support: danielmanji38@gmail.com
-- 📚 Documentation: Available in `/docs` directory
-- 🐛 Bug Reports: Please include system information and error logs
-- 💡 Feature Requests: Contact via email with detailed requirements
+### Support Options
+- **📧 Priority Email Support**: danielmanji38@gmail.com (24-48 hour response)
+- **📋 Comprehensive Support Guide**: See [SUPPORT.md](SUPPORT.md) for detailed support information
+- **📚 Documentation**: Extensive guides available in this repository
+- **🔧 Setup Assistance**: Help with installation, configuration, and initial setup
+- **📈 Strategy Guidance**: Basic strategy implementation and optimization tips
+- **🐛 Bug Resolution**: Priority bug fixes and troubleshooting
+
+### What's Included in Free Support
+- ✅ Installation and setup assistance
+- ✅ Configuration troubleshooting
+- ✅ Basic strategy implementation help
+- ✅ Exchange API integration support
+- ✅ Performance optimization guidance
+- ✅ Bug fixes and error resolution
+
+### Extended Support Options
+After the initial 7-day period, extended support packages are available. Contact us for pricing and details.
+
+### Self-Service Resources
+- **📖 [BUYER_GUIDE.md](BUYER_GUIDE.md)** - Complete setup and usage guide
+- **🔧 [SUPPORT.md](SUPPORT.md)** - Detailed support information and FAQ
+- **📊 [TRADING_STRATEGIES.md](TRADING_STRATEGIES.md)** - Strategy documentation
+- **🏗️ [BUILD_DEPLOYMENT_GUIDE.md](BUILD_DEPLOYMENT_GUIDE.md)** - Deployment options
+- **🏢 [SAAS_INTEGRATION_GUIDE.md](SAAS_INTEGRATION_GUIDE.md)** - Enterprise SaaS features

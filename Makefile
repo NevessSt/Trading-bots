@@ -31,6 +31,13 @@ help:
 	@echo "  make format      - Format code (backend + frontend)"
 	@echo "  make security    - Run security scans"
 	@echo ""
+	@echo "Build & Deployment:"
+	@echo "  make build-all   - Build all buyer tier packages"
+	@echo "  make build-tier  - Build specific tier (TIER=starter|professional|enterprise|institutional)"
+	@echo "  make build-buyer - Create buyer package (requires BUYER_ID, BUYER_NAME, BUYER_EMAIL, TIER)"
+	@echo "  make list-tiers  - List available buyer tiers"
+	@echo "  make build-deps  - Install build dependencies"
+	@echo ""
 	@echo "Utilities:"
 	@echo "  make clean       - Clean build artifacts and cache"
 	@echo "  make logs        - View production logs"
@@ -314,6 +321,95 @@ help-prod:
 	@echo "3. make prod-up      - Start production"
 	@echo "4. make backup       - Backup database"
 	@echo "5. make logs         - View logs"
+
+# Build and deployment targets
+build-deps:
+	@echo "📦 Installing build dependencies..."
+	pip install pyinstaller>=5.0 pyarmor>=8.0 cx_Freeze auto-py-to-exe
+	@echo "✅ Build dependencies installed"
+
+build-all: build-deps
+	@echo "🏗️ Building all buyer tier packages..."
+	python build_config.py --config all
+	@echo "✅ All packages built successfully"
+
+build-tier: build-deps
+	@echo "🏗️ Building $(TIER) tier package..."
+	@if "$(TIER)"=="" (echo "❌ Error: TIER variable required. Use: make build-tier TIER=starter" && exit 1)
+	python build_config.py --config $(TIER)
+	@echo "✅ $(TIER) package built successfully"
+
+build-buyer: build-deps
+	@echo "📦 Creating buyer-specific package..."
+	@if "$(BUYER_ID)"=="" (echo "❌ Error: BUYER_ID required" && exit 1)
+	@if "$(BUYER_NAME)"=="" (echo "❌ Error: BUYER_NAME required" && exit 1)
+	@if "$(BUYER_EMAIL)"=="" (echo "❌ Error: BUYER_EMAIL required" && exit 1)
+	@if "$(TIER)"=="" (echo "❌ Error: TIER required" && exit 1)
+	python scripts/build_for_buyer.py --buyer-id "$(BUYER_ID)" --buyer-name "$(BUYER_NAME)" --buyer-email "$(BUYER_EMAIL)" --tier "$(TIER)" --create-package
+	@echo "✅ Buyer package created successfully"
+
+list-tiers:
+	@echo "📋 Available buyer tiers:"
+	python scripts/build_for_buyer.py --list-tiers
+
+build-clean:
+	@echo "🧹 Cleaning build directories..."
+	@if exist "build" rmdir /s /q "build"
+	@if exist "dist" rmdir /s /q "dist"
+	@if exist "temp_build" rmdir /s /q "temp_build"
+	@if exist "buyer_configs" rmdir /s /q "buyer_configs"
+	@if exist "*.spec" del "*.spec"
+	@echo "✅ Build cleanup completed"
+
+build-test:
+	@echo "🧪 Testing build system..."
+	python -c "from build_config import TradingBotBuilder; builder = TradingBotBuilder(); print('✅ Build system ready')"
+	python -c "from scripts.build_for_buyer import BuyerDeploymentManager; manager = BuyerDeploymentManager(); print('✅ Buyer deployment system ready')"
+	@echo "✅ Build system tests passed"
+
+# License server management
+license-server-start:
+	@echo "🔑 Starting license server..."
+	python backend/license_server.py &
+	@echo "✅ License server started on port 8080"
+
+license-server-stop:
+	@echo "🛑 Stopping license server..."
+	@taskkill /f /im python.exe /fi "WINDOWTITLE eq License Server" 2>nul || echo "License server not running"
+
+license-admin:
+	@echo "🔧 License administration tool:"
+	python scripts/license_admin.py
+
+# Example buyer package creation
+example-buyer-starter:
+	@echo "📦 Creating example starter package..."
+	@make build-buyer BUYER_ID="DEMO_001" BUYER_NAME="Demo User" BUYER_EMAIL="demo@example.com" TIER="starter"
+
+example-buyer-enterprise:
+	@echo "📦 Creating example enterprise package..."
+	@make build-buyer BUYER_ID="DEMO_002" BUYER_NAME="Enterprise Demo" BUYER_EMAIL="enterprise@example.com" TIER="enterprise"
+
+# Build validation and quality assurance
+build-validate:
+	@echo "✅ Validating build outputs..."
+	@if not exist "dist" (echo "❌ No build outputs found. Run 'make build-all' first" && exit 1)
+	@echo "📊 Build validation:"
+	@for /d %%i in (dist\*) do @echo "  - %%~nxi"
+	@echo "✅ Build validation completed"
+
+build-package-info:
+	@echo "📋 Build package information:"
+	@if exist "dist" (
+		@for %%f in (dist\*.zip) do @echo "Package: %%~nxf - Size: %%~zf bytes"
+	) else (
+		@echo "No packages found. Run 'make build-all' first"
+	)
+
+# Complete build workflow
+build-workflow: clean build-clean build-test build-all build-validate
+	@echo "🎉 Complete build workflow completed successfully!"
+	@make build-package-info
 
 # Default target when no target is specified
 .DEFAULT_GOAL := help

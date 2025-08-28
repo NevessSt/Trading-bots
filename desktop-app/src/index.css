@@ -1,0 +1,269 @@
+/* Global styles for TradingBot Pro Desktop App */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+  color: #ffffff;
+  overflow: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.5);
+}
+
+/* Trading chart styles */
+.trading-chart {
+  background: rgba(26, 31, 58, 0.8);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.price-positive {
+  color: #4caf50 !important;
+}
+
+.price-negative {
+  color: #f44336 !important;
+}
+
+.price-neutral {
+  color: #ffffff !important;
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Status indicators */
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-connected {
+  background-color: #4caf50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+}
+
+.status-connecting {
+  background-color: #ff9800;
+  animation: pulse 1.5s infinite;
+}
+
+.status-disconnected {
+  background-color: #f44336;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Card hover effects */
+.hover-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Loading states */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 14, 39, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Trading pair styles */
+.trading-pair {
+  font-weight: 500;
+  font-size: 1.1em;
+}
+
+.trading-pair .base {
+  color: #00d4ff;
+}
+
+.trading-pair .quote {
+  color: #b0bec5;
+}
+
+/* Number formatting */
+.number-large {
+  font-size: 1.5em;
+  font-weight: 300;
+}
+
+.number-small {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+/* Button styles */
+.btn-buy {
+  background: linear-gradient(45deg, #4caf50, #66bb6a) !important;
+  color: white !important;
+}
+
+.btn-sell {
+  background: linear-gradient(45deg, #f44336, #ef5350) !important;
+  color: white !important;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #00d4ff, #0099cc) !important;
+  color: white !important;
+}
+
+/* Table styles */
+.data-table {
+  background: rgba(26, 31, 58, 0.6);
+}
+
+.data-table .MuiTableHead-root {
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.data-table .MuiTableRow-root:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Form styles */
+.form-section {
+  background: rgba(26, 31, 58, 0.4);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+/* Notification styles */
+.notification-item {
+  border-left: 4px solid #00d4ff;
+  background: rgba(26, 31, 58, 0.8);
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: 0 8px 8px 0;
+}
+
+.notification-trade {
+  border-left-color: #4caf50;
+}
+
+.notification-alert {
+  border-left-color: #ff9800;
+}
+
+.notification-error {
+  border-left-color: #f44336;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+  
+  .mobile-stack {
+    flex-direction: column;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .status-indicator {
+    border: 2px solid white;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

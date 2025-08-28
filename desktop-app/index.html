@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bot Desktop</title>
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+    <div id="app">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading Trading Bot...</div>
+        </div>
+        
+        <!-- Main Application -->
+        <div class="app-container" id="app-container" style="display: none;">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-left">
+                    <div class="logo">
+                        <span class="logo-icon">TB</span>
+                        <span class="logo-text">Trading Bot</span>
+                    </div>
+                </div>
+                
+                <div class="header-center">
+                    <nav class="nav-tabs">
+                        <button class="nav-tab active" data-view="dashboard">
+                            <span class="material-icons">dashboard</span>
+                            Dashboard
+                        </button>
+                        <button class="nav-tab" data-view="trading">
+                            <span class="material-icons">trending_up</span>
+                            Trading
+                        </button>
+                        <button class="nav-tab" data-view="portfolio">
+                            <span class="material-icons">account_balance_wallet</span>
+                            Portfolio
+                        </button>
+                        <button class="nav-tab" data-view="analytics">
+                            <span class="material-icons">analytics</span>
+                            Analytics
+                        </button>
+                        <button class="nav-tab" data-view="history">
+                            <span class="material-icons">history</span>
+                            History
+                        </button>
+                    </nav>
+                </div>
+                
+                <div class="header-right">
+                    <div class="connection-status" id="connection-status">
+                        <span class="status-dot connected"></span>
+                        <span class="status-text">Connected</span>
+                    </div>
+                    <button class="header-btn" id="settings-btn">
+                        <span class="material-icons">settings</span>
+                    </button>
+                    <button class="header-btn" id="notifications-btn">
+                        <span class="material-icons">notifications</span>
+                        <span class="notification-badge">3</span>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Dashboard View -->
+                <div class="view" id="dashboard-view">
+                    <div class="view-header">
+                        <h1>Dashboard</h1>
+                        <div class="view-actions">
+                            <button class="btn btn-primary">
+                                <span class="material-icons">refresh</span>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-grid">
+                        <div class="card metric-card">
+                            <div class="card-header">
+                                <h3>Portfolio Value</h3>
+                                <span class="material-icons">account_balance_wallet</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="metric-value">$12,450.67</div>
+                                <div class="metric-change positive">+2.34% (+$285.12)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="card metric-card">
+                            <div class="card-header">
+                                <h3>24h P&L</h3>
+                                <span class="material-icons">trending_up</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="metric-value">+$285.12</div>
+                                <div class="metric-change positive">+2.34%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="card metric-card">
+                            <div class="card-header">
+                                <h3>Win Rate</h3>
+                                <span class="material-icons">emoji_events</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="metric-value">68.5%</div>
+                                <div class="metric-change positive">+1.2%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="card metric-card">
+                            <div class="card-header">
+                                <h3>Active Trades</h3>
+                                <span class="material-icons">swap_horiz</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="metric-value">7</div>
+                                <div class="metric-change neutral">2 pending</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-charts">
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <h3>Portfolio Performance</h3>
+                                <div class="chart-controls">
+                                    <button class="btn btn-sm active">24H</button>
+                                    <button class="btn btn-sm">7D</button>
+                                    <button class="btn btn-sm">30D</button>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <div class="chart-placeholder">
+                                    <span class="material-icons">show_chart</span>
+                                    <p>Portfolio performance chart will be displayed here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Other views will be loaded dynamically -->
+                <div class="view" id="trading-view" style="display: none;">
+                    <div class="view-header">
+                        <h1>Trading Terminal</h1>
+                    </div>
+                    <div class="trading-layout">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Market Data</h3>
+                            </div>
+                            <div class="card-content">
+                                <p>Trading interface will be implemented here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="view" id="portfolio-view" style="display: none;">
+                    <div class="view-header">
+                        <h1>Portfolio</h1>
+                    </div>
+                    <div class="card">
+                        <div class="card-content">
+                            <p>Portfolio details will be displayed here</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="view" id="analytics-view" style="display: none;">
+                    <div class="view-header">
+                        <h1>Analytics</h1>
+                    </div>
+                    <div class="card">
+                        <div class="card-content">
+                            <p>Analytics and reports will be shown here</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="view" id="history-view" style="display: none;">
+                    <div class="view-header">
+                        <h1>Trade History</h1>
+                    </div>
+                    <div class="card">
+                        <div class="card-content">
+                            <p>Trade history will be displayed here</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="src/app.js"></script>
+</body>
+</html>

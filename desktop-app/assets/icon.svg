@@ -1,0 +1,52 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0e27;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a1f3a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0099cc;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="120" fill="url(#bgGradient)" stroke="#00d4ff" stroke-width="4"/>
+  
+  <!-- Trading chart lines -->
+  <g stroke="url(#chartGradient)" stroke-width="3" fill="none">
+    <polyline points="60,180 80,160 100,140 120,120 140,100 160,80 180,100 200,90"/>
+    <polyline points="60,200 80,190 100,170 120,150 140,130 160,110 180,120 200,110"/>
+  </g>
+  
+  <!-- Candlestick chart elements -->
+  <g fill="#00d4ff">
+    <rect x="75" y="150" width="8" height="20" rx="2"/>
+    <rect x="95" y="130" width="8" height="25" rx="2"/>
+    <rect x="115" y="110" width="8" height="30" rx="2"/>
+    <rect x="135" y="90" width="8" height="35" rx="2"/>
+    <rect x="155" y="70" width="8" height="40" rx="2"/>
+    <rect x="175" y="90" width="8" height="30" rx="2"/>
+  </g>
+  
+  <!-- Bot symbol -->
+  <g fill="#ffffff">
+    <circle cx="128" cy="80" r="15"/>
+    <rect x="120" y="95" width="16" height="20" rx="3"/>
+    <circle cx="123" cy="77" r="2" fill="#0a0e27"/>
+    <circle cx="133" cy="77" r="2" fill="#0a0e27"/>
+    <rect x="125" y="83" width="6" height="2" rx="1" fill="#0a0e27"/>
+  </g>
+  
+  <!-- Currency symbols -->
+  <text x="70" y="50" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#00d4ff">$</text>
+  <text x="170" y="50" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#00d4ff">₿</text>
+  
+  <!-- Trading arrows -->
+  <g fill="#00ff88">
+    <polygon points="50,120 60,115 60,125"/>
+  </g>
+  <g fill="#ff4444">
+    <polygon points="206,140 196,135 196,145"/>
+  </g>
+</svg>

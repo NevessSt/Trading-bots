@@ -1,0 +1,361 @@
+/* Update Manager Styles */
+.update-manager {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: var(--card-bg, #1e1e1e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.update-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: var(--header-bg, #2a2a2a);
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.update-header h2 {
+  margin: 0;
+  color: var(--text-primary, #ffffff);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #888);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--hover-bg, #333);
+  color: var(--text-primary, #ffffff);
+}
+
+.update-content {
+  padding: 24px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.current-version {
+  margin-bottom: 24px;
+}
+
+.current-version h3 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary, #ffffff);
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.version-number {
+  margin: 0;
+  color: var(--accent-color, #4CAF50);
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+.update-status {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--status-bg, #2a2a2a);
+  border-radius: 8px;
+  border-left: 4px solid var(--accent-color, #4CAF50);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.status-icon {
+  font-size: 20px;
+}
+
+.status-text {
+  color: var(--text-primary, #ffffff);
+  font-weight: 500;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--progress-bg, #333);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color, #4CAF50), var(--accent-light, #66BB6A));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: var(--error-bg, #2d1b1b);
+  border: 1px solid var(--error-border, #d32f2f);
+  border-radius: 6px;
+  color: var(--error-text, #ff6b6b);
+  font-size: 14px;
+}
+
+.error-icon {
+  font-size: 16px;
+}
+
+.update-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary-color, #2196F3);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover, #1976D2);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--secondary-color, #666);
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--secondary-hover, #777);
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: var(--success-color, #4CAF50);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: var(--success-hover, #45a049);
+  transform: translateY(-1px);
+}
+
+.update-settings {
+  border-top: 1px solid var(--border-color, #333);
+  padding-top: 24px;
+}
+
+.update-settings h3 {
+  margin: 0 0 16px 0;
+  color: var(--text-primary, #ffffff);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.setting-item {
+  margin-bottom: 20px;
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary, #ffffff);
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.setting-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-color, #4CAF50);
+}
+
+.setting-select {
+  margin-left: 8px;
+  padding: 4px 8px;
+  background: var(--input-bg, #333);
+  border: 1px solid var(--border-color, #555);
+  border-radius: 4px;
+  color: var(--text-primary, #ffffff);
+  font-size: 14px;
+}
+
+.setting-select:focus {
+  outline: none;
+  border-color: var(--accent-color, #4CAF50);
+}
+
+.setting-description {
+  margin: 4px 0 0 0;
+  color: var(--text-secondary, #888);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.dev-notice {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.dev-notice h3 {
+  margin: 0 0 12px 0;
+  color: var(--warning-color, #ff9800);
+  font-size: 18px;
+}
+
+.dev-notice p {
+  margin: 8px 0;
+  color: var(--text-secondary, #888);
+  line-height: 1.5;
+}
+
+/* Dark theme variables */
+:root {
+  --card-bg: #1e1e1e;
+  --header-bg: #2a2a2a;
+  --border-color: #333;
+  --text-primary: #ffffff;
+  --text-secondary: #888;
+  --accent-color: #4CAF50;
+  --accent-light: #66BB6A;
+  --primary-color: #2196F3;
+  --primary-hover: #1976D2;
+  --secondary-color: #666;
+  --secondary-hover: #777;
+  --success-color: #4CAF50;
+  --success-hover: #45a049;
+  --warning-color: #ff9800;
+  --error-bg: #2d1b1b;
+  --error-border: #d32f2f;
+  --error-text: #ff6b6b;
+  --hover-bg: #333;
+  --status-bg: #2a2a2a;
+  --progress-bg: #333;
+  --input-bg: #333;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --card-bg: #ffffff;
+  --header-bg: #f5f5f5;
+  --border-color: #e0e0e0;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --hover-bg: #f0f0f0;
+  --status-bg: #f8f9fa;
+  --progress-bg: #e0e0e0;
+  --input-bg: #ffffff;
+  --error-bg: #fef2f2;
+  --error-border: #fecaca;
+  --error-text: #dc2626;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+  .update-manager {
+    width: 95vw;
+    margin: 20px;
+  }
+  
+  .update-content {
+    padding: 16px;
+  }
+  
+  .update-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.update-manager {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scrollbar styling */
+.update-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.update-content::-webkit-scrollbar-track {
+  background: var(--progress-bg, #333);
+  border-radius: 3px;
+}
+
+.update-content::-webkit-scrollbar-thumb {
+  background: var(--text-secondary, #888);
+  border-radius: 3px;
+}
+
+.update-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-primary, #ffffff);
+}

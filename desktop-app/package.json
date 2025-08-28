@@ -1,0 +1,185 @@
+{
+  "name": "trading-bot-desktop",
+  "version": "1.0.0",
+  "description": "Desktop GUI for Trading Bot - Enterprise Edition",
+  "author": "Trading Bot Pro <support@tradingbot.pro>",
+  "main": "main.js",
+  "homepage": "./",
+  "scripts": {
+    "start": "electron .",
+    "build": "echo 'Build complete'",
+    "electron": "electron .",
+    "electron-dev": "electron . --dev",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist-win": "electron-builder --win",
+    "dist-mac": "electron-builder --mac",
+    "dist-linux": "electron-builder --linux",
+    "build-installers": "node build-installers.js",
+    "build-installers:win": "node build-installers.js --win",
+    "build-installers:mac": "node build-installers.js --mac",
+    "build-installers:linux": "node build-installers.js --linux",
+    "build-all": "node build-installers.js --all",
+    "prepack": "npm run build",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.tradingbot.desktop",
+    "productName": "Trading Bot Desktop",
+    "copyright": "Copyright © 2024 Trading Bot Pro",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "main.js",
+      "preload.js",
+      "index.html",
+      "splash.html",
+      "!node_modules/.cache",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/",
+        "to": "assets/",
+        "filter": ["**/*"]
+      }
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "trading-bot",
+      "repo": "desktop-app"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.svg",
+      "requestedExecutionLevel": "asInvoker",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "signAndEditExecutable": false,
+      "signDlls": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Trading Bot Desktop",
+      "include": "installer.nsh",
+      "installerIcon": "assets/icon.svg",
+      "uninstallerIcon": "assets/icon.svg",
+      "installerHeaderIcon": "assets/icon.svg",
+      "installerSidebar": "assets/installer-sidebar.bmp",
+      "uninstallerSidebar": "assets/uninstaller-sidebar.bmp"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "assets/icon.svg",
+      "category": "public.app-category.finance",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "title": "${productName} ${version}",
+      "icon": "assets/icon.svg",
+      "background": "assets/dmg-background.png",
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64"]
+        },
+        {
+          "target": "snap",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.svg",
+      "category": "Office",
+      "synopsis": "Professional Trading Bot Desktop Application",
+      "description": "A comprehensive desktop application for automated cryptocurrency trading with real-time analytics, portfolio management, and advanced trading strategies.",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "deb": {
+      "depends": ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"],
+      "priority": "optional",
+      "afterInstall": "scripts/afterInstall.sh",
+      "afterRemove": "scripts/afterRemove.sh"
+    },
+    "rpm": {
+      "depends": ["libnotify", "libappindicator", "libXtst", "nss"],
+      "afterInstall": "scripts/afterInstall.sh",
+      "afterRemove": "scripts/afterRemove.sh"
+    },
+    "snap": {
+      "summary": "Professional Trading Bot Desktop",
+      "description": "A comprehensive desktop application for automated cryptocurrency trading.",
+      "grade": "stable",
+      "confinement": "strict",
+      "plugs": ["default", "network", "network-bind", "home"]
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.0"
+  },
+  "devDependencies": {
+    "electron": "^25.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}

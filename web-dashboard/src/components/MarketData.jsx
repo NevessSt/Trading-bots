@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Activity, Eye } from 'lucide-react'
 
-const MarketData = () => {
-  const [marketData, setMarketData] = useState([
+const MarketData = ({ data = null }) => {
+  const defaultMarketData = [
     {
       symbol: 'BTC/USD',
       name: 'Bitcoin',
@@ -57,7 +57,16 @@ const MarketData = () => {
       volume: '567M',
       marketCap: '43.2B'
     }
-  ])
+  ]
+  
+  const [marketData, setMarketData] = useState(data || defaultMarketData)
+  
+  // Update market data when prop changes
+  useEffect(() => {
+    if (data) {
+      setMarketData(data)
+    }
+  }, [data])
 
   const [watchlist, setWatchlist] = useState(['BTC/USD', 'ETH/USD', 'ADA/USD'])
   const [selectedTimeframe, setSelectedTimeframe] = useState('24h')

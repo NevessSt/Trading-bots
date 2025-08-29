@@ -1,6 +1,58 @@
 version: '3.8'
 
 services:
+  # License Server
+  license-server:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.license
+    container_name: trading_bot_license_server
+    environment:
+      - LICENSE_SERVER_SECRET=${LICENSE_SERVER_SECRET:-demo-secret-key-2024}
+      - LICENSE_ADMIN_KEY=${LICENSE_ADMIN_KEY:-demo-admin-key-123}
+      - LICENSE_SERVER_PORT=8080
+      - FLASK_DEBUG=false
+    volumes:
+      - license_data:/app/data
+    ports:
+      - "8080:8080"
+    networks:
+      - trading_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Demo Data Generator (for fake trading data)
+  demo-data-generator:
+    build:
+      context: ./tools
+      dockerfile: Dockerfile.demo-data
+    container_name: trading_bot_demo_data
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres123}@postgres:5432/${POSTGRES_DB:-trading_bot}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - DEMO_MODE=true
+      - LICENSE_SERVER_URL=http://license-server:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      license-server:
+        condition: service_healthy
+      license-server:
+        condition: service_healthy
+    volumes:
+      - ./tools:/app
+    networks:
+      - trading_network
+    restart: unless-stopped
+    profiles:
+      - demo
+
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
@@ -51,6 +103,7 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-jwt-secret-change-this}
+      - LICENSE_SERVER_URL=http://license-server:8080
       - BINANCE_API_KEY=${BINANCE_API_KEY:-}
       - BINANCE_SECRET_KEY=${BINANCE_SECRET_KEY:-}
       - MAIL_SERVER=${MAIL_SERVER:-}
@@ -124,6 +177,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  license_data:
     driver: local
 
 networks:

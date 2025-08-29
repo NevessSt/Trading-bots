@@ -12,6 +12,7 @@ import {
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import { TrendingUp, TrendingDown } from 'lucide-react'
+import demoDataService from '../services/demoDataService'
 
 ChartJS.register(
   CategoryScale,
@@ -24,7 +25,7 @@ ChartJS.register(
   Filler
 )
 
-const TradingChart = () => {
+const TradingChart = ({ mode = 'demo' }) => {
   const [timeframe, setTimeframe] = useState('1H')
   const [symbol, setSymbol] = useState('BTC/USD')
   const [chartData, setChartData] = useState({
@@ -33,51 +34,90 @@ const TradingChart = () => {
   })
   const [currentPrice, setCurrentPrice] = useState(43250.75)
   const [priceChange, setPriceChange] = useState(1.23)
+  const [marketData, setMarketData] = useState([])
 
   // Generate sample data
   useEffect(() => {
-    const generateData = () => {
-      const now = new Date()
-      const labels = []
-      const prices = []
-      let basePrice = 43000
+    if (mode === 'demo') {
+      loadDemoData()
+      const interval = setInterval(loadDemoData, 5000) // Update every 5 seconds
+      return () => clearInterval(interval)
+    } else {
+      generateData()
+      const interval = setInterval(generateData, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [timeframe, symbol, mode])
 
-      for (let i = 23; i >= 0; i--) {
-        const time = new Date(now.getTime() - i * 60 * 60 * 1000)
-        labels.push(time.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        }))
-        
-        basePrice += (Math.random() - 0.5) * 500
-        prices.push(basePrice)
-      }
+  const loadDemoData = () => {
+    const data = demoDataService.getMarketData()
+    setMarketData(data)
+    
+    // Find current symbol data
+    const symbolData = data.find(item => item.symbol === symbol.replace('/', ''))
+    if (symbolData) {
+      setCurrentPrice(symbolData.price)
+      setPriceChange(symbolData.change24h)
+    }
+    
+    // Generate chart data for the symbol
+    const chartHistory = demoDataService.getChartData(symbol.replace('/', ''), timeframe)
+    
+    setChartData({
+      labels: chartHistory.labels,
+      datasets: [
+        {
+          label: symbol,
+          data: chartHistory.prices,
+          borderColor: symbolData?.change24h >= 0 ? '#10b981' : '#ef4444',
+          backgroundColor: symbolData?.change24h >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+        }
+      ]
+    })
+  }
 
-      setCurrentPrice(prices[prices.length - 1])
-      setPriceChange(((prices[prices.length - 1] - prices[0]) / prices[0]) * 100)
+  const generateData = () => {
+    const now = new Date()
+    const labels = []
+    const prices = []
+    let basePrice = 43000
 
-      setChartData({
-        labels,
-        datasets: [
-          {
-            label: symbol,
-            data: prices,
-            borderColor: priceChange >= 0 ? '#10b981' : '#ef4444',
-            backgroundColor: priceChange >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 6,
-          }
-        ]
-      })
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 60 * 60 * 1000)
+      labels.push(time.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }))
+      
+      basePrice += (Math.random() - 0.5) * 500
+      prices.push(basePrice)
     }
 
-    generateData()
-    const interval = setInterval(generateData, 5000)
-    return () => clearInterval(interval)
-  }, [symbol, priceChange])
+    setCurrentPrice(prices[prices.length - 1])
+    setPriceChange(((prices[prices.length - 1] - prices[0]) / prices[0]) * 100)
+
+    setChartData({
+      labels,
+      datasets: [
+        {
+          label: symbol,
+          data: prices,
+          borderColor: priceChange >= 0 ? '#10b981' : '#ef4444',
+          backgroundColor: priceChange >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+        }
+      ]
+    })
+  }
 
   const options = {
     responsive: true,

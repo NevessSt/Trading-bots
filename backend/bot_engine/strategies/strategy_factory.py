@@ -6,6 +6,8 @@ from typing import Optional, Dict, Any
 from .rsi_strategy import RSIStrategy
 from .macd_strategy import MACDStrategy
 from .ema_crossover_strategy import EMACrossoverStrategy
+from .scalping_strategy import ScalpingStrategy
+from .swing_trading_strategy import SwingTradingStrategy
 
 # Import the dynamic strategy manager
 try:
@@ -93,6 +95,25 @@ class StrategyFactory:
             strategy = EMACrossoverStrategy(
                 fast_period=parameters.get('fast_period', 9),
                 slow_period=parameters.get('slow_period', 21)
+            )
+        elif strategy_name.lower() == 'scalping':
+            strategy = ScalpingStrategy(
+                timeframes=parameters.get('timeframes', ['1m', '5m']),
+                min_spread=parameters.get('min_spread', 0.0001),
+                max_spread=parameters.get('max_spread', 0.001),
+                volume_threshold=parameters.get('volume_threshold', 1000000),
+                volatility_threshold=parameters.get('volatility_threshold', 0.005),
+                quick_profit_target=parameters.get('quick_profit_target', 0.002),
+                stop_loss=parameters.get('stop_loss', 0.003)
+            )
+        elif strategy_name.lower() == 'swing_trading':
+            strategy = SwingTradingStrategy(
+                primary_timeframe=parameters.get('primary_timeframe', '4h'),
+                secondary_timeframe=parameters.get('secondary_timeframe', '1d'),
+                trend_ema_fast=parameters.get('trend_ema_fast', 21),
+                trend_ema_slow=parameters.get('trend_ema_slow', 50),
+                profit_target=parameters.get('profit_target', 0.08),
+                stop_loss=parameters.get('stop_loss', 0.04)
             )
         else:
             raise ValueError(f"Unknown strategy: {strategy_name}")
@@ -231,6 +252,117 @@ class StrategyFactory:
                 'risk_level': 'low',
                 'min_capital': 50.0,
                 'supported_timeframes': ['5m', '15m', '1h', '4h', '1d']
+            },
+            {
+                'id': 'scalping',
+                'name': 'Advanced Scalping Strategy',
+                'description': 'High-frequency scalping strategy with multi-timeframe analysis and order book data',
+                'version': '1.0.0',
+                'author': 'System',
+                'parameters': {
+                    'timeframes': {
+                        'type': 'array',
+                        'default': ['1m', '5m'],
+                        'description': 'List of timeframes to analyze'
+                    },
+                    'min_spread': {
+                        'type': 'float',
+                        'default': 0.0001,
+                        'min': 0.00001,
+                        'max': 0.01,
+                        'description': 'Minimum spread requirement'
+                    },
+                    'max_spread': {
+                        'type': 'float',
+                        'default': 0.001,
+                        'min': 0.0001,
+                        'max': 0.01,
+                        'description': 'Maximum spread allowed'
+                    },
+                    'volume_threshold': {
+                        'type': 'float',
+                        'default': 1000000,
+                        'min': 100000,
+                        'max': 10000000,
+                        'description': 'Minimum volume requirement'
+                    },
+                    'volatility_threshold': {
+                        'type': 'float',
+                        'default': 0.005,
+                        'min': 0.001,
+                        'max': 0.02,
+                        'description': 'Minimum volatility requirement'
+                    },
+                    'quick_profit_target': {
+                        'type': 'float',
+                        'default': 0.002,
+                        'min': 0.001,
+                        'max': 0.01,
+                        'description': 'Quick profit target percentage'
+                    },
+                    'stop_loss': {
+                        'type': 'float',
+                        'default': 0.003,
+                        'min': 0.001,
+                        'max': 0.01,
+                        'description': 'Stop loss percentage'
+                    }
+                },
+                'tags': ['scalping', 'high_frequency', 'technical_analysis'],
+                'risk_level': 'high',
+                'min_capital': 1000.0,
+                'supported_timeframes': ['1m', '5m']
+            },
+            {
+                'id': 'swing_trading',
+                'name': 'Advanced Swing Trading Strategy',
+                'description': 'Medium-term swing trading strategy with multi-timeframe analysis and trend following',
+                'version': '1.0.0',
+                'author': 'System',
+                'parameters': {
+                    'primary_timeframe': {
+                        'type': 'string',
+                        'default': '4h',
+                        'description': 'Main timeframe for analysis'
+                    },
+                    'secondary_timeframe': {
+                        'type': 'string',
+                        'default': '1d',
+                        'description': 'Higher timeframe for trend confirmation'
+                    },
+                    'trend_ema_fast': {
+                        'type': 'integer',
+                        'default': 21,
+                        'min': 5,
+                        'max': 50,
+                        'description': 'Fast EMA period for trend'
+                    },
+                    'trend_ema_slow': {
+                        'type': 'integer',
+                        'default': 50,
+                        'min': 20,
+                        'max': 200,
+                        'description': 'Slow EMA period for trend'
+                    },
+                    'profit_target': {
+                        'type': 'float',
+                        'default': 0.08,
+                        'min': 0.02,
+                        'max': 0.20,
+                        'description': 'Profit target percentage'
+                    },
+                    'stop_loss': {
+                        'type': 'float',
+                        'default': 0.04,
+                        'min': 0.01,
+                        'max': 0.10,
+                        'description': 'Stop loss percentage'
+                    }
+                },
+                'tags': ['swing_trading', 'trend_following', 'technical_analysis'],
+                'risk_level': 'medium',
+                'min_capital': 5000.0,
+                'supported_timeframes': ['4h', '1d']
             }
         ]
     
@@ -282,8 +414,8 @@ class StrategyFactory:
         
         # Return basic stats for legacy mode
         return {
-            'total_strategies': 3,
-            'active_strategies': 3,
+            'total_strategies': 5,
+            'active_strategies': 5,
             'inactive_strategies': 0,
             'dynamic_loading_enabled': False
         }

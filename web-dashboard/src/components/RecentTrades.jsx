@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { TrendingUp, TrendingDown, Clock, Filter, Download } from 'lucide-react'
 
-const RecentTrades = ({ detailed = false }) => {
+const RecentTrades = ({ detailed = false, data = null }) => {
   const [filter, setFilter] = useState('all')
-  const [trades] = useState([
+  const defaultTrades = [
     {
       id: 1,
       symbol: 'BTC/USD',
@@ -76,7 +76,9 @@ const RecentTrades = ({ detailed = false }) => {
       status: 'completed',
       pnl: 89.45
     }
-  ])
+  ]
+  
+  const [trades] = useState(data || defaultTrades)
 
   const filteredTrades = trades.filter(trade => {
     if (filter === 'all') return true

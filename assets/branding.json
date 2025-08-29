@@ -1,0 +1,218 @@
+{
+  "app": {
+    "name": "Trading Bot Pro",
+    "tagline": "Automated Trading Made Simple",
+    "description": "Professional cryptocurrency trading bot with advanced strategies and risk management",
+    "version": "1.0.0",
+    "website": "https://tradingbotpro.com",
+    "support_email": "support@tradingbotpro.com",
+    "company": "TradingBot Pro LLC"
+  },
+  "colors": {
+    "primary": {
+      "main": "#0099CC",
+      "light": "#00D4FF",
+      "dark": "#0066AA",
+      "gradient": "linear-gradient(135deg, #00D4FF 0%, #0099CC 50%, #0066AA 100%)"
+    },
+    "secondary": {
+      "main": "#FFD700",
+      "light": "#FFF700",
+      "dark": "#FFA500",
+      "gradient": "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)"
+    },
+    "success": {
+      "main": "#00AA00",
+      "light": "#00DD00",
+      "dark": "#007700"
+    },
+    "error": {
+      "main": "#FF4444",
+      "light": "#FF6666",
+      "dark": "#CC0000"
+    },
+    "warning": {
+      "main": "#FF9900",
+      "light": "#FFBB33",
+      "dark": "#CC7700"
+    },
+    "info": {
+      "main": "#3399FF",
+      "light": "#66BBFF",
+      "dark": "#0066CC"
+    },
+    "neutral": {
+      "white": "#FFFFFF",
+      "light_gray": "#F5F5F5",
+      "gray": "#CCCCCC",
+      "dark_gray": "#666666",
+      "black": "#000000"
+    },
+    "background": {
+      "light": "#FFFFFF",
+      "dark": "#1A1A1A",
+      "card_light": "#F8F9FA",
+      "card_dark": "#2D2D2D"
+    },
+    "text": {
+      "primary_light": "#333333",
+      "primary_dark": "#FFFFFF",
+      "secondary_light": "#666666",
+      "secondary_dark": "#CCCCCC",
+      "muted_light": "#999999",
+      "muted_dark": "#888888"
+    }
+  },
+  "typography": {
+    "font_family": {
+      "primary": "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+      "secondary": "'Roboto Mono', 'Consolas', monospace",
+      "display": "'Poppins', 'Inter', sans-serif"
+    },
+    "font_sizes": {
+      "xs": "12px",
+      "sm": "14px",
+      "base": "16px",
+      "lg": "18px",
+      "xl": "20px",
+      "2xl": "24px",
+      "3xl": "30px",
+      "4xl": "36px",
+      "5xl": "48px"
+    },
+    "font_weights": {
+      "light": 300,
+      "normal": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700,
+      "extrabold": 800
+    }
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px",
+    "2xl": "48px",
+    "3xl": "64px"
+  },
+  "border_radius": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "12px",
+    "xl": "16px",
+    "full": "9999px"
+  },
+  "shadows": {
+    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+    "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+  },
+  "logo": {
+    "primary": "assets/logo.svg",
+    "favicon": "assets/favicon.ico",
+    "apple_touch_icon": "assets/apple-touch-icon.png",
+    "sizes": {
+      "16": "assets/logo-16.png",
+      "32": "assets/logo-32.png",
+      "48": "assets/logo-48.png",
+      "64": "assets/logo-64.png",
+      "128": "assets/logo-128.png",
+      "256": "assets/logo-256.png",
+      "512": "assets/logo-512.png"
+    }
+  },
+  "themes": {
+    "light": {
+      "background": "#FFFFFF",
+      "surface": "#F8F9FA",
+      "primary": "#0099CC",
+      "secondary": "#FFD700",
+      "text_primary": "#333333",
+      "text_secondary": "#666666",
+      "border": "#E5E5E5"
+    },
+    "dark": {
+      "background": "#1A1A1A",
+      "surface": "#2D2D2D",
+      "primary": "#00D4FF",
+      "secondary": "#FFD700",
+      "text_primary": "#FFFFFF",
+      "text_secondary": "#CCCCCC",
+      "border": "#404040"
+    }
+  },
+  "components": {
+    "button": {
+      "primary": {
+        "background": "linear-gradient(135deg, #00D4FF 0%, #0099CC 100%)",
+        "color": "#FFFFFF",
+        "border": "none",
+        "border_radius": "8px",
+        "padding": "12px 24px",
+        "font_weight": 600,
+        "hover_background": "linear-gradient(135deg, #0099CC 0%, #0066AA 100%)"
+      },
+      "secondary": {
+        "background": "transparent",
+        "color": "#0099CC",
+        "border": "2px solid #0099CC",
+        "border_radius": "8px",
+        "padding": "10px 22px",
+        "font_weight": 600,
+        "hover_background": "#0099CC",
+        "hover_color": "#FFFFFF"
+      }
+    },
+    "card": {
+      "background": "#FFFFFF",
+      "border": "1px solid #E5E5E5",
+      "border_radius": "12px",
+      "padding": "24px",
+      "shadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+    },
+    "input": {
+      "background": "#FFFFFF",
+      "border": "2px solid #E5E5E5",
+      "border_radius": "8px",
+      "padding": "12px 16px",
+      "font_size": "16px",
+      "focus_border": "#0099CC",
+      "focus_shadow": "0 0 0 3px rgba(0, 153, 204, 0.1)"
+    }
+  },
+  "animations": {
+    "duration": {
+      "fast": "150ms",
+      "normal": "300ms",
+      "slow": "500ms"
+    },
+    "easing": {
+      "ease_in": "cubic-bezier(0.4, 0, 1, 1)",
+      "ease_out": "cubic-bezier(0, 0, 0.2, 1)",
+      "ease_in_out": "cubic-bezier(0.4, 0, 0.2, 1)"
+    }
+  },
+  "breakpoints": {
+    "mobile": "480px",
+    "tablet": "768px",
+    "desktop": "1024px",
+    "wide": "1280px"
+  },
+  "social": {
+    "twitter": "@TradingBotPro",
+    "discord": "https://discord.gg/tradingbotpro",
+    "github": "https://github.com/tradingbotpro",
+    "youtube": "https://youtube.com/@tradingbotpro",
+    "telegram": "https://t.me/tradingbotpro"
+  },
+  "meta": {
+    "keywords": "trading bot, cryptocurrency, automated trading, binance, bitcoin, ethereum, trading strategies",
+    "og_image": "assets/og-image.png",
+    "twitter_card": "summary_large_image",
+    "theme_color": "#0099CC"
+  }
+}

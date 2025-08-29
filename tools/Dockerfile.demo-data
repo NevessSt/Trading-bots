@@ -1,0 +1,31 @@
+# Demo Data Generator Dockerfile
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    psycopg2-binary \
+    redis \
+    requests \
+    flask
+
+# Copy demo data generator
+COPY demo_data_generator.py .
+
+# Make script executable
+RUN chmod +x demo_data_generator.py
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
+
+# Run demo data generator
+CMD ["python", "demo_data_generator.py"]

@@ -1,0 +1,57 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D4FF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0099CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0066AA;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="url(#primaryGradient)"/>
+  
+  <!-- Robot head -->
+  <circle cx="16" cy="14" r="6" fill="#FFFFFF" stroke="url(#primaryGradient)" stroke-width="0.5"/>
+  
+  <!-- Robot eyes -->
+  <circle cx="14" cy="13" r="1" fill="url(#primaryGradient)"/>
+  <circle cx="18" cy="13" r="1" fill="url(#primaryGradient)"/>
+  
+  <!-- Robot mouth/display -->
+  <rect x="13" y="15" width="6" height="1.5" rx="0.75" fill="url(#accentGradient)"/>
+  
+  <!-- Trading chart -->
+  <polyline points="13.5,15.75 15,14.5 16.5,16 18,14 18.5,15" 
+            fill="none" stroke="#FFFFFF" stroke-width="0.3" stroke-linecap="round"/>
+  
+  <!-- Antennas -->
+  <line x1="13" y1="9" x2="13" y2="7" stroke="url(#primaryGradient)" stroke-width="0.5" stroke-linecap="round"/>
+  <line x1="19" y1="9" x2="19" y2="7" stroke="url(#primaryGradient)" stroke-width="0.5" stroke-linecap="round"/>
+  
+  <!-- Antenna tips -->
+  <circle cx="13" cy="7" r="0.5" fill="url(#accentGradient)"/>
+  <circle cx="19" cy="7" r="0.5" fill="url(#accentGradient)"/>
+  
+  <!-- Chart element -->
+  <rect x="12" y="20" width="8" height="4" rx="0.5" fill="rgba(255,255,255,0.9)" stroke="url(#primaryGradient)" stroke-width="0.2"/>
+  
+  <!-- Chart bars -->
+  <rect x="13" y="21" width="0.8" height="2.5" fill="url(#accentGradient)"/>
+  <rect x="14.2" y="21.5" width="0.8" height="2" fill="url(#primaryGradient)"/>
+  <rect x="15.4" y="21" width="0.8" height="2.8" fill="url(#accentGradient)"/>
+  <rect x="16.6" y="21.8" width="0.8" height="1.5" fill="url(#primaryGradient)"/>
+  <rect x="17.8" y="21.3" width="0.8" height="2.2" fill="url(#accentGradient)"/>
+  
+  <!-- Trend arrow -->
+  <polyline points="13,25 16,23 19,25" fill="none" stroke="#00AA00" stroke-width="0.4" stroke-linecap="round"/>
+  <polygon points="19,25 18.2,24.2 19.8,24.2" fill="#00AA00"/>
+  
+  <!-- Currency symbols -->
+  <text x="6" y="26" font-family="Arial, sans-serif" font-size="3" font-weight="bold" fill="rgba(255,255,255,0.8)">$</text>
+  <text x="25" y="26" font-family="Arial, sans-serif" font-size="3" font-weight="bold" fill="rgba(255,255,255,0.8)">₿</text>
+</svg>

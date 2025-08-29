@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import { ShoppingCart, TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react'
 
-const TradingInterface = () => {
+const TradingInterface = ({ mode = 'demo', marketData = [] }) => {
   const [orderType, setOrderType] = useState('market')
   const [side, setSide] = useState('buy')
   const [amount, setAmount] = useState('')
   const [price, setPrice] = useState('')
   const [symbol, setSymbol] = useState('BTC/USD')
+  const [balance] = useState({
+    USD: mode === 'demo' ? 100000 : 10000,
+    BTC: mode === 'demo' ? 2.5 : 0.5,
+    ETH: mode === 'demo' ? 10.3 : 2.3
+  })
   const [orders, setOrders] = useState([
     { id: 1, symbol: 'BTC/USD', side: 'buy', amount: 0.5, price: 43200, status: 'filled', time: '10:30 AM' },
     { id: 2, symbol: 'ETH/USD', side: 'sell', amount: 2.0, price: 2100, status: 'pending', time: '10:25 AM' },
@@ -24,30 +29,44 @@ const TradingInterface = () => {
 
   const handleSubmitOrder = (e) => {
     e.preventDefault()
-    if (!amount || (orderType === 'limit' && !price)) return
+    if (!amount || (orderType === 'limit' && !price)) {
+      alert('Please fill in all required fields')
+      return
+    }
 
+    const currentPrice = marketData.find(item => item.symbol === symbol.replace('/', ''))?.price || currentPrices[symbol]
+    
     const newOrder = {
       id: orders.length + 1,
       symbol,
       side,
       amount: parseFloat(amount),
-      price: orderType === 'market' ? currentPrices[symbol] : parseFloat(price),
+      price: orderType === 'market' ? currentPrice : parseFloat(price),
       status: 'pending',
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }),
+      mode: mode
     }
 
     setOrders([newOrder, ...orders])
     setAmount('')
     setPrice('')
     
+    // Show demo mode confirmation
+    if (mode === 'demo') {
+      alert(`Demo Order Placed: ${side.toUpperCase()} ${amount} ${symbol} ${orderType === 'market' ? 'at market price' : `at $${price}`}`)
+    }
+    
     // Simulate order execution
     setTimeout(() => {
       setOrders(prev => prev.map(order => 
         order.id === newOrder.id 
-          ? { ...order, status: Math.random() > 0.1 ? 'filled' : 'cancelled' }
+          ? { ...order, status: 'filled' }
           : order
       ))
-    }, 2000)
+    }, mode === 'demo' ? 1000 : 2000)
   }
 
   const getStatusColor = (status) => {
@@ -70,6 +89,19 @@ const TradingInterface = () => {
 
   return (
     <div className="space-y-6">
+      {/* Demo Mode Indicator */}
+      {mode === 'demo' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-blue-800 font-medium">Demo Trading Mode</span>
+            </div>
+            <span className="text-blue-600 text-sm">All trades are simulated with virtual funds</span>
+          </div>
+        </div>
+      )}
+      
       {/* Order Form */}
       <div className="card">
         <div className="flex items-center space-x-2 mb-4">

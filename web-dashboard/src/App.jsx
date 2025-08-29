@@ -14,28 +14,75 @@ import {
   Target,
   Clock
 } from 'lucide-react'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
 import TradingChart from './components/TradingChart'
 import PortfolioOverview from './components/PortfolioOverview'
 import TradingInterface from './components/TradingInterface'
 import RecentTrades from './components/RecentTrades'
 import MarketData from './components/MarketData'
 import SetupWizardLauncher from './components/SetupWizardLauncher'
+import DemoModeToggle from './components/DemoModeToggle'
+import DemoBanner from './components/DemoBanner'
+import demoDataService from './services/demoDataService'
+
+// Create Material-UI theme
+const muiTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+    success: {
+      main: '#2e7d32',
+    },
+    error: {
+      main: '#d32f2f',
+    },
+    warning: {
+      main: '#ed6c02',
+    },
+    info: {
+      main: '#0288d1',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          borderRadius: 8,
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          borderRadius: 6,
+        },
+      },
+    },
+  },
+})
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showSetupWizard, setShowSetupWizard] = useState(false)
   const [setupCompleted, setSetupCompleted] = useState(false)
-  const [portfolioData, setPortfolioData] = useState({
-    totalValue: 125430.50,
-    dailyChange: 2.34,
-    dailyChangePercent: 1.89,
-    positions: [
-      { symbol: 'BTC/USD', amount: 2.5, value: 87500, change: 3.2 },
-      { symbol: 'ETH/USD', amount: 15.8, value: 31600, change: -1.5 },
-      { symbol: 'ADA/USD', amount: 5000, value: 6330.50, change: 5.7 }
-    ]
-  })
+  const [tradingMode, setTradingMode] = useState('demo')
+  const [showDemoBanner, setShowDemoBanner] = useState(true)
+  const [portfolioData, setPortfolioData] = useState(null)
+  const [marketData, setMarketData] = useState([])
+  const [recentTrades, setRecentTrades] = useState([])
+  const [botMetrics, setBotMetrics] = useState(null)
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
@@ -45,35 +92,57 @@ function App() {
     { id: 'settings', name: 'Settings', icon: Settings },
   ]
 
-  // Check setup status on app load
+  // Initialize app on load
   useEffect(() => {
     const completed = localStorage.getItem('setupCompleted') === 'true'
     const skipped = localStorage.getItem('setupSkipped') === 'true'
+    const savedMode = localStorage.getItem('tradingMode') || 'demo'
+    const bannerDismissed = localStorage.getItem('demoBannerDismissed') === 'true'
     
     setSetupCompleted(completed)
+    setTradingMode(savedMode)
+    setShowDemoBanner(!bannerDismissed && savedMode === 'demo')
     
     // Show setup wizard if neither completed nor skipped
     if (!completed && !skipped) {
       setShowSetupWizard(true)
     }
+    
+    // Initialize data based on mode
+    loadData(savedMode)
   }, [])
 
-  // Simulate real-time data updates
+  // Load data based on current mode
+  const loadData = (mode) => {
+    if (mode === 'demo') {
+      // Load demo data
+      setPortfolioData(demoDataService.getPortfolioData())
+      setMarketData(demoDataService.getMarketData())
+      setRecentTrades(demoDataService.getRecentTrades())
+      setBotMetrics(demoDataService.getBotMetrics())
+    } else {
+      // Load live data (would connect to real APIs)
+      // For now, we'll use demo data as fallback
+      setPortfolioData(demoDataService.getPortfolioData())
+      setMarketData(demoDataService.getMarketData())
+      setRecentTrades(demoDataService.getRecentTrades())
+      setBotMetrics(demoDataService.getBotMetrics())
+    }
+  }
+
+  // Real-time data updates
   useEffect(() => {
     const interval = setInterval(() => {
-      setPortfolioData(prev => ({
-        ...prev,
-        totalValue: prev.totalValue + (Math.random() - 0.5) * 100,
-        dailyChange: prev.dailyChange + (Math.random() - 0.5) * 0.5,
-        positions: prev.positions.map(pos => ({
-          ...pos,
-          change: pos.change + (Math.random() - 0.5) * 2
-        }))
-      }))
+      if (tradingMode === 'demo') {
+        setPortfolioData(demoDataService.getPortfolioData())
+        setMarketData(demoDataService.getMarketData())
+        setRecentTrades(demoDataService.getRecentTrades())
+        setBotMetrics(demoDataService.getBotMetrics())
+      }
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [tradingMode])
 
   const handleSetupComplete = (config) => {
     setSetupCompleted(true)
@@ -86,43 +155,89 @@ function App() {
     setShowSetupWizard(false)
   }
 
+  const handleModeChange = (newMode) => {
+    setTradingMode(newMode)
+    loadData(newMode)
+    
+    // Show demo banner when switching to demo mode
+    if (newMode === 'demo') {
+      setShowDemoBanner(true)
+      localStorage.removeItem('demoBannerDismissed')
+    } else {
+      setShowDemoBanner(false)
+    }
+  }
+
+  const handleDemoBannerDismiss = () => {
+    setShowDemoBanner(false)
+  }
+
+  const handleSwitchToLive = () => {
+    handleModeChange('live')
+  }
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return (
           <div className="space-y-6">
+            {/* Demo Banner */}
+            {tradingMode === 'demo' && showDemoBanner && (
+              <DemoBanner 
+                onDismiss={handleDemoBannerDismiss}
+                onSwitchToLive={handleSwitchToLive}
+              />
+            )}
+            
+            {/* Portfolio Overview */}
+            <PortfolioOverview data={portfolioData} />
+            
+            {/* Market Data and Trading Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <PortfolioOverview data={portfolioData} />
+                <TradingChart data={chartData} />
               </div>
               <div>
-                <MarketData />
+                <MarketData data={marketData} />
               </div>
             </div>
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="xl:col-span-2">
-                <TradingChart />
-              </div>
-              <div>
-                <RecentTrades />
-              </div>
-            </div>
+            
+            {/* Recent Trades */}
+            <RecentTrades data={recentTrades} />
           </div>
         )
       case 'trading':
         return (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2">
-              <TradingChart />
-            </div>
-            <div>
-              <TradingInterface />
+          <div className="space-y-6">
+            {/* Demo Banner */}
+            {tradingMode === 'demo' && showDemoBanner && (
+              <DemoBanner 
+                onDismiss={handleDemoBannerDismiss}
+                onSwitchToLive={handleSwitchToLive}
+              />
+            )}
+            
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="xl:col-span-2">
+                <TradingChart mode={tradingMode} />
+              </div>
+              <div>
+                <TradingInterface mode={tradingMode} marketData={marketData} />
+              </div>
             </div>
           </div>
         )
       case 'portfolio':
         return (
           <div className="space-y-6">
+            {/* Demo Banner */}
+            {tradingMode === 'demo' && showDemoBanner && (
+              <DemoBanner 
+                onDismiss={handleDemoBannerDismiss}
+                onSwitchToLive={handleSwitchToLive}
+              />
+            )}
+            
             <PortfolioOverview data={portfolioData} detailed={true} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="card">
@@ -170,12 +285,38 @@ function App() {
       case 'history':
         return (
           <div className="space-y-6">
-            <RecentTrades detailed={true} />
+            {/* Demo Banner */}
+            {tradingMode === 'demo' && showDemoBanner && (
+              <DemoBanner 
+                onDismiss={handleDemoBannerDismiss}
+                onSwitchToLive={handleSwitchToLive}
+              />
+            )}
+            
+            <RecentTrades data={recentTrades} detailed={true} />
           </div>
         )
       case 'settings':
         return (
           <div className="space-y-6">
+            <div className="card">
+              <h3 className="text-lg font-semibold mb-4">Trading Mode</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium">Current Mode</h4>
+                    <p className="text-sm text-gray-600">
+                      {tradingMode === 'demo' ? 'Demo mode with simulated data' : 'Live trading with real money'}
+                    </p>
+                  </div>
+                  <DemoModeToggle 
+                    currentMode={tradingMode}
+                    onModeChange={handleModeChange}
+                  />
+                </div>
+              </div>
+            </div>
+            
             <SetupWizardLauncher 
               onSetupComplete={handleSetupComplete}
             />
@@ -240,7 +381,9 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <ThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div 
@@ -308,6 +451,10 @@ function App() {
                 <span className="text-gray-600">Bot Status:</span>
                 <span className="font-medium text-success-600">Active</span>
               </div>
+              <DemoModeToggle 
+                currentMode={tradingMode}
+                onModeChange={handleModeChange}
+              />
               <button className="p-2 text-gray-400 hover:text-gray-600">
                 <Bell className="h-5 w-5" />
               </button>
@@ -323,7 +470,8 @@ function App() {
           {renderContent()}
         </main>
       </div>
-    </div>
+      </div>
+    </ThemeProvider>
   )
 }
 

@@ -9,7 +9,15 @@
     "start": "react-native start",
     "test": "jest",
     "build:android": "cd android && ./gradlew assembleRelease",
-    "build:ios": "cd ios && xcodebuild -workspace TradingBotMobile.xcworkspace -scheme TradingBotMobile -configuration Release -destination generic/platform=iOS -archivePath TradingBotMobile.xcarchive archive"
+    "build:ios": "cd ios && xcodebuild -workspace TradingBotMobile.xcworkspace -scheme TradingBotMobile -configuration Release -destination generic/platform=iOS -archivePath TradingBotMobile.xcarchive archive",
+    "package:android": "node build-mobile-packages.js android",
+    "package:ios": "node build-mobile-packages.js ios",
+    "package:all": "node build-mobile-packages.js all",
+    "build:apk": "cd android && ./gradlew assembleRelease",
+    "build:aab": "cd android && ./gradlew bundleRelease",
+    "clean:android": "cd android && ./gradlew clean",
+    "clean:ios": "cd ios && xcodebuild clean -workspace TradingBotMobile.xcworkspace -scheme TradingBotMobile",
+    "clean": "npm run clean:android && npm run clean:ios"
   },
   "dependencies": {
     "react": "18.2.0",

@@ -20,8 +20,14 @@
     "build-installers:mac": "node build-installers.js --mac",
     "build-installers:linux": "node build-installers.js --linux",
     "build-all": "node build-installers.js --all",
+    "build-installer": "node build-installer.js",
+    "build-installer:win": "node build-installer.js --platform=win32",
+    "build-installer:mac": "node build-installer.js --platform=darwin",
+    "build-installer:linux": "node build-installer.js --platform=linux",
     "prepack": "npm run build",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "clean": "rimraf dist build",
+    "test": "echo 'No tests specified'"
   },
   "build": {
     "appId": "com.tradingbot.desktop",
@@ -52,6 +58,36 @@
         "from": "assets/",
         "to": "assets/",
         "filter": ["**/*"]
+      },
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/venv/**",
+          "!**/env/**",
+          "!**/.env",
+          "!**/logs/**",
+          "!**/test_*.py",
+          "!**/tests/**"
+        ]
+      },
+      {
+        "from": "../web-dashboard/dist",
+        "to": "web-dashboard",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../license-server",
+        "to": "license-server",
+        "filter": [
+          "**/*",
+          "!**/node_modules/**",
+          "!**/.env",
+          "!**/logs/**"
+        ]
       }
     ],
     "publish": {
@@ -84,7 +120,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Trading Bot Desktop",
-      "include": "installer.nsh",
+      "include": "installer-script.nsh",
       "installerIcon": "assets/icon.svg",
       "uninstallerIcon": "assets/icon.svg",
       "installerHeaderIcon": "assets/icon.svg",
@@ -176,10 +212,22 @@
     }
   },
   "dependencies": {
-    "electron-updater": "^6.1.0"
+    "electron-updater": "^6.1.7",
+    "electron-log": "^5.0.1",
+    "electron-store": "^8.1.0",
+    "axios": "^1.6.2",
+    "ws": "^8.14.2",
+    "node-notifier": "^10.0.1",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "fs-extra": "^11.2.0"
   },
   "devDependencies": {
-    "electron": "^25.0.0",
-    "electron-builder": "^24.0.0"
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "rimraf": "^5.0.5",
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0"
   }
 }

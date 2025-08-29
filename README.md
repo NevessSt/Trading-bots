@@ -108,6 +108,14 @@ TradingBot Pro is a professional-grade cryptocurrency trading bot designed for s
 
 ## 📸 Screenshots
 
+### 🖥️ Desktop Application
+![Desktop Application](screenshots/desktop-screenshot.png)
+*Professional Electron-based desktop application with modern UI, theme toggle, and comprehensive trading interface*
+
+### 🌐 Web Dashboard
+![Web Dashboard](screenshots/web-dashboard-screenshot.png)
+*Responsive web dashboard with real-time data, interactive charts, and portfolio management*
+
 ### 🎯 Live Trading Dashboard
 ![Trading Dashboard](samples/live/dashboard_screenshot.svg)
 *Real-time portfolio monitoring with performance charts, active bots overview, and recent trades*

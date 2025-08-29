@@ -1406,6 +1406,10 @@ trading-bot/
 - **[SAAS_INTEGRATION_GUIDE.md](SAAS_INTEGRATION_GUIDE.md)** - Multi-tenant SaaS implementation guide
 - **[LICENSE_REVOCATION.md](LICENSE_REVOCATION.md)** - License management and revocation system
 
+### Mobile & Desktop App Documentation
+- **[MOBILE_APP_GUIDE.md](docs/MOBILE_APP_GUIDE.md)** - Complete mobile app user guide with setup, features, demo trading, and troubleshooting
+- **[DESKTOP_APP_GUIDE.md](docs/DESKTOP_APP_GUIDE.md)** - Comprehensive desktop app documentation covering installation, trading modes, and advanced features
+
 ### Support & Legal
 - **[SUPPORT.md](SUPPORT.md)** - Support options and contact information (includes 7-day free support)
 - **[DISCLAIMER.md](DISCLAIMER.md)** - Risk warnings, liability limitations, and legal disclaimers

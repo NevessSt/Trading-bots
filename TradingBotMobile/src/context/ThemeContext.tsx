@@ -65,45 +65,53 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Custom light theme with trading colors
+// Custom light theme with enhanced design system
 const lightTheme: CustomTheme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#1976D2',
+    // Primary brand colors - Modern blue gradient system
+    primary: '#2563EB', // Blue-600
     onPrimary: '#FFFFFF',
     primaryContainer: '#E3F2FD',
     onPrimaryContainer: '#0D47A1',
-    secondary: '#424242',
+    secondary: '#7C3AED', // Violet-600
     onSecondary: '#FFFFFF',
     secondaryContainer: '#F5F5F5',
     onSecondaryContainer: '#212121',
-    // Trading-specific colors
-    profit: '#4CAF50',
-    loss: '#F44336',
-    warning: '#FF9800',
-    info: '#2196F3',
+    // Enhanced background system
+    background: '#FFFFFF',
+    surface: '#F8FAFC', // Slate-50
+    // Trading-specific colors with modern palette
+    profit: '#10B981', // Emerald-500
+    loss: '#EF4444', // Red-500
+    warning: '#F59E0B', // Amber-500
+    info: '#3B82F6', // Blue-500
   },
 };
 
-// Custom dark theme with trading colors
+// Custom dark theme with enhanced design system
 const darkTheme: CustomTheme = {
   ...MD3DarkTheme,
   colors: {
     ...MD3DarkTheme.colors,
-    primary: '#90CAF9',
-    onPrimary: '#0D47A1',
-    primaryContainer: '#1565C0',
-    onPrimaryContainer: '#E3F2FD',
-    secondary: '#BDBDBD',
-    onSecondary: '#424242',
-    secondaryContainer: '#616161',
-    onSecondaryContainer: '#F5F5F5',
-    // Trading-specific colors
-    profit: '#66BB6A',
-    loss: '#EF5350',
-    warning: '#FFB74D',
-    info: '#42A5F5',
+    // Primary brand colors - Adjusted for dark mode
+    primary: '#3B82F6', // Blue-500 (brighter for dark)
+    onPrimary: '#FFFFFF',
+    primaryContainer: '#1E3A8A', // Blue-900
+    onPrimaryContainer: '#DBEAFE', // Blue-100
+    secondary: '#8B5CF6', // Violet-500
+    onSecondary: '#FFFFFF',
+    secondaryContainer: '#4C1D95', // Violet-900
+    onSecondaryContainer: '#EDE9FE', // Violet-100
+    // Enhanced dark background system
+    background: '#0F172A', // Slate-900
+    surface: '#1E293B', // Slate-800
+    // Trading-specific colors - Enhanced for dark mode visibility
+    profit: '#34D399', // Emerald-400 (brighter for dark backgrounds)
+    loss: '#F87171', // Red-400 (softer for dark backgrounds)
+    warning: '#FBBF24', // Amber-400
+    info: '#60A5FA', // Blue-400
   },
 };
 

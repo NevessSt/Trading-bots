@@ -41,50 +41,63 @@ const Button: React.FC<ButtonProps> = ({
 
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
-      borderRadius: 8,
+      borderRadius: theme.borderRadius?.lg || 12,
       justifyContent: 'center',
       alignItems: 'center',
       flexDirection: 'row',
     };
 
-    // Size styles
+    // Enhanced size styles with better proportions
     switch (size) {
       case 'small':
-        baseStyle.paddingHorizontal = 12;
-        baseStyle.paddingVertical = 8;
-        baseStyle.minHeight = 32;
+        baseStyle.paddingHorizontal = theme.spacing?.md || 16;
+        baseStyle.paddingVertical = theme.spacing?.sm || 8;
+        baseStyle.minHeight = 36;
+        baseStyle.borderRadius = theme.borderRadius?.md || 8;
         break;
       case 'large':
-        baseStyle.paddingHorizontal = 24;
-        baseStyle.paddingVertical = 16;
+        baseStyle.paddingHorizontal = theme.spacing?.xl || 32;
+        baseStyle.paddingVertical = theme.spacing?.lg || 16;
         baseStyle.minHeight = 56;
+        baseStyle.borderRadius = theme.borderRadius?.xl || 16;
         break;
       default: // medium
-        baseStyle.paddingHorizontal = 16;
-        baseStyle.paddingVertical = 12;
-        baseStyle.minHeight = 44;
+        baseStyle.paddingHorizontal = theme.spacing?.lg || 24;
+        baseStyle.paddingVertical = theme.spacing?.md || 12;
+        baseStyle.minHeight = 48;
+        baseStyle.borderRadius = theme.borderRadius?.lg || 12;
     }
 
-    // Variant styles
+    // Enhanced variant styles with modern design
     switch (variant) {
       case 'secondary':
-        baseStyle.backgroundColor = theme.colors.surfaceVariant;
+        baseStyle.backgroundColor = theme.colors.surfaceVariant || theme.colors.surface;
+        baseStyle.borderWidth = 1;
+        baseStyle.borderColor = theme.colors.border;
+        if (theme.shadows?.sm) {
+          Object.assign(baseStyle, theme.shadows.sm);
+        }
         break;
       case 'outline':
         baseStyle.backgroundColor = 'transparent';
-        baseStyle.borderWidth = 1;
-        baseStyle.borderColor = theme.colors.outline;
+        baseStyle.borderWidth = 2;
+        baseStyle.borderColor = theme.colors.primary;
         break;
       case 'text':
         baseStyle.backgroundColor = 'transparent';
+        baseStyle.borderWidth = 0;
         break;
       default: // primary
         baseStyle.backgroundColor = theme.colors.primary;
+        baseStyle.borderWidth = 0;
+        if (theme.shadows?.md) {
+          Object.assign(baseStyle, theme.shadows.md);
+        }
     }
 
     // Disabled state
     if (disabled || loading) {
-      baseStyle.opacity = 0.6;
+      baseStyle.opacity = 0.5;
     }
 
     // Full width

@@ -106,9 +106,10 @@ const Input: React.FC<InputProps> = ({
       flex: 1,
       color: theme.colors.onSurface,
       paddingVertical: 0, // Remove default padding
+      fontFamily: theme.typography?.body?.fontFamily,
     };
 
-    // Size styles
+    // Enhanced size styles with better proportions
     switch (size) {
       case 'small':
         baseStyle.fontSize = 14;

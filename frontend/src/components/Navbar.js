@@ -18,6 +18,8 @@ import {
   KeyIcon,
   ChatBubbleLeftRightIcon,
   WifiIcon,
+  BuildingStorefrontIcon,
+  CircleStackIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
@@ -25,6 +27,8 @@ import {
   CogIcon as CogIconSolid,
   UserIcon as UserIconSolid,
   WifiIcon as WifiIconSolid,
+  BuildingStorefrontIcon as BuildingStorefrontIconSolid,
+  CircleStackIcon as CircleStackIconSolid,
 } from '@heroicons/react/24/solid';
 
 const Navbar = () => {
@@ -81,6 +85,20 @@ const Navbar = () => {
       icon: ChartBarIcon,
       iconSolid: ChartBarIconSolid,
       current: location.pathname === '/performance',
+    },
+    {
+      name: 'Marketplace',
+      href: '/marketplace',
+      icon: BuildingStorefrontIcon,
+      iconSolid: BuildingStorefrontIconSolid,
+      current: location.pathname === '/marketplace',
+    },
+    {
+      name: 'Exchanges',
+      href: '/exchanges',
+      icon: CircleStackIcon,
+      iconSolid: CircleStackIconSolid,
+      current: location.pathname === '/exchanges',
     },
     {
       name: 'Settings',

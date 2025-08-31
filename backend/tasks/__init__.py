@@ -4,6 +4,7 @@ from .trading import *
 from .notifications import *
 from .analytics import *
 from .maintenance import *
+from .demo_user_tasks import *
 
 __all__ = [
     # Trading tasks
@@ -30,4 +31,10 @@ __all__ = [
     'system_health_check',
     'database_maintenance',
     'log_rotation',
+    
+    # Demo user tasks
+    'cleanup_expired_demo_users',
+    'send_demo_expiration_warnings',
+    'generate_demo_user_stats_report',
+    'demo_user_maintenance',
 ]

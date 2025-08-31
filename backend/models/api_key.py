@@ -4,10 +4,12 @@ import secrets
 import string
 import json
 from db import db
-from utils.encryption import get_encryption_manager, EncryptionError
+from services.encryption_service import EncryptionService
+from services.logging_service import get_logger, LogCategory
+from services.error_handler import handle_errors, ErrorCategory
 import logging
 
-logger = logging.getLogger(__name__)
+logger = get_logger(LogCategory.DATABASE)
 
 class APIKey(db.Model):
     """API Key model for managing exchange API keys"""
@@ -38,19 +40,35 @@ class APIKey(db.Model):
     
     # Relationships are defined via backref in User model
     
+    @handle_errors(ErrorCategory.DATABASE_ERROR)
     def __init__(self, user_id, exchange, key_name, api_key, api_secret, passphrase=None, **kwargs):
+        """Initialize API key with encrypted storage"""
         self.user_id = user_id
-        self.exchange = exchange
+        self.exchange = exchange.lower()
         self.key_name = key_name
         self.api_key = api_key
-        self.set_credentials(api_secret, passphrase)
-        self.is_active = True  # Set default value
-        self.usage_count = 0  # Set default value
-        self.created_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+        
+        # Encrypt sensitive data
+        try:
+            encryption_service = EncryptionService()
+            self.api_secret_encrypted = encryption_service.encrypt_data(api_secret)
+            logger.info(f"API secret encrypted for key: {key_name}")
+            
+            if passphrase:
+                self.passphrase_encrypted = encryption_service.encrypt_data(passphrase)
+                logger.info(f"Passphrase encrypted for key: {key_name}")
+                
+            logger.info(f"API key created for user {user_id} on {exchange}")
+        except Exception as e:
+            logger.error(f"Failed to encrypt API key data for {key_name}: {e}")
+            raise ValueError("Failed to encrypt sensitive data")
+        
+        # Set optional attributes
+        self.is_active = kwargs.get('is_active', True)
+        self.is_testnet = kwargs.get('is_testnet', False)
+        self.permissions = kwargs.get('permissions', ['read', 'trade'])
+        self.created_at = kwargs.get('created_at', datetime.utcnow())
+        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
     
     def set_credentials(self, api_secret, passphrase=None):
         """Encrypt and store the API credentials"""
@@ -85,6 +103,37 @@ class APIKey(db.Model):
         except EncryptionError as e:
             logger.error(f"Failed to decrypt API credentials: {str(e)}")
             raise ValueError(f"Failed to decrypt API credentials: {str(e)}")
+    
+    @handle_errors(ErrorCategory.DATABASE_ERROR)
+    def get_decrypted_secret(self):
+        """Get decrypted API secret"""
+        if not self.api_secret_encrypted:
+            logger.warning(f"No encrypted secret found for API key {self.id}")
+            return None
+        
+        try:
+            encryption_service = EncryptionService()
+            decrypted_secret = encryption_service.decrypt_data(self.api_secret_encrypted)
+            logger.debug(f"API secret decrypted for key {self.id}")
+            return decrypted_secret
+        except Exception as e:
+            logger.error(f"Failed to decrypt API secret for key {self.id}: {e}")
+            return None
+    
+    @handle_errors(ErrorCategory.DATABASE_ERROR)
+    def get_decrypted_passphrase(self):
+        """Get decrypted passphrase"""
+        if not self.passphrase_encrypted:
+            return None
+        
+        try:
+            encryption_service = EncryptionService()
+            decrypted_passphrase = encryption_service.decrypt_data(self.passphrase_encrypted)
+            logger.debug(f"Passphrase decrypted for key {self.id}")
+            return decrypted_passphrase
+        except Exception as e:
+            logger.error(f"Failed to decrypt passphrase for key {self.id}: {e}")
+            return None
     
     def verify_secret(self, secret):
         """Verify the API secret by decrypting and comparing"""

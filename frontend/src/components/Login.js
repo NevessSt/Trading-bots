@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { EyeIcon, EyeSlashIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import OAuthLogin from './auth/OAuthLogin';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -151,6 +152,18 @@ const Login = () => {
               )}
             </button>
           </form>
+          
+          {/* OAuth Login */}
+          <OAuthLogin 
+            onSuccess={() => {
+              toast.success('Successfully logged in!');
+              navigate('/dashboard');
+            }}
+            onError={(error) => {
+              toast.error('OAuth login failed');
+              console.error('OAuth error:', error);
+            }}
+          />
         </div>
 
         {/* Demo Credentials */}

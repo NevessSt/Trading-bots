@@ -8,6 +8,7 @@ from .macd_strategy import MACDStrategy
 from .ema_crossover_strategy import EMACrossoverStrategy
 from .scalping_strategy import ScalpingStrategy
 from .swing_trading_strategy import SwingTradingStrategy
+from .arbitrage_strategy import ArbitrageStrategy
 
 # Import the dynamic strategy manager
 try:
@@ -114,6 +115,19 @@ class StrategyFactory:
                 trend_ema_slow=parameters.get('trend_ema_slow', 50),
                 profit_target=parameters.get('profit_target', 0.08),
                 stop_loss=parameters.get('stop_loss', 0.04)
+            )
+        elif strategy_name.lower() == 'arbitrage':
+            strategy = ArbitrageStrategy(
+                min_profit_threshold=parameters.get('min_profit_threshold', 0.005),
+                max_position_size=parameters.get('max_position_size', 1000),
+                slippage_tolerance=parameters.get('slippage_tolerance', 0.002),
+                transaction_cost=parameters.get('transaction_cost', 0.001),
+                max_execution_time=parameters.get('max_execution_time', 30),
+                enable_cross_exchange=parameters.get('enable_cross_exchange', True),
+                enable_triangular=parameters.get('enable_triangular', True),
+                enable_spot_futures=parameters.get('enable_spot_futures', False),
+                max_daily_trades=parameters.get('max_daily_trades', 50),
+                max_concurrent_trades=parameters.get('max_concurrent_trades', 3)
             )
         else:
             raise ValueError(f"Unknown strategy: {strategy_name}")
@@ -363,6 +377,83 @@ class StrategyFactory:
                 'risk_level': 'medium',
                 'min_capital': 5000.0,
                 'supported_timeframes': ['4h', '1d']
+            },
+            {
+                'id': 'arbitrage',
+                'name': 'Arbitrage Strategy',
+                'description': 'Cross-exchange and triangular arbitrage strategy for risk-free profits',
+                'version': '1.0.0',
+                'author': 'System',
+                'parameters': {
+                    'min_profit_threshold': {
+                        'type': 'float',
+                        'default': 0.005,
+                        'min': 0.001,
+                        'max': 0.02,
+                        'description': 'Minimum profit threshold (as decimal)'
+                    },
+                    'max_position_size': {
+                        'type': 'float',
+                        'default': 1000,
+                        'min': 100,
+                        'max': 10000,
+                        'description': 'Maximum position size in USD'
+                    },
+                    'slippage_tolerance': {
+                        'type': 'float',
+                        'default': 0.002,
+                        'min': 0.001,
+                        'max': 0.01,
+                        'description': 'Maximum acceptable slippage'
+                    },
+                    'transaction_cost': {
+                        'type': 'float',
+                        'default': 0.001,
+                        'min': 0.0005,
+                        'max': 0.005,
+                        'description': 'Estimated transaction cost per trade'
+                    },
+                    'max_execution_time': {
+                        'type': 'integer',
+                        'default': 30,
+                        'min': 10,
+                        'max': 120,
+                        'description': 'Maximum execution time in seconds'
+                    },
+                    'enable_cross_exchange': {
+                        'type': 'boolean',
+                        'default': True,
+                        'description': 'Enable cross-exchange arbitrage'
+                    },
+                    'enable_triangular': {
+                        'type': 'boolean',
+                        'default': True,
+                        'description': 'Enable triangular arbitrage'
+                    },
+                    'enable_spot_futures': {
+                        'type': 'boolean',
+                        'default': False,
+                        'description': 'Enable spot-futures arbitrage'
+                    },
+                    'max_daily_trades': {
+                        'type': 'integer',
+                        'default': 50,
+                        'min': 10,
+                        'max': 200,
+                        'description': 'Maximum trades per day'
+                    },
+                    'max_concurrent_trades': {
+                        'type': 'integer',
+                        'default': 3,
+                        'min': 1,
+                        'max': 10,
+                        'description': 'Maximum concurrent arbitrage trades'
+                    }
+                },
+                'tags': ['arbitrage', 'cross_exchange', 'risk_free'],
+                'risk_level': 'low',
+                'min_capital': 2000.0,
+                'supported_timeframes': ['1m', '5m']
             }
         ]
     
@@ -414,8 +505,8 @@ class StrategyFactory:
         
         # Return basic stats for legacy mode
         return {
-            'total_strategies': 5,
-            'active_strategies': 5,
+            'total_strategies': 6,
+            'active_strategies': 6,
             'inactive_strategies': 0,
             'dynamic_loading_enabled': False
         }

@@ -140,7 +140,7 @@ def register_routes(app):
         from api.auth_routes import auth_bp
         from api.user_routes import user_bp
         from api.trading_routes import trading_bp
-        from api.admin_routes import admin_bp
+        from routes.admin_routes import admin_bp  # Updated to use new admin routes
         from api.backtest_routes import backtest_bp
         from api.api_key_routes import api_key_bp
         from api.notification_routes import notification_bp
@@ -153,15 +153,20 @@ def register_routes(app):
         from api.license_routes import license_bp
         from api.connection_test_routes import connection_test_bp
         from api.strategy_management_routes import strategy_management_bp
+        from api.strategy_marketplace_routes import strategy_marketplace_bp
         from routes.monitoring import monitoring_bp
         from routes.async_tasks import async_tasks_bp
         from routes.websocket_routes import websocket_bp
+        from routes.bot_control import bot_control_bp
+        from routes.oauth_routes import oauth_bp  # Add OAuth routes
+        from routes.analytics import analytics_bp  # Add analytics routes
+        from routes.exchange_routes import exchange_bp  # Add exchange routes
         
         # Register blueprints
         app.register_blueprint(auth_bp, url_prefix='/api/auth')
         app.register_blueprint(user_bp, url_prefix='/api/user')
         app.register_blueprint(trading_bp, url_prefix='/api/trading')
-        app.register_blueprint(admin_bp, url_prefix='/api/admin')
+        app.register_blueprint(admin_bp)  # Admin routes already have /api/admin prefix
         app.register_blueprint(backtest_bp, url_prefix='/api/backtest')
         app.register_blueprint(api_key_bp, url_prefix='/api/api-keys')
         app.register_blueprint(notification_bp, url_prefix='/api/notifications')
@@ -174,9 +179,14 @@ def register_routes(app):
         app.register_blueprint(license_bp, url_prefix='/api/license')
         app.register_blueprint(connection_test_bp, url_prefix='/api/connection')
         app.register_blueprint(strategy_management_bp)
+        app.register_blueprint(strategy_marketplace_bp)
         app.register_blueprint(monitoring_bp)
         app.register_blueprint(async_tasks_bp)
         app.register_blueprint(websocket_bp, url_prefix='/api/websocket')
+        app.register_blueprint(bot_control_bp)
+        app.register_blueprint(oauth_bp)  # OAuth routes already have /api/oauth prefix
+        app.register_blueprint(analytics_bp)  # Analytics routes already have /api/analytics prefix
+        app.register_blueprint(exchange_bp, url_prefix='/api')  # Exchange routes
         
         # Import and register optimization blueprint
         from routes.optimization import optimization_bp

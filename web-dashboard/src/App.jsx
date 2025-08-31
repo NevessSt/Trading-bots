@@ -12,7 +12,9 @@ import {
   Activity,
   Wallet,
   Target,
-  Clock
+  Clock,
+  Bot,
+  PieChart
 } from 'lucide-react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
@@ -24,6 +26,9 @@ import MarketData from './components/MarketData'
 import SetupWizardLauncher from './components/SetupWizardLauncher'
 import DemoModeToggle from './components/DemoModeToggle'
 import DemoBanner from './components/DemoBanner'
+import BotControl from './components/BotControl'
+import BalanceMonitor from './components/BalanceMonitor'
+import PnLTracker from './components/PnLTracker'
 import demoDataService from './services/demoDataService'
 
 // Create Material-UI theme
@@ -86,8 +91,11 @@ function App() {
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
+    { id: 'bots', name: 'Bot Control', icon: Bot },
+    { id: 'balance', name: 'Balance', icon: Wallet },
+    { id: 'pnl', name: 'P&L Tracker', icon: PieChart },
     { id: 'trading', name: 'Trading', icon: TrendingUp },
-    { id: 'portfolio', name: 'Portfolio', icon: Wallet },
+    { id: 'portfolio', name: 'Portfolio', icon: Target },
     { id: 'history', name: 'History', icon: Clock },
     { id: 'settings', name: 'Settings', icon: Settings },
   ]
@@ -204,6 +212,48 @@ function App() {
             
             {/* Recent Trades */}
             <RecentTrades data={recentTrades} />
+          </div>
+        )
+      case 'bots':
+        return (
+          <div className="space-y-6">
+            {/* Demo Banner */}
+            {tradingMode === 'demo' && showDemoBanner && (
+              <DemoBanner 
+                onDismiss={handleDemoBannerDismiss}
+                onSwitchToLive={handleSwitchToLive}
+              />
+            )}
+            
+            <BotControl mode={tradingMode} />
+          </div>
+        )
+      case 'balance':
+        return (
+          <div className="space-y-6">
+            {/* Demo Banner */}
+            {tradingMode === 'demo' && showDemoBanner && (
+              <DemoBanner 
+                onDismiss={handleDemoBannerDismiss}
+                onSwitchToLive={handleSwitchToLive}
+              />
+            )}
+            
+            <BalanceMonitor mode={tradingMode} />
+          </div>
+        )
+      case 'pnl':
+        return (
+          <div className="space-y-6">
+            {/* Demo Banner */}
+            {tradingMode === 'demo' && showDemoBanner && (
+              <DemoBanner 
+                onDismiss={handleDemoBannerDismiss}
+                onSwitchToLive={handleSwitchToLive}
+              />
+            )}
+            
+            <PnLTracker mode={tradingMode} />
           </div>
         )
       case 'trading':

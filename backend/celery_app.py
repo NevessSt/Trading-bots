@@ -56,6 +56,14 @@ celery_app.conf.update(
             'task': 'tasks.maintenance.system_health_check',
             'schedule': 600.0,  # Every 10 minutes
         },
+        'demo-user-maintenance': {
+            'task': 'tasks.demo_user_tasks.demo_user_maintenance',
+            'schedule': 3600.0,  # Every hour
+        },
+        'demo-expiration-warnings': {
+            'task': 'tasks.demo_user_tasks.send_demo_expiration_warnings',
+            'schedule': 86400.0,  # Daily
+        },
     },
 )
 
@@ -64,7 +72,8 @@ celery_app.autodiscover_tasks([
     'tasks.trading',
     'tasks.notifications', 
     'tasks.analytics',
-    'tasks.maintenance'
+    'tasks.maintenance',
+    'tasks.demo_user_tasks'
 ])
 
 # Configure for testing

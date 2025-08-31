@@ -1,259 +1,339 @@
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from auth.license_manager import LicenseManager
-from models.user import User
-from database import db
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from datetime import datetime, timedelta
+import traceback
 
-license_bp = Blueprint('license', __name__)
+from services.license_service import LicenseService, LicenseType, Permission
+from services.auth_service import AuthService
+from services.admin_service import AdminService
+from services.logging_service import get_logger, LogCategory
+from services.error_handler import handle_errors, ErrorCategory
+from middleware.security_middleware import require_permission, require_license_type
+from models.user import User
+from db import db
+
+license_bp = Blueprint('license', __name__, url_prefix='/api/license')
+logger = get_logger(LogCategory.API)
+
+# Initialize services
+license_service = LicenseService()
+auth_service = AuthService()
+admin_service = AdminService()
 
 @license_bp.route('/activate', methods=['POST'])
 @jwt_required()
+@handle_errors(ErrorCategory.API_ERROR)
 def activate_license():
     """Activate a license key for the current user"""
     try:
         data = request.get_json()
-        if not data or 'license_key' not in data:
+        license_key = data.get('license_key')
+        
+        if not license_key:
             return jsonify({'error': 'License key is required'}), 400
         
-        license_key = data['license_key'].strip()
-        if not license_key:
-            return jsonify({'error': 'License key cannot be empty'}), 400
+        user_id = int(get_jwt_identity())
+        user = User.find_by_id(user_id)
         
-        user_id = get_jwt_identity()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
         
         # Activate the license
-        success, message = LicenseManager.activate_license(user_id, license_key)
+        success = license_service.activate_license(license_key, user_id)
         
         if success:
-            # Get updated license info
-            license_info, _ = LicenseManager.get_user_license_info(user_id)
+            # Refresh user data
+            db.session.refresh(user)
+            license_info = user.get_license_info()
+            
+            logger.info(f"License activated for user {user_id}: {license_key[:8]}...")
             return jsonify({
-                'message': message,
+                'message': 'License activated successfully',
                 'license': license_info
             }), 200
         else:
-            return jsonify({'error': message}), 400
+            logger.warning(f"Failed to activate license for user {user_id}: {license_key[:8]}...")
+            return jsonify({'error': 'Invalid or expired license key'}), 400
             
     except Exception as e:
-        current_app.logger.error(f"License activation error: {str(e)}")
-        return jsonify({'error': 'License activation failed'}), 500
+        logger.error(f"Error activating license: {e}")
+        return jsonify({'error': 'Failed to activate license'}), 500
 
-@license_bp.route('/deactivate', methods=['POST'])
+@license_bp.route('/info', methods=['GET'])
 @jwt_required()
-def deactivate_license():
-    """Deactivate the current user's license"""
+@handle_errors(ErrorCategory.API_ERROR)
+def get_license_info():
+    """Get current user's license information"""
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
+        user = User.find_by_id(user_id)
         
-        # Deactivate the license
-        success, message = LicenseManager.deactivate_license(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
         
-        if success:
-            # Get updated license info
-            license_info, _ = LicenseManager.get_user_license_info(user_id)
-            return jsonify({
-                'message': message,
-                'license': license_info
-            }), 200
-        else:
-            return jsonify({'error': message}), 400
-            
-    except Exception as e:
-        current_app.logger.error(f"License deactivation error: {str(e)}")
-        return jsonify({'error': 'License deactivation failed'}), 500
-
-@license_bp.route('/status', methods=['GET'])
-@jwt_required()
-def get_license_status():
-    """Get the current user's license status"""
-    try:
-        user_id = get_jwt_identity()
+        license_info = user.get_license_info()
         
-        # Get license info
-        license_info, error = LicenseManager.get_user_license_info(user_id)
+        # Add usage statistics
+        license_info.update({
+            'current_bots': len([bot for bot in user.bots if bot.is_active]),
+            'current_api_keys': len([key for key in user.api_keys if key.is_active]),
+            'can_create_bot': user.can_create_bot(),
+            'can_create_api_key': user.can_create_api_key()
+        })
         
-        if error:
-            return jsonify({'error': error}), 500
-        
-        return jsonify({'license': license_info}), 200
+        logger.info(f"License info retrieved for user {user_id}")
+        return jsonify(license_info), 200
         
     except Exception as e:
-        current_app.logger.error(f"License status error: {str(e)}")
-        return jsonify({'error': 'Failed to retrieve license status'}), 500
+        logger.error(f"Error getting license info: {e}")
+        return jsonify({'error': 'Failed to get license information'}), 500
 
 @license_bp.route('/validate', methods=['POST'])
 @jwt_required()
-def validate_license_key():
+@handle_errors(ErrorCategory.API_ERROR)
+def validate_license():
     """Validate a license key without activating it"""
     try:
         data = request.get_json()
-        if not data or 'license_key' not in data:
+        license_key = data.get('license_key')
+        
+        if not license_key:
             return jsonify({'error': 'License key is required'}), 400
         
-        license_key = data['license_key'].strip()
-        if not license_key:
-            return jsonify({'error': 'License key cannot be empty'}), 400
+        # Validate the license
+        license_data = license_service.validate_license(license_key)
         
-        # Validate the license key
-        license_data, error = LicenseManager.validate_license_key(license_key)
-        
-        if error:
+        if license_data:
+            logger.info(f"License validated: {license_key[:8]}...")
             return jsonify({
-                'valid': False,
-                'error': error
-            }), 400
-        
-        return jsonify({
-            'valid': True,
-            'license_data': {
-                'type': license_data['type'],
-                'expires': license_data['expires'],
-                'features': license_data['features']
-            }
-        }), 200
-        
+                'valid': True,
+                'license_type': license_data.license_type.value,
+                'expires': license_data.expires_at.isoformat() if license_data.expires_at else None,
+                'features': license_data.features.__dict__
+            }), 200
+        else:
+            logger.warning(f"Invalid license key: {license_key[:8]}...")
+            return jsonify({'valid': False}), 200
+            
     except Exception as e:
-        current_app.logger.error(f"License validation error: {str(e)}")
-        return jsonify({'error': 'License validation failed'}), 500
+        logger.error(f"Error validating license: {e}")
+        return jsonify({'error': 'Failed to validate license'}), 500
 
-@license_bp.route('/features', methods=['GET'])
+@license_bp.route('/upgrade', methods=['POST'])
 @jwt_required()
-def get_available_features():
-    """Get all available license features"""
-    try:
-        return jsonify({
-            'license_types': LicenseManager.LICENSE_FEATURES
-        }), 200
-        
-    except Exception as e:
-        current_app.logger.error(f"Features retrieval error: {str(e)}")
-        return jsonify({'error': 'Failed to retrieve features'}), 500
-
-@license_bp.route('/check-feature', methods=['POST'])
-@jwt_required()
-def check_feature_access():
-    """Check if the current user has access to a specific feature"""
+@require_permission(Permission.ADMIN_LICENSES)
+@handle_errors(ErrorCategory.API_ERROR)
+def upgrade_license():
+    """Upgrade user's license"""
     try:
         data = request.get_json()
-        if not data or 'feature' not in data:
-            return jsonify({'error': 'Feature name is required'}), 400
-        
-        feature = data['feature']
-        user_id = get_jwt_identity()
-        
-        # Check feature access
-        has_access = LicenseManager.check_feature_access(user_id, feature)
-        
-        # Get current license info
-        license_info, _ = LicenseManager.get_user_license_info(user_id)
-        
-        return jsonify({
-            'feature': feature,
-            'has_access': has_access,
-            'current_license': license_info['type'] if license_info else 'free'
-        }), 200
-        
-    except Exception as e:
-        current_app.logger.error(f"Feature check error: {str(e)}")
-        return jsonify({'error': 'Feature check failed'}), 500
-
-@license_bp.route('/generate', methods=['POST'])
-@jwt_required()
-def generate_license():
-    """Generate a new license key (web-based generator)"""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'Request data is required'}), 400
-        
-        # Extract parameters
-        license_type = data.get('license_type', 'premium')
+        new_license_type = data.get('license_type')
         duration_days = data.get('duration_days', 365)
-        user_email = data.get('user_email', '')
         
-        # Validate license type
-        if license_type not in LicenseManager.LICENSE_FEATURES:
+        if not new_license_type:
+            return jsonify({'error': 'License type is required'}), 400
+        
+        try:
+            license_type = LicenseType(new_license_type)
+        except ValueError:
             return jsonify({'error': 'Invalid license type'}), 400
         
-        # Validate duration
-        try:
-            duration_days = int(duration_days)
-            if duration_days < 1 or duration_days > 3650:  # Max 10 years
-                return jsonify({'error': 'Duration must be between 1 and 3650 days'}), 400
-        except (ValueError, TypeError):
-            return jsonify({'error': 'Invalid duration format'}), 400
+        user_id = int(get_jwt_identity())
+        user = User.find_by_id(user_id)
         
-        # Validate email format if provided
-        if user_email and '@' not in user_email:
-            return jsonify({'error': 'Invalid email format'}), 400
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
         
-        # Generate license key
-        license_key = LicenseManager.generate_license_key(
+        # Generate and activate new license
+        new_license = license_service.generate_license(
             license_type=license_type,
-            duration_days=duration_days,
-            user_email=user_email
+            duration_days=duration_days
         )
         
-        if not license_key:
-            return jsonify({'error': 'Failed to generate license key'}), 500
+        success = license_service.activate_license(new_license.license_key, user_id)
         
-        # Validate the generated key
-        license_data, error = LicenseManager.validate_license_key(license_key)
-        
-        if error:
-            return jsonify({'error': f'Generated license is invalid: {error}'}), 500
-        
-        # Return the generated license with details
-        return jsonify({
-            'success': True,
-            'license_key': license_key,
-            'license_data': {
-                'type': license_data['type'],
-                'user_email': license_data.get('user_email', ''),
-                'created': license_data['created'],
-                'expires': license_data['expires'],
-                'duration_days': duration_days,
-                'features': license_data['features']
-            }
-        }), 200
-        
+        if success:
+            db.session.refresh(user)
+            license_info = user.get_license_info()
+            
+            logger.info(f"License upgraded for user {user_id} to {license_type.value}")
+            return jsonify({
+                'message': 'License upgraded successfully',
+                'license': license_info
+            }), 200
+        else:
+            logger.error(f"Failed to upgrade license for user {user_id}")
+            return jsonify({'error': 'Failed to upgrade license'}), 500
+            
     except Exception as e:
-        current_app.logger.error(f"License generation error: {str(e)}")
-        return jsonify({'error': 'License generation failed'}), 500
+        logger.error(f"Error upgrading license: {e}")
+        return jsonify({'error': 'Failed to upgrade license'}), 500
 
-@license_bp.route('/types', methods=['GET'])
-def get_license_types():
-    """Get available license types and their features (public endpoint)"""
+@license_bp.route('/extend', methods=['POST'])
+@jwt_required()
+@require_permission(Permission.ADMIN_LICENSES)
+@handle_errors(ErrorCategory.API_ERROR)
+def extend_license():
+    """Extend user's license duration"""
     try:
-        license_types = {}
+        data = request.get_json()
+        extension_days = data.get('extension_days', 30)
         
-        for license_type, features in LicenseManager.LICENSE_FEATURES.items():
-            # Create a user-friendly description
-            description = {
-                'free': 'Basic features for getting started',
-                'premium': 'Advanced features for serious traders',
-                'enterprise': 'All features with unlimited access'
-            }.get(license_type, 'Custom license type')
+        if extension_days <= 0:
+            return jsonify({'error': 'Extension days must be positive'}), 400
+        
+        user_id = int(get_jwt_identity())
+        user = User.find_by_id(user_id)
+        
+        if not user or not user.license_key:
+            return jsonify({'error': 'No active license found'}), 404
+        
+        # Extend the license
+        success = license_service.extend_license(user.license_key, extension_days)
+        
+        if success:
+            db.session.refresh(user)
+            license_info = user.get_license_info()
             
-            # Format features for display
-            formatted_features = {}
-            for feature, value in features.items():
-                if feature == 'max_bots' and value == -1:
-                    formatted_features[feature] = 'Unlimited'
-                else:
-                    formatted_features[feature] = value
+            logger.info(f"License extended for user {user_id} by {extension_days} days")
+            return jsonify({
+                'message': f'License extended by {extension_days} days',
+                'license': license_info
+            }), 200
+        else:
+            logger.error(f"Failed to extend license for user {user_id}")
+            return jsonify({'error': 'Failed to extend license'}), 500
             
-            license_types[license_type] = {
-                'name': license_type.title(),
-                'description': description,
-                'features': formatted_features
-            }
+    except Exception as e:
+        logger.error(f"Error extending license: {e}")
+        return jsonify({'error': 'Failed to extend license'}), 500
+
+# Admin routes
+@license_bp.route('/admin/generate', methods=['POST'])
+@jwt_required()
+@require_license_type(LicenseType.ENTERPRISE)
+@require_permission(Permission.ADMIN_LICENSES)
+@handle_errors(ErrorCategory.API_ERROR)
+def admin_generate_license():
+    """Generate a new license (admin only)"""
+    try:
+        data = request.get_json()
+        license_type = data.get('license_type', 'premium')
+        duration_days = data.get('duration_days', 365)
+        max_activations = data.get('max_activations', 1)
+        
+        try:
+            license_type_enum = LicenseType(license_type)
+        except ValueError:
+            return jsonify({'error': 'Invalid license type'}), 400
+        
+        # Generate license
+        license_data = license_service.generate_license(
+            license_type=license_type_enum,
+            duration_days=duration_days,
+            max_activations=max_activations
+        )
+        
+        admin_id = int(get_jwt_identity())
+        logger.info(f"License generated by admin {admin_id}: {license_data.license_key[:8]}...")
         
         return jsonify({
-            'license_types': license_types
-        }), 200
+            'license_key': license_data.license_key,
+            'license_type': license_data.license_type.value,
+            'expires_at': license_data.expires_at.isoformat() if license_data.expires_at else None,
+            'max_activations': license_data.max_activations,
+            'features': license_data.features.__dict__
+        }), 201
         
     except Exception as e:
-        current_app.logger.error(f"License types retrieval error: {str(e)}")
-        return jsonify({'error': 'Failed to retrieve license types'}), 500
+        logger.error(f"Error generating license: {e}")
+        return jsonify({'error': 'Failed to generate license'}), 500
+
+@license_bp.route('/admin/revoke', methods=['POST'])
+@jwt_required()
+@require_license_type(LicenseType.ENTERPRISE)
+@require_permission(Permission.ADMIN_LICENSES)
+@handle_errors(ErrorCategory.API_ERROR)
+def admin_revoke_license():
+    """Revoke a license (admin only)"""
+    try:
+        data = request.get_json()
+        license_key = data.get('license_key')
+        reason = data.get('reason', 'Admin revocation')
+        
+        if not license_key:
+            return jsonify({'error': 'License key is required'}), 400
+        
+        # Revoke the license
+        success = license_service.revoke_license(license_key, reason)
+        
+        if success:
+            admin_id = int(get_jwt_identity())
+            logger.info(f"License revoked by admin {admin_id}: {license_key[:8]}... - {reason}")
+            return jsonify({'message': 'License revoked successfully'}), 200
+        else:
+            return jsonify({'error': 'License not found or already revoked'}), 404
+            
+    except Exception as e:
+        logger.error(f"Error revoking license: {e}")
+        return jsonify({'error': 'Failed to revoke license'}), 500
+
+@license_bp.route('/admin/statistics', methods=['GET'])
+@jwt_required()
+@require_license_type(LicenseType.ENTERPRISE)
+@require_permission(Permission.DATA_ANALYTICS)
+@handle_errors(ErrorCategory.API_ERROR)
+def admin_license_statistics():
+    """Get license statistics (admin only)"""
+    try:
+        stats = admin_service.get_license_statistics()
+        
+        admin_id = int(get_jwt_identity())
+        logger.info(f"License statistics requested by admin {admin_id}")
+        
+        return jsonify(stats), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting license statistics: {e}")
+        return jsonify({'error': 'Failed to get license statistics'}), 500
+
+@license_bp.route('/admin/users/<int:user_id>/upgrade', methods=['POST'])
+@jwt_required()
+@require_license_type(LicenseType.ENTERPRISE)
+@require_permission(Permission.ADMIN_USERS)
+@handle_errors(ErrorCategory.API_ERROR)
+def admin_upgrade_user_license(user_id):
+    """Upgrade a user's license (admin only)"""
+    try:
+        data = request.get_json()
+        license_type = data.get('license_type')
+        duration_days = data.get('duration_days', 365)
+        
+        if not license_type:
+            return jsonify({'error': 'License type is required'}), 400
+        
+        try:
+            license_type_enum = LicenseType(license_type)
+        except ValueError:
+            return jsonify({'error': 'Invalid license type'}), 400
+        
+        # Upgrade user license
+        success = admin_service.upgrade_user_license(user_id, license_type_enum, duration_days)
+        
+        if success:
+            admin_id = int(get_jwt_identity())
+            logger.info(f"User {user_id} license upgraded by admin {admin_id} to {license_type}")
+            return jsonify({'message': 'User license upgraded successfully'}), 200
+        else:
+            return jsonify({'error': 'Failed to upgrade user license'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error upgrading user license: {e}")
+        return jsonify({'error': 'Failed to upgrade user license'}), 500
+
+@license_bp.errorhandler(Exception)
+def handle_license_error(error):
+    """Handle license-related errors"""
+    logger.error(f"License API error: {error}")
+    logger.error(traceback.format_exc())
+    return jsonify({'error': 'Internal server error'}), 500

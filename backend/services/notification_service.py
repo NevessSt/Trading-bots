@@ -2,6 +2,8 @@ import smtplib
 import requests
 import logging
 import json
+import asyncio
+import aiohttp
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -10,6 +12,8 @@ from flask import current_app
 from database import db
 from models.notification import NotificationPreference, NotificationLog, NotificationTemplate
 from models.user import User
+from services.logging_service import get_logger, LogCategory
+from services.retry_service import get_retry_service, RetryConfig, async_retry, API_RETRY_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -508,6 +512,165 @@ Your trade has been executed:
         except Exception as e:
             logger.error(f"Failed to send test notification: {str(e)}")
             return False
+    
+    # Enhanced error handling and system notification methods
+    def send_system_error(self, error_message: str, error_type: str = 'system_error', 
+                         metadata: Dict[str, Any] = None) -> None:
+        """Send system error notification to all admin users"""
+        try:
+            # Get all admin users
+            admin_users = User.query.filter_by(role='admin').all()
+            
+            error_data = {
+                'error_message': error_message,
+                'error_type': error_type,
+                'timestamp': datetime.utcnow().isoformat(),
+                'metadata': metadata or {}
+            }
+            
+            for admin in admin_users:
+                self.send_notification(admin.id, 'system_error', error_data)
+                
+        except Exception as e:
+            logger.error(f"Failed to send system error notification: {str(e)}")
+    
+    def send_critical_alert(self, title: str, message: str, metadata: Dict[str, Any] = None) -> None:
+        """Send critical alert to all admin users immediately"""
+        try:
+            admin_users = User.query.filter_by(role='admin').all()
+            
+            alert_data = {
+                'title': title,
+                'message': message,
+                'severity': 'critical',
+                'timestamp': datetime.utcnow().isoformat(),
+                'metadata': metadata or {}
+            }
+            
+            for admin in admin_users:
+                self.send_notification(admin.id, 'critical_alert', alert_data)
+                
+        except Exception as e:
+            logger.error(f"Failed to send critical alert: {str(e)}")
+    
+    def send_api_error_alert(self, api_name: str, error_message: str, 
+                           retry_count: int = 0, metadata: Dict[str, Any] = None) -> None:
+        """Send API error notification"""
+        try:
+            admin_users = User.query.filter_by(role='admin').all()
+            
+            api_error_data = {
+                'api_name': api_name,
+                'error_message': error_message,
+                'retry_count': retry_count,
+                'timestamp': datetime.utcnow().isoformat(),
+                'metadata': metadata or {}
+            }
+            
+            for admin in admin_users:
+                self.send_notification(admin.id, 'api_error', api_error_data)
+                
+        except Exception as e:
+            logger.error(f"Failed to send API error alert: {str(e)}")
+    
+    def send_trading_engine_alert(self, engine_status: str, message: str, 
+                                metadata: Dict[str, Any] = None) -> None:
+        """Send trading engine status alert"""
+        try:
+            # Send to all users who have trading bots
+            users_with_bots = User.query.filter(User.trading_bots.any()).all()
+            
+            engine_data = {
+                'engine_status': engine_status,
+                'message': message,
+                'timestamp': datetime.utcnow().isoformat(),
+                'metadata': metadata or {}
+            }
+            
+            for user in users_with_bots:
+                self.send_notification(user.id, 'trading_engine_alert', engine_data)
+                
+        except Exception as e:
+            logger.error(f"Failed to send trading engine alert: {str(e)}")
+    
+    def send_security_alert(self, security_event: str, details: str, 
+                          user_id: Optional[int] = None, metadata: Dict[str, Any] = None) -> None:
+        """Send security alert"""
+        try:
+            security_data = {
+                'security_event': security_event,
+                'details': details,
+                'timestamp': datetime.utcnow().isoformat(),
+                'metadata': metadata or {}
+            }
+            
+            if user_id:
+                # Send to specific user
+                self.send_notification(user_id, 'security_alert', security_data)
+            else:
+                # Send to all admin users
+                admin_users = User.query.filter_by(role='admin').all()
+                for admin in admin_users:
+                    self.send_notification(admin.id, 'security_alert', security_data)
+                    
+        except Exception as e:
+            logger.error(f"Failed to send security alert: {str(e)}")
+    
+    @async_retry(config=API_RETRY_CONFIG, circuit_breaker="telegram_async")
+    async def send_telegram_async(self, chat_id: str, message: str) -> bool:
+        """Send Telegram message asynchronously with retry logic"""
+        if not self.telegram_config['bot_token']:
+            logger.warning("Telegram bot token not configured")
+            return False
+            
+        try:
+            url = self.telegram_config['api_url'].format(self.telegram_config['bot_token'])
+            payload = {
+                'chat_id': chat_id,
+                'text': message,
+                'parse_mode': 'HTML'
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                    if response.status == 200:
+                        logger.info(f"Telegram message sent successfully to {chat_id}")
+                        return True
+                    else:
+                        error_text = await response.text()
+                        logger.error(f"Telegram API error {response.status}: {error_text}")
+                        return False
+                        
+        except Exception as e:
+            logger.error(f"Failed to send Telegram message: {str(e)}")
+            raise
+    
+    def send_immediate_alert(self, message: str, alert_type: str = 'urgent') -> None:
+        """Send immediate alert via all available channels"""
+        try:
+            # Get emergency contact settings
+            emergency_telegram_chat = current_app.config.get('EMERGENCY_TELEGRAM_CHAT') if current_app else None
+            emergency_email = current_app.config.get('EMERGENCY_EMAIL') if current_app else None
+            
+            alert_data = {
+                'message': message,
+                'alert_type': alert_type,
+                'timestamp': datetime.utcnow().isoformat(),
+                'severity': 'immediate'
+            }
+            
+            # Send to emergency Telegram if configured
+            if emergency_telegram_chat and self.telegram_config['bot_token']:
+                asyncio.create_task(self.send_telegram_async(emergency_telegram_chat, 
+                    f"🚨 URGENT ALERT 🚨\n\n{message}\n\nTime: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"))
+            
+            # Send to all admin users
+            admin_users = User.query.filter_by(role='admin').all()
+            for admin in admin_users:
+                self.send_notification(admin.id, 'immediate_alert', alert_data)
+                
+        except Exception as e:
+            logger.error(f"Failed to send immediate alert: {str(e)}")
 
 # Global notification service instance
 notification_service = NotificationService()

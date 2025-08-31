@@ -37,6 +37,12 @@ class User(db.Model):
     license_type = db.Column(db.String(20), default='free', nullable=False)  # free, premium, enterprise
     license_expires = db.Column(db.DateTime)  # License expiration date
     license_activated = db.Column(db.DateTime)  # License activation date
+    license_status = db.Column(db.String(20), default='active', nullable=False)  # active, suspended, expired, revoked
+    
+    # License limits
+    max_bots = db.Column(db.Integer, default=1, nullable=False)
+    max_api_keys = db.Column(db.Integer, default=1, nullable=False)
+    permissions = db.Column(db.JSON)  # JSON array of permissions
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -147,6 +153,40 @@ class User(db.Model):
             return []
         return subscription.get_available_strategies()
     
+    def has_permission(self, permission):
+        """Check if user has a specific permission"""
+        if not self.permissions:
+            return False
+        return permission in self.permissions
+    
+    def can_create_api_key(self):
+        """Check if user can create more API keys"""
+        current_key_count = len([key for key in self.api_keys if key.is_active])
+        return current_key_count < self.max_api_keys
+    
+    def is_license_valid(self):
+        """Check if user's license is valid and active"""
+        if self.license_status != 'active':
+            return False
+        
+        if self.license_expires and datetime.utcnow() > self.license_expires:
+            return False
+        
+        return True
+    
+    def get_license_info(self):
+        """Get comprehensive license information"""
+        return {
+            'type': self.license_type,
+            'status': self.license_status,
+            'expires': self.license_expires.isoformat() if self.license_expires else None,
+            'activated': self.license_activated.isoformat() if self.license_activated else None,
+            'max_bots': self.max_bots,
+            'max_api_keys': self.max_api_keys,
+            'permissions': self.permissions or [],
+            'is_valid': self.is_license_valid()
+        }
+    
     @property
     def is_premium(self):
         """Check if user has a premium subscription"""
@@ -191,7 +231,8 @@ class User(db.Model):
             'role': self.role,
             'last_login': self.last_login.isoformat() if self.last_login else None,
             'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'license': self.get_license_info()
         }
         
         if include_sensitive:
@@ -200,7 +241,7 @@ class User(db.Model):
                 'locked_until': self.locked_until.isoformat() if self.locked_until else None
             })
         
-        # Include subscription info
+        # Include subscription info for backward compatibility
         subscription = self.get_current_subscription()
         if subscription:
             data['subscription'] = subscription.to_dict()

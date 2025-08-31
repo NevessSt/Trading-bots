@@ -28,6 +28,8 @@ import ProDashboard from './components/ProDashboard/ProDashboard';
 import ProSettings from './components/Settings/ProSettings';
 import APIConnectionTest from './components/APIConnectionTest';
 import StrategyManager from './components/StrategyManager';
+import StrategyMarketplace from './components/StrategyMarketplace';
+import ExchangeManager from './components/ExchangeManager';
 import NotificationDashboard from './components/NotificationDashboard';
 
 const queryClient = new QueryClient();
@@ -153,6 +155,22 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <StrategyManager />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/marketplace" 
+          element={
+            <ProtectedRoute>
+              <StrategyMarketplace />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/exchanges" 
+          element={
+            <ProtectedRoute>
+              <ExchangeManager />
             </ProtectedRoute>
           } 
         />

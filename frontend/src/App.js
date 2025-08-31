@@ -31,6 +31,7 @@ import StrategyManager from './components/StrategyManager';
 import StrategyMarketplace from './components/StrategyMarketplace';
 import ExchangeManager from './components/ExchangeManager';
 import NotificationDashboard from './components/NotificationDashboard';
+import EnhancedDashboardIntegration from './components/EnhancedDashboardIntegration';
 
 const queryClient = new QueryClient();
 
@@ -254,6 +255,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <NotificationDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/enhanced-dashboard" 
+          element={
+            <ProtectedRoute>
+              <EnhancedDashboardIntegration />
             </ProtectedRoute>
           } 
         />

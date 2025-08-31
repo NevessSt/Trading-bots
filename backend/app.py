@@ -11,6 +11,7 @@ from services.notification_service import NotificationService
 from utils.logging_config import setup_logging
 from utils.monitoring import MetricsCollector
 from utils.sentry_config import init_sentry
+from middleware.enhanced_security import EnhancedSecurityMiddleware
 from celery_app import celery_app
 
 # Load environment variables
@@ -78,6 +79,15 @@ def create_app(config_name=None):
     
     # Initialize Sentry for error tracking
     init_sentry(app)
+    
+    # Initialize enhanced security middleware
+enhanced_security = EnhancedSecurityMiddleware()
+enhanced_security.init_app(app)
+
+# Initialize enhanced integration
+from utils.enhanced_integration import EnhancedTradingBotIntegration
+enhanced_integration = EnhancedTradingBotIntegration()
+enhanced_integration.init_app(app)
     
     # Initialize extensions
     db.init_app(app)

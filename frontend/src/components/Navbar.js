@@ -66,6 +66,13 @@ const Navbar = () => {
       current: location.pathname === '/dashboard',
     },
     {
+      name: 'Enhanced Dashboard',
+      href: '/enhanced-dashboard',
+      icon: ShieldCheckIcon,
+      iconSolid: ShieldCheckIcon,
+      current: location.pathname === '/enhanced-dashboard',
+    },
+    {
       name: 'Pro Dashboard',
       href: '/pro-dashboard',
       icon: ChartBarIcon,

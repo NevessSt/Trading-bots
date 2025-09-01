@@ -80,6 +80,13 @@ const Navbar = () => {
       current: location.pathname === '/pro-dashboard',
     },
     {
+      name: 'Trading Dashboard',
+      href: '/trading-dashboard',
+      icon: ChartBarIcon,
+      iconSolid: ChartBarIconSolid,
+      current: location.pathname === '/trading-dashboard',
+    },
+    {
       name: 'Trading Bots',
       href: '/bots',
       icon: ChartBarIcon,

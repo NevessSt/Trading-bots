@@ -1,0 +1,105 @@
+# Trading Strategies Configuration Template
+# Copy this file to strategies.yaml and customize your strategies
+
+strategies:
+  moving_average_crossover:
+    enabled: true
+    parameters:
+      fast_period: 10
+      slow_period: 20
+      signal_threshold: 0.001  # Minimum price change to trigger signal
+    risk_management:
+      position_size: 0.1  # 10% of portfolio per trade
+      stop_loss: 0.02     # 2% stop loss
+      take_profit: 0.04   # 4% take profit
+      max_positions: 3    # Maximum concurrent positions
+    timeframes: ["1h", "4h"]
+    symbols: ["BTC/USDT", "ETH/USDT", "ADA/USDT"]
+    exchanges: ["binance"]  # Which exchanges to use
+
+  rsi_oversold_oversought:
+    enabled: true
+    parameters:
+      rsi_period: 14
+      oversold_threshold: 30
+      overbought_threshold: 70
+      rsi_smoothing: 3
+    risk_management:
+      position_size: 0.08
+      stop_loss: 0.03
+      take_profit: 0.06
+      max_positions: 2
+    timeframes: ["1h", "2h"]
+    symbols: ["BTC/USDT", "ETH/USDT"]
+    exchanges: ["binance"]
+
+  bollinger_bands_mean_reversion:
+    enabled: false  # Disabled by default
+    parameters:
+      bb_period: 20
+      bb_std_dev: 2
+      mean_reversion_threshold: 0.8  # How close to bands to trigger
+    risk_management:
+      position_size: 0.05
+      stop_loss: 0.025
+      take_profit: 0.05
+      max_positions: 4
+    timeframes: ["30m", "1h"]
+    symbols: ["BTC/USDT", "ETH/USDT", "BNB/USDT", "ADA/USDT"]
+    exchanges: ["binance"]
+
+  grid_trading:
+    enabled: false
+    parameters:
+      grid_size: 0.01      # 1% between grid levels
+      grid_levels: 10      # Number of buy/sell levels
+      base_order_size: 0.02 # 2% of portfolio for base orders
+      safety_orders: 5     # Number of safety orders
+      safety_order_multiplier: 1.5  # Increase safety order size
+    risk_management:
+      position_size: 0.2   # Total grid allocation
+      stop_loss: 0.15      # 15% stop loss for entire grid
+      take_profit: 0.1     # 10% take profit
+      max_positions: 1     # Only one grid per symbol
+    timeframes: ["5m", "15m"]
+    symbols: ["BTC/USDT"]
+    exchanges: ["binance"]
+
+  arbitrage:
+    enabled: false
+    parameters:
+      min_profit_threshold: 0.005  # 0.5% minimum profit
+      max_execution_time: 30       # seconds
+      slippage_tolerance: 0.001    # 0.1% slippage tolerance
+    risk_management:
+      position_size: 0.15
+      stop_loss: 0.01
+      take_profit: 0.02
+      max_positions: 2
+    timeframes: ["1m", "5m"]
+    symbols: ["BTC/USDT", "ETH/USDT"]
+    exchanges: ["binance", "coinbase"]  # Multiple exchanges for arbitrage
+
+  momentum_breakout:
+    enabled: true
+    parameters:
+      lookback_period: 20
+      breakout_threshold: 0.02  # 2% breakout from range
+      volume_confirmation: true
+      volume_multiplier: 1.5    # Volume must be 1.5x average
+    risk_management:
+      position_size: 0.12
+      stop_loss: 0.025
+      take_profit: 0.08
+      max_positions: 3
+    timeframes: ["1h", "4h"]
+    symbols: ["BTC/USDT", "ETH/USDT", "SOL/USDT"]
+    exchanges: ["binance"]
+
+# Global strategy settings
+global_settings:
+  max_total_positions: 10        # Maximum positions across all strategies
+  portfolio_allocation: 0.8      # Use 80% of portfolio for trading
+  reserve_allocation: 0.2        # Keep 20% in reserve
+  rebalance_frequency: "daily"   # How often to rebalance
+  strategy_correlation_limit: 0.7 # Maximum correlation between strategies

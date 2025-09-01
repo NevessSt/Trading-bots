@@ -1,0 +1,43 @@
+# Exchange Configuration Template
+# Copy this file to exchanges.yaml and update with your credentials
+
+exchanges:
+  binance:
+    api_key: "your_binance_api_key_here"
+    api_secret: "your_binance_api_secret_here"
+    sandbox: true  # Set to false for live trading
+    rate_limit: 10  # requests per second
+    timeout: 30
+    retry_attempts: 3
+    enabled: true
+
+  coinbase:
+    api_key: "your_coinbase_api_key_here"
+    api_secret: "your_coinbase_api_secret_here"
+    api_passphrase: "your_coinbase_passphrase_here"
+    sandbox: true
+    rate_limit: 10
+    timeout: 30
+    retry_attempts: 3
+    enabled: false
+
+  kraken:
+    api_key: "your_kraken_api_key_here"
+    api_secret: "your_kraken_api_secret_here"
+    sandbox: false  # Kraken doesn't have sandbox
+    rate_limit: 1   # Kraken has strict rate limits
+    timeout: 30
+    retry_attempts: 3
+    enabled: false
+
+  bybit:
+    api_key: "your_bybit_api_key_here"
+    api_secret: "your_bybit_api_secret_here"
+    sandbox: true
+    rate_limit: 5
+    timeout: 30
+    retry_attempts: 3
+    enabled: false
+
+# Note: For production, encrypt sensitive data using the configuration manager
+# Example: api_key: "enc_gAAAAABh..." (encrypted format)

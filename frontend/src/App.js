@@ -32,6 +32,7 @@ import StrategyMarketplace from './components/StrategyMarketplace';
 import ExchangeManager from './components/ExchangeManager';
 import NotificationDashboard from './components/NotificationDashboard';
 import EnhancedDashboardIntegration from './components/EnhancedDashboardIntegration';
+import TradingDashboard from './components/TradingDashboard';
 
 const queryClient = new QueryClient();
 
@@ -263,6 +264,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <EnhancedDashboardIntegration />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/trading-dashboard" 
+          element={
+            <ProtectedRoute>
+              <TradingDashboard />
             </ProtectedRoute>
           } 
         />

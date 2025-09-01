@@ -81,13 +81,13 @@ def create_app(config_name=None):
     init_sentry(app)
     
     # Initialize enhanced security middleware
-enhanced_security = EnhancedSecurityMiddleware()
-enhanced_security.init_app(app)
+    enhanced_security = EnhancedSecurityMiddleware()
+    enhanced_security.init_app(app)
 
-# Initialize enhanced integration
-from utils.enhanced_integration import EnhancedTradingBotIntegration
-enhanced_integration = EnhancedTradingBotIntegration()
-enhanced_integration.init_app(app)
+    # Initialize enhanced integration
+    from utils.enhanced_integration import EnhancedTradingBotIntegration
+    enhanced_integration = EnhancedTradingBotIntegration()
+    enhanced_integration.init_app(app)
     
     # Initialize extensions
     db.init_app(app)

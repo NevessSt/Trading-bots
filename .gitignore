@@ -135,7 +135,7 @@ out/
 *.rpm
 *.msi
 
-# Trading Bot Specific
+# Trading bot specific data files
 trades.json
 portfolio_data.json
 api_credentials.json
@@ -144,8 +144,71 @@ config.json
 secrets.json
 api_keys.json
 
-# Misc
-.directory
+# Security and encryption files
+encryption.key
+credentials.enc
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+*.csr
+*.jks
+*.keystore
+*.truststore
+wallet.dat
+seed.txt
+mnemonic.txt
+private_keys/
+keys/
+secrets/
+.secrets/
+
+# Environment and configuration files
+.env
+.env.*
+!.env.example
+!.env.template
+config.yaml
+config.yml
+settings.json
+settings.yaml
+settings.yml
+local_settings.py
+local_config.py
+
+# Authentication and session files
+session.json
+auth_tokens.json
+jwt_secret.txt
+oauth_tokens.json
+refresh_tokens.json
+*.session
+*.token
+
+# Database files with sensitive data
+*.sqlite3
+*.sqlite
+*.db3
+*.s3db
+*.sl3
+database.db
+trading.db
+users.db
+
+# Backup files that might contain sensitive data
+*.backup
 *.bak
+*.old
+*.orig
+*.save
+
+# Miscellaneous
 *.tmp
 *.temp
+*.swp
+*.swo
+*~
+.directory

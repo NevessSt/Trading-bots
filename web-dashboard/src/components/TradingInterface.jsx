@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ShoppingCart, TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react'
+import { ShoppingCart, TrendingUp, TrendingDown, AlertCircle, CheckCircle, Shield, Target, Percent, AlertTriangle } from 'lucide-react'
 
 const TradingInterface = ({ mode = 'demo', marketData = [] }) => {
   const [orderType, setOrderType] = useState('market')
@@ -7,11 +7,23 @@ const TradingInterface = ({ mode = 'demo', marketData = [] }) => {
   const [amount, setAmount] = useState('')
   const [price, setPrice] = useState('')
   const [symbol, setSymbol] = useState('BTC/USD')
+  
+  // Enhanced Risk Management States
+  const [stopLoss, setStopLoss] = useState('')
+  const [takeProfit, setTakeProfit] = useState('')
+  const [positionSizePercent, setPositionSizePercent] = useState('2') // Default 2% risk
+  const [riskRewardRatio, setRiskRewardRatio] = useState('2') // Default 1:2 risk/reward
+  const [maxDailyLoss, setMaxDailyLoss] = useState('5') // Default 5% max daily loss
+  const [enableRiskManagement, setEnableRiskManagement] = useState(true)
+  
   const [balance] = useState({
     USD: mode === 'demo' ? 100000 : 10000,
     BTC: mode === 'demo' ? 2.5 : 0.5,
     ETH: mode === 'demo' ? 10.3 : 2.3
   })
+  
+  // Track daily P&L for risk management
+  const [dailyPnL] = useState(-250) // Example daily loss
   const [orders, setOrders] = useState([
     { id: 1, symbol: 'BTC/USD', side: 'buy', amount: 0.5, price: 43200, status: 'filled', time: '10:30 AM' },
     { id: 2, symbol: 'ETH/USD', side: 'sell', amount: 2.0, price: 2100, status: 'pending', time: '10:25 AM' },
@@ -27,36 +39,139 @@ const TradingInterface = ({ mode = 'demo', marketData = [] }) => {
     'LINK/USD': 14.23
   }
 
+  // Risk Management Calculations
+  const calculatePositionSize = () => {
+    if (!enableRiskManagement || !stopLoss || !amount) return parseFloat(amount) || 0
+    
+    const currentPrice = currentPrices[symbol]
+    const stopLossPrice = parseFloat(stopLoss)
+    const riskAmount = balance.USD * (parseFloat(positionSizePercent) / 100)
+    const priceRisk = Math.abs(currentPrice - stopLossPrice)
+    
+    if (priceRisk === 0) return parseFloat(amount) || 0
+    
+    return riskAmount / priceRisk
+  }
+
+  const calculateRiskReward = () => {
+    if (!stopLoss || !takeProfit) return null
+    
+    const currentPrice = currentPrices[symbol]
+    const stopLossPrice = parseFloat(stopLoss)
+    const takeProfitPrice = parseFloat(takeProfit)
+    
+    const risk = Math.abs(currentPrice - stopLossPrice)
+    const reward = Math.abs(takeProfitPrice - currentPrice)
+    
+    return risk > 0 ? (reward / risk).toFixed(2) : null
+  }
+
+  const validateRiskManagement = () => {
+    const errors = []
+    
+    // Check daily loss limit
+    const dailyLossPercent = (Math.abs(dailyPnL) / balance.USD) * 100
+    if (dailyLossPercent >= parseFloat(maxDailyLoss)) {
+      errors.push(`Daily loss limit reached (${dailyLossPercent.toFixed(1)}% of ${maxDailyLoss}%)`)
+    }
+    
+    // Check position size
+    const orderValue = parseFloat(amount) * currentPrices[symbol]
+    const positionPercent = (orderValue / balance.USD) * 100
+    if (positionPercent > 10) {
+      errors.push(`Position size too large (${positionPercent.toFixed(1)}% of portfolio)`)
+    }
+    
+    // Check stop-loss placement
+    if (enableRiskManagement && stopLoss) {
+      const currentPrice = currentPrices[symbol]
+      const stopLossPrice = parseFloat(stopLoss)
+      const stopLossPercent = Math.abs((currentPrice - stopLossPrice) / currentPrice) * 100
+      
+      if (side === 'buy' && stopLossPrice >= currentPrice) {
+        errors.push('Stop-loss must be below current price for buy orders')
+      }
+      if (side === 'sell' && stopLossPrice <= currentPrice) {
+        errors.push('Stop-loss must be above current price for sell orders')
+      }
+      if (stopLossPercent > 10) {
+        errors.push(`Stop-loss too far from current price (${stopLossPercent.toFixed(1)}%)`)
+      }
+    }
+    
+    // Check take-profit placement
+    if (enableRiskManagement && takeProfit) {
+      const currentPrice = currentPrices[symbol]
+      const takeProfitPrice = parseFloat(takeProfit)
+      
+      if (side === 'buy' && takeProfitPrice <= currentPrice) {
+        errors.push('Take-profit must be above current price for buy orders')
+      }
+      if (side === 'sell' && takeProfitPrice >= currentPrice) {
+        errors.push('Take-profit must be below current price for sell orders')
+      }
+    }
+    
+    return errors
+  }
+
   const handleSubmitOrder = (e) => {
     e.preventDefault()
+    
+    // Basic validation
     if (!amount || (orderType === 'limit' && !price)) {
       alert('Please fill in all required fields')
       return
     }
 
+    // Risk management validation
+    if (enableRiskManagement) {
+      const riskErrors = validateRiskManagement()
+      if (riskErrors.length > 0) {
+        alert('Risk Management Errors:\n' + riskErrors.join('\n'))
+        return
+      }
+      
+      // Validate required risk management fields
+      if (!stopLoss) {
+        alert('Stop-loss is required when risk management is enabled')
+        return
+      }
+    }
+
     const currentPrice = marketData.find(item => item.symbol === symbol.replace('/', ''))?.price || currentPrices[symbol]
+    const finalAmount = enableRiskManagement ? calculatePositionSize() : parseFloat(amount)
     
     const newOrder = {
       id: orders.length + 1,
       symbol,
       side,
-      amount: parseFloat(amount),
+      amount: finalAmount,
       price: orderType === 'market' ? currentPrice : parseFloat(price),
       status: 'pending',
       time: new Date().toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit' 
       }),
-      mode: mode
+      mode: mode,
+      // Enhanced risk management data
+      stopLoss: enableRiskManagement ? parseFloat(stopLoss) : null,
+      takeProfit: enableRiskManagement ? parseFloat(takeProfit) : null,
+      riskReward: calculateRiskReward(),
+      positionSizePercent: parseFloat(positionSizePercent)
     }
 
     setOrders([newOrder, ...orders])
+    
+    // Reset form but keep risk management settings
     setAmount('')
     setPrice('')
     
-    // Show demo mode confirmation
+    // Enhanced demo mode confirmation
     if (mode === 'demo') {
-      alert(`Demo Order Placed: ${side.toUpperCase()} ${amount} ${symbol} ${orderType === 'market' ? 'at market price' : `at $${price}`}`)
+      const riskInfo = enableRiskManagement ? 
+        `\nStop-Loss: $${stopLoss}\nTake-Profit: $${takeProfit || 'Not set'}\nRisk/Reward: ${calculateRiskReward() || 'N/A'}` : ''
+      alert(`Demo Order Placed: ${side.toUpperCase()} ${finalAmount.toFixed(6)} ${symbol} ${orderType === 'market' ? 'at market price' : `at $${price}`}${riskInfo}`)
     }
     
     // Simulate order execution
@@ -187,17 +302,84 @@ const TradingInterface = ({ mode = 'demo', marketData = [] }) => {
             </div>
           </div>
 
+          {/* Risk Management Toggle */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-5 w-5 text-blue-600" />
+                <span className="font-medium text-blue-900">Risk Management</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEnableRiskManagement(!enableRiskManagement)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  enableRiskManagement ? 'bg-blue-600' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    enableRiskManagement ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            
+            {enableRiskManagement && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-blue-700 mb-1">Risk per Trade (%)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      max="10"
+                      value={positionSizePercent}
+                      onChange={(e) => setPositionSizePercent(e.target.value)}
+                      className="w-full px-2 py-1 text-sm border border-blue-200 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-blue-700 mb-1">Max Daily Loss (%)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="1"
+                      max="20"
+                      value={maxDailyLoss}
+                      onChange={(e) => setMaxDailyLoss(e.target.value)}
+                      className="w-full px-2 py-1 text-sm border border-blue-200 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                <div className="text-xs text-blue-600">
+                  Daily P&L: <span className={dailyPnL >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    ${dailyPnL.toLocaleString()} ({((dailyPnL / balance.USD) * 100).toFixed(1)}%)
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium mb-2">Amount</label>
+            <label className="block text-sm font-medium mb-2">
+              Amount
+              {enableRiskManagement && (
+                <span className="text-xs text-gray-500 ml-2">
+                  (Auto-calculated: {calculatePositionSize().toFixed(6)})
+                </span>
+              )}
+            </label>
             <input
               type="number"
               step="0.00001"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount"
+              placeholder={enableRiskManagement ? "Will be auto-calculated" : "Enter amount"}
               className="input-field"
-              required
+              required={!enableRiskManagement}
             />
           </div>
 
@@ -214,6 +396,52 @@ const TradingInterface = ({ mode = 'demo', marketData = [] }) => {
                 className="input-field"
                 required
               />
+            </div>
+          )}
+
+          {/* Stop Loss & Take Profit */}
+          {enableRiskManagement && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-3">
+                <TrendingDown className="h-4 w-4 text-yellow-600" />
+                <span className="font-medium text-yellow-900">Stop Loss & Take Profit</span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-yellow-700 mb-1">Stop Loss (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    max="50"
+                    value={stopLoss}
+                    onChange={(e) => setStopLoss(e.target.value)}
+                    placeholder="e.g., 2.0"
+                    className="w-full px-2 py-1 text-sm border border-yellow-200 rounded focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-yellow-700 mb-1">Take Profit (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    max="100"
+                    value={takeProfit}
+                    onChange={(e) => setTakeProfit(e.target.value)}
+                    placeholder="e.g., 4.0"
+                    className="w-full px-2 py-1 text-sm border border-yellow-200 rounded focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-2 text-xs text-yellow-600">
+                Risk/Reward Ratio: {calculateRiskReward()}
+                {parseFloat(calculateRiskReward()) < 1.5 && (
+                  <span className="text-red-500 ml-2">⚠️ Consider higher reward ratio</span>
+                )}
+              </div>
             </div>
           )}
 
@@ -235,18 +463,42 @@ const TradingInterface = ({ mode = 'demo', marketData = [] }) => {
                   <span className="font-medium">$2.50</span>
                 </div>
               </div>
+              
+              {/* Risk Validation Warnings */}
+              {enableRiskManagement && (
+                <div className="mt-3 space-y-1">
+                  {validateRiskManagement().map((warning, index) => (
+                    <div key={index} className="flex items-center space-x-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded p-2">
+                      <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                      <span>{warning}</span>
+                    </div>
+                  ))}
+                  {validateRiskManagement().length === 0 && (
+                    <div className="flex items-center space-x-2 text-xs text-green-600 bg-green-50 border border-green-200 rounded p-2">
+                      <CheckCircle className="h-3 w-3 flex-shrink-0" />
+                      <span>Risk parameters validated ✓</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           <button
             type="submit"
+            disabled={enableRiskManagement && validateRiskManagement().length > 0}
             className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-              side === 'buy'
+              enableRiskManagement && validateRiskManagement().length > 0
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : side === 'buy'
                 ? 'bg-success-600 hover:bg-success-700 text-white'
                 : 'bg-danger-600 hover:bg-danger-700 text-white'
             }`}
           >
-            {side === 'buy' ? 'Place Buy Order' : 'Place Sell Order'}
+            {enableRiskManagement && validateRiskManagement().length > 0
+              ? 'Fix Risk Issues to Continue'
+              : side === 'buy' ? 'Place Buy Order' : 'Place Sell Order'
+            }
           </button>
         </form>
       </div>

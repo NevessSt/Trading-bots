@@ -6,7 +6,9 @@ from .strategies.ema_crossover_strategy import EMACrossoverStrategy
 from .strategies.advanced_grid_strategy import AdvancedGridStrategy
 from .strategies.smart_dca_strategy import SmartDCAStrategy
 from .strategies.advanced_scalping_strategy import AdvancedScalpingStrategy
+from .plugin_manager_integration import get_plugin_manager
 import logging
+import os
 
 class StrategyFactory:
     """Factory class for creating trading strategy instances"""
@@ -35,22 +37,42 @@ class StrategyFactory:
         Raises:
             ValueError: If strategy name is not found
         """
-        if strategy_name not in self._strategies:
-            available = list(self._strategies.keys())
-            raise ValueError(f"Unknown strategy '{strategy_name}'. Available strategies: {available}")
-        
-        strategy_class = self._strategies[strategy_name]
-        strategy_instance = strategy_class()
-        
-        # Set parameters if provided
-        if parameters:
-            strategy_instance.set_parameters(parameters)
-        
-        self.logger.info(f"Created strategy instance: {strategy_name}")
-        return strategy_instance
+        try:
+            # First try plugin strategies
+            try:
+                plugin_manager = get_plugin_manager()
+                plugin_strategies = {p.name: p for p in plugin_manager.strategy_factory.plugin_system.list_plugins('strategy')}
+                
+                if strategy_name in plugin_strategies:
+                    strategy_instance = plugin_manager.strategy_factory.plugin_system.create_strategy_instance(strategy_name)
+                    if parameters:
+                        strategy_instance.set_parameters(parameters)
+                    self.logger.info(f"Created plugin strategy instance: {strategy_name}")
+                    return strategy_instance
+            except Exception as e:
+                self.logger.debug(f"Plugin strategy creation failed for {strategy_name}: {e}")
+            
+            # Then try built-in strategies
+            if strategy_name not in self._strategies:
+                available = list(self._strategies.keys())
+                raise ValueError(f"Unknown strategy '{strategy_name}'. Available strategies: {available}")
+            
+            strategy_class = self._strategies[strategy_name]
+            strategy_instance = strategy_class()
+            
+            # Set parameters if provided
+            if parameters:
+                strategy_instance.set_parameters(parameters)
+            
+            self.logger.info(f"Created strategy instance: {strategy_name}")
+            return strategy_instance
+            
+        except Exception as e:
+            self.logger.error(f"Failed to create strategy {strategy_name}: {e}")
+            raise
     
     def get_available_strategies(self) -> Dict[str, str]:
-        """Get list of available strategies with descriptions"""
+        """Get list of available strategies with descriptions including plugins"""
         descriptions = {
             'rsi': 'RSI-based momentum strategy with overbought/oversold signals',
             'macd': 'MACD crossover strategy for trend following',
@@ -59,6 +81,19 @@ class StrategyFactory:
             'smart_dca': 'Intelligent Dollar Cost Averaging with market analysis',
             'advanced_scalping': 'High-frequency scalping with multi-timeframe analysis'
         }
+        
+        # Add plugin strategies
+        try:
+            plugin_manager = get_plugin_manager()
+            plugin_strategies = plugin_manager.strategy_factory.get_available_strategies()
+            
+            # Filter out legacy strategies to avoid duplicates
+            for strategy_id, strategy_info in plugin_strategies.items():
+                if strategy_info.get('type') == 'plugin':
+                    descriptions[strategy_id] = strategy_info.get('description', f'Plugin strategy: {strategy_id}')
+        except Exception as e:
+            self.logger.warning(f"Failed to load plugin strategies: {e}")
+        
         return descriptions
     
     def get_strategy_parameters(self, strategy_name: str) -> Dict[str, Any]:

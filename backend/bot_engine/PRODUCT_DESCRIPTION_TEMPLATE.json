@@ -1,0 +1,219 @@
+{
+  "product": {
+    "basic_info": {
+      "name": "Your Strategy Name",
+      "type": "strategy",
+      "version": "1.0.0",
+      "author": "Your Name",
+      "email": "your.email@example.com",
+      "website": "https://yourwebsite.com",
+      "license": "MIT",
+      "price": 0.00,
+      "tags": ["momentum", "technical", "oscillator"],
+      "compatibility": {
+        "min_version": "1.0.0",
+        "max_version": "2.0.0",
+        "recommended_version": "1.5.0"
+      }
+    },
+    "marketing": {
+      "short_description": "A concise, compelling description (150 chars max)",
+      "long_description": "A detailed description of your plugin, what it does, how it works, and its benefits. This can be multiple paragraphs and should provide comprehensive information about your product.",
+      "key_features": [
+        "Feature 1: Brief description",
+        "Feature 2: Brief description",
+        "Feature 3: Brief description"
+      ],
+      "use_cases": [
+        "Use case 1: Describe a specific scenario where your plugin excels",
+        "Use case 2: Describe another application of your plugin"
+      ],
+      "target_audience": "Describe your ideal users (experience level, trading style, etc.)",
+      "unique_selling_points": [
+        "What makes your plugin different from similar offerings?",
+        "Why should users choose your plugin over alternatives?"
+      ],
+      "preview_images": [
+        {
+          "url": "image1.png",
+          "caption": "Caption for image 1"
+        },
+        {
+          "url": "image2.png",
+          "caption": "Caption for image 2"
+        }
+      ],
+      "video_url": "https://youtu.be/your-demo-video"
+    },
+    "technical": {
+      "parameters": [
+        {
+          "name": "parameter1",
+          "type": "integer",
+          "default": 14,
+          "min": 1,
+          "max": 100,
+          "description": "Description of parameter 1"
+        },
+        {
+          "name": "parameter2",
+          "type": "float",
+          "default": 0.5,
+          "min": 0.1,
+          "max": 1.0,
+          "description": "Description of parameter 2"
+        },
+        {
+          "name": "parameter3",
+          "type": "boolean",
+          "default": true,
+          "description": "Description of parameter 3"
+        },
+        {
+          "name": "parameter4",
+          "type": "enum",
+          "default": "option1",
+          "options": ["option1", "option2", "option3"],
+          "description": "Description of parameter 4"
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "pandas",
+          "version": ">=1.3.0"
+        },
+        {
+          "name": "numpy",
+          "version": ">=1.20.0"
+        }
+      ],
+      "data_requirements": {
+        "minimum_history": "100 bars",
+        "recommended_timeframes": ["1h", "4h", "1d"],
+        "required_data_fields": ["open", "high", "low", "close", "volume"]
+      },
+      "computational_complexity": {
+        "cpu_usage": "low",
+        "memory_usage": "medium",
+        "execution_time": "fast"
+      }
+    },
+    "performance": {
+      "backtest_results": {
+        "test_period": {
+          "start_date": "2020-01-01",
+          "end_date": "2022-12-31"
+        },
+        "markets_tested": ["BTC/USD", "ETH/USD", "SOL/USD"],
+        "timeframes_tested": ["1h", "4h", "1d"],
+        "metrics": {
+          "total_return": "287%",
+          "annual_return": "57%",
+          "max_drawdown": "28%",
+          "sharpe_ratio": 1.87,
+          "win_rate": "62%",
+          "profit_factor": 2.3,
+          "average_trade": "1.2%",
+          "recovery_factor": 2.1,
+          "trades_per_month": 15
+        }
+      },
+      "market_condition_analysis": {
+        "bull_market": "Excellent performance with high win rate",
+        "bear_market": "Implements protective measures to limit drawdown",
+        "ranging_market": "Moderate performance with reduced position sizing",
+        "high_volatility": "Adapts by reducing position size and widening stops",
+        "low_volatility": "May underperform due to fewer trading opportunities"
+      },
+      "optimization_potential": "High - multiple parameters can be fine-tuned for specific markets"
+    },
+    "documentation": {
+      "setup_instructions": "Step-by-step instructions for installing and configuring your plugin",
+      "usage_examples": [
+        {
+          "name": "Basic Usage",
+          "code": "# Example code showing basic usage\nfrom trading_bot import create_strategy\n\nstrategy = create_strategy('your_strategy_id', param1=value1)\nsignals = strategy.generate_signals(market_data)",
+          "description": "Description of the basic usage example"
+        },
+        {
+          "name": "Advanced Configuration",
+          "code": "# Example code showing advanced configuration\nfrom trading_bot import create_strategy\n\nstrategy = create_strategy('your_strategy_id', param1=value1, param2=value2)\nsignals = strategy.generate_signals(market_data)\nperformance = strategy.get_performance_summary()",
+          "description": "Description of the advanced configuration example"
+        }
+      ],
+      "configuration_presets": [
+        {
+          "name": "Conservative",
+          "description": "Lower risk settings for capital preservation",
+          "parameters": {
+            "param1": 20,
+            "param2": 0.3
+          }
+        },
+        {
+          "name": "Balanced",
+          "description": "Default settings for balanced risk/reward",
+          "parameters": {
+            "param1": 14,
+            "param2": 0.5
+          }
+        },
+        {
+          "name": "Aggressive",
+          "description": "Higher risk settings for maximum returns",
+          "parameters": {
+            "param1": 10,
+            "param2": 0.7
+          }
+        }
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Common issue 1",
+          "solution": "How to resolve common issue 1"
+        },
+        {
+          "issue": "Common issue 2",
+          "solution": "How to resolve common issue 2"
+        }
+      ],
+      "faq": [
+        {
+          "question": "Frequently asked question 1?",
+          "answer": "Answer to frequently asked question 1"
+        },
+        {
+          "question": "Frequently asked question 2?",
+          "answer": "Answer to frequently asked question 2"
+        }
+      ]
+    },
+    "support": {
+      "email": "support@example.com",
+      "website": "https://support.example.com",
+      "response_time": "Within 24 hours",
+      "update_frequency": "Monthly",
+      "update_policy": "Free updates for one year"
+    },
+    "author_info": {
+      "name": "Your Name",
+      "bio": "Brief professional biography highlighting your expertise and experience",
+      "experience": "8 years of algorithmic trading experience",
+      "specialization": "Momentum and mean-reversion strategies",
+      "other_products": [
+        "Product 1 - Brief description",
+        "Product 2 - Brief description"
+      ],
+      "social_media": {
+        "twitter": "@yourhandle",
+        "linkedin": "https://linkedin.com/in/yourprofile",
+        "github": "https://github.com/yourusername"
+      }
+    },
+    "legal": {
+      "terms_of_use": "Summary of terms of use",
+      "refund_policy": "Description of refund policy",
+      "disclaimer": "Trading involves risk. Past performance is not indicative of future results."
+    }
+  }
+}
